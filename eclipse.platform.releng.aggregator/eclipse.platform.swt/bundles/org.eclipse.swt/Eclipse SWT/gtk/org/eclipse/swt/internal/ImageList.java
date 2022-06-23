@@ -255,6 +255,7 @@ public boolean isDisposed () {
 public void put (int index, Image image) {
 	int count = images.length;
 	if (!(0 <= index && index < count)) return;
+	if (images [index] == image) return;
 	if (image != null) {
 		set (index, image);
 	} else {
@@ -298,6 +299,7 @@ void set (int index, Image image) {
 	}
 
 	if (w != width || h != height) {
+		Cairo.cairo_surface_destroy(surface);
 		surface = scaleSurface(image, width, height);
 	}
 
@@ -306,7 +308,6 @@ void set (int index, Image image) {
 		Cairo.cairo_surface_destroy(oldSurface);
 	}
 
-	Cairo.cairo_surface_reference(surface);
 	surfaces [index] = surface;
 	images [index] = image;
 }

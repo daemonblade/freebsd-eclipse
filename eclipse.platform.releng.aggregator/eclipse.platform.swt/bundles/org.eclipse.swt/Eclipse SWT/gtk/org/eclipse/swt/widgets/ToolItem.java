@@ -15,6 +15,8 @@
 package org.eclipse.swt.widgets;
 
 
+import java.util.*;
+
 import org.eclipse.swt.*;
 import org.eclipse.swt.events.*;
 import org.eclipse.swt.graphics.*;
@@ -53,11 +55,21 @@ public class ToolItem extends Item {
 	ToolBar parent;
 	Control control;
 	Image hotImage, disabledImage, defaultDisableImage;
+	Color background, foreground;
 	String toolTipText;
 	boolean drawHotImage;
 	/** True iff map has been hooked for this ToolItem. See bug 546914. */
 	boolean mapHooked;
 	boolean enabled = true;
+
+	/**
+	 * The image that is currently used by the tool item.
+	 * Either the image set by client code via {@link #setImage(Image)}
+	 * or {@link #setDisabledImage(Image)}, depending on button state.
+	 * Or if the button is disabled but no disabled image is specified,
+	 * a grayed out version of the "normal" image.
+	 */
+	Image currentImage;
 
 /**
  * Constructs a new instance of this class given its parent
@@ -366,6 +378,27 @@ public void dispose () {
 }
 
 /**
+ * Returns the receiver's background color.
+ * <p>
+ * Note: This operation is a hint and may be overridden by the platform.
+ * For example, on some versions of Windows the background of a TabFolder,
+ * is a gradient rather than a solid color.
+ * </p>
+ * @return the background color
+ *
+ * @exception SWTException <ul>
+ *    <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+ *    <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+ * </ul>
+ *
+ * @since 3.120
+ */
+public Color getBackground () {
+	checkWidget ();
+	return (background != null) ? background : parent.getBackground ();
+}
+
+/**
  * Returns a rectangle describing the receiver's size and location
  * relative to its parent.
  *
@@ -450,6 +483,23 @@ public boolean getEnabled () {
 	checkWidget();
 	long topHandle = topHandle ();
 	return GTK.gtk_widget_get_sensitive (topHandle);
+}
+
+/**
+ * Returns the foreground color that the receiver will use to draw.
+ *
+ * @return the receiver's foreground color
+ *
+ * @exception SWTException <ul>
+ *    <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+ *    <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+ * </ul>
+ *
+ * @since 3.120
+ */
+public Color getForeground () {
+	checkWidget ();
+	return (foreground != null) ? foreground : parent.getForeground ();
 }
 
 /**
@@ -657,6 +707,7 @@ long gtk_create_menu_proxy (long widget) {
 		return 1;
 	}
 
+	Image image = currentImage;
 	if (image != null) {
 		ImageList imageList = parent.imageList;
 		if (imageList != null) {
@@ -714,21 +765,6 @@ long gtk_create_menu_proxy (long widget) {
 		}
 	}
 	return 0;
-}
-
-void gtk_css_provider_load_from_css (long context, String css) {
-	/* Utility function. */
-	//@param css : a 'css java' string like "{\nbackground: red;\n}".
-	if (provider == 0) {
-		provider = GTK.gtk_css_provider_new ();
-		GTK.gtk_style_context_add_provider (context, provider, GTK.GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
-		OS.g_object_unref (provider);
-	}
-	if (GTK.GTK4) {
-		GTK4.gtk_css_provider_load_from_data (provider, Converter.wcsToMbcs (css, true), -1);
-	} else {
-		GTK3.gtk_css_provider_load_from_data (provider, Converter.wcsToMbcs (css, true), -1, null);
-	}
 }
 
 @Override
@@ -1038,7 +1074,7 @@ void resizeHandle(int width, int height) {
 	GTK.gtk_widget_get_allocation (handle, allocation);
 	allocation.width = width;
 	allocation.height = height;
-	GTK3.gtk_widget_size_allocate (handle, allocation);
+	gtk_widget_size_allocate(handle, allocation, -1);
 }
 
 void selectRadio () {
@@ -1050,6 +1086,36 @@ void selectRadio () {
 	int j = index + 1;
 	while (j < items.length && items [j].setRadioSelection (false)) j++;
 	setSelection (true);
+}
+
+/**
+ * Sets the receiver's background color to the color specified
+ * by the argument, or to the default system color for the control
+ * if the argument is null.
+ * <p>
+ * Note: This operation is a hint and may be overridden by the platform.
+ * </p>
+ * @param color the new color (or null)
+ *
+ * @exception IllegalArgumentException <ul>
+ *    <li>ERROR_INVALID_ARGUMENT - if the argument has been disposed</li>
+ * </ul>
+ * @exception SWTException <ul>
+ *    <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+ *    <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+ * </ul>
+ *
+ * @since 3.120
+ */
+public void setBackground (Color color) {
+	checkWidget ();
+	if (color != null && color.isDisposed ()) {
+		error (SWT.ERROR_INVALID_ARGUMENT);
+	}
+	Color oldColor = background;
+	background = color;
+	if (Objects.equals (oldColor, background)) return;
+	updateStyle ();
 }
 
 /**
@@ -1106,6 +1172,7 @@ public void setControl (Control control) {
  */
 public void setDisabledImage (Image image) {
 	checkWidget();
+	if (this.disabledImage == image) return;
 	if ((style & SWT.SEPARATOR) != 0) return;
 	disabledImage = image;
 	if (image != null) {
@@ -1165,43 +1232,34 @@ void setFontDescription (long font) {
 	if (labelHandle != 0) setFontDescription (labelHandle, font);
 }
 
-void setForegroundRGBA (GdkRGBA rgba) {
-	if (labelHandle != 0) setForegroundRGBA (labelHandle, rgba);
-}
-
-void setBackgroundRGBA (GdkRGBA rgba) {
-	if (handle != 0) setBackgroundRGBA (handle, rgba);
-}
-
-void setBackgroundRGBA (long handle, GdkRGBA rgba) {
-	// Form background string
-	long context = GTK.gtk_widget_get_style_context(handle);
-	String name = display.gtk_widget_class_get_css_name(handle);
-	String css = name + " {background-color: " + display.gtk_rgba_to_css_string(rgba) + "}";
-
-	// Apply background color and any foreground color
-	gtk_css_provider_load_from_css(context, css);
-}
-
-void setForegroundRGBA (long handle, GdkRGBA rgba) {
-	GdkRGBA toSet = new GdkRGBA();
-	if (rgba != null) {
-		toSet = rgba;
-	} else {
-		toSet = display.COLOR_WIDGET_FOREGROUND_RGBA;
+/**
+ * Sets the receiver's foreground color to the color specified
+ * by the argument, or to the default system color for the control
+ * if the argument is null.
+ * <p>
+ * Note: This operation is a hint and may be overridden by the platform.
+ * </p>
+ * @param color the new color (or null)
+ *
+ * @exception IllegalArgumentException <ul>
+ *    <li>ERROR_INVALID_ARGUMENT - if the argument has been disposed</li>
+ * </ul>
+ * @exception SWTException <ul>
+ *    <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+ *    <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+ * </ul>
+ *
+ * @since 3.120
+ */
+public void setForeground (Color color) {
+	checkWidget ();
+	if (color != null && color.isDisposed ()) {
+		error (SWT.ERROR_INVALID_ARGUMENT);
 	}
-	long context = GTK.gtk_widget_get_style_context (handle);
-	// Form foreground string
-	String color = display.gtk_rgba_to_css_string(toSet);
-	String css = "* {color: " + color + ";}";
-
-	// Cache and apply foreground color
-	parent.cssForeground = css;
-	gtk_css_provider_load_from_css(context, css);
-
-	// We need to set the parent ToolBar's background
-	// otherwise setting the foreground will wipe it out.
-	parent.restoreBackground();
+	Color oldColor = foreground;
+	foreground = color;
+	if (Objects.equals (oldColor, foreground)) return;
+	updateStyle ();
 }
 
 /**
@@ -1223,6 +1281,7 @@ void setForegroundRGBA (long handle, GdkRGBA rgba) {
  */
 public void setHotImage (Image image) {
 	checkWidget();
+	if (this.hotImage == image) return;
 	if ((style & SWT.SEPARATOR) != 0) return;
 	hotImage = image;
 	if (image != null) {
@@ -1240,6 +1299,7 @@ public void setHotImage (Image image) {
 @Override
 public void setImage (Image image) {
 	checkWidget();
+	if (this.image == image) return;
 	if ((style & SWT.SEPARATOR) != 0) return;
 	super.setImage (image);
 	disposeDefault();
@@ -1258,6 +1318,7 @@ private void disposeDefault() {
 
 void _setImage (Image image) {
 	if ((style & SWT.SEPARATOR) != 0) return;
+	currentImage = image;
 	if (image != null) {
 		ImageList imageList = parent.imageList;
 		if (imageList == null) imageList = parent.imageList = new ImageList ();
@@ -1290,15 +1351,7 @@ void _setImage (Image image) {
 	* required to reset the proxy menu. Otherwise, the
 	* old menuItem appears in the overflow menu.
 	*/
-	if ((style & SWT.DROP_DOWN) != 0) {
-		if (GTK.GTK4) {
-			/* TODO: GTK4 have to implement our own overflow menu */
-		} else {
-			proxyMenuItem = 0;
-			proxyMenuItem = GTK3.gtk_tool_item_retrieve_proxy_menu_item (handle);
-			OS.g_signal_connect(proxyMenuItem, OS.activate, ToolBar.menuItemSelectedFunc.getAddress(), handle);
-		}
-	}
+	recreateMenuProxy();
 	parent.relayout ();
 }
 
@@ -1408,15 +1461,7 @@ public void setText (String string) {
 	* required to reset the proxy menu. Otherwise, the
 	* old menuItem appears in the overflow menu.
 	*/
-	if ((style & SWT.DROP_DOWN) != 0) {
-		if (GTK.GTK4) {
-			/* TODO: GTK4 have to implement our own overflow menu */
-		} else {
-			proxyMenuItem = 0;
-			proxyMenuItem = GTK3.gtk_tool_item_retrieve_proxy_menu_item (handle);
-			OS.g_signal_connect(proxyMenuItem, OS.activate, ToolBar.menuItemSelectedFunc.getAddress(), handle);
-		}
-	}
+	recreateMenuProxy();
 	parent.relayout ();
 }
 
@@ -1471,15 +1516,7 @@ public void setToolTipText(String string) {
 	* Otherwise, the old menuItem appears in the overflow
 	* menu as a blank item.
 	*/
-	if ((style & SWT.DROP_DOWN) != 0) {
-		if (GTK.GTK4) {
-			/* TODO: GTK4 have to implement our own overflow menu */
-		} else {
-			proxyMenuItem = 0;
-			proxyMenuItem = GTK3.gtk_tool_item_retrieve_proxy_menu_item (handle);
-			OS.g_signal_connect(proxyMenuItem, OS.activate, ToolBar.menuItemSelectedFunc.getAddress(), handle);
-		}
-	}
+	recreateMenuProxy();
 }
 
 /**
@@ -1536,6 +1573,45 @@ void showWidget (int index) {
 	}
 }
 
+void updateStyle () {
+	if ((style & SWT.SEPARATOR) != 0) return;
+
+	if (provider == 0) {
+		provider = GTK.gtk_css_provider_new ();
+		if ((style & SWT.DROP_DOWN) != 0) {
+			long box = GTK3.gtk_bin_get_child (handle);
+			long list = GTK3.gtk_container_get_children (box);
+			for (int i = 0; i < 2; i++) {
+				long child = OS.g_list_nth_data(list, i);
+				long context = GTK.gtk_widget_get_style_context (child);
+				GTK.gtk_style_context_add_provider (context, provider, GTK.GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+			}
+			OS.g_list_free(list);
+		} else {
+			long child = GTK3.gtk_bin_get_child (handle);
+			long context = GTK.gtk_widget_get_style_context (child);
+			GTK.gtk_style_context_add_provider (context, provider, GTK.GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+		}
+		OS.g_object_unref (provider);
+	}
+
+	String css = "";
+	if (foreground != null) {
+		css += "button { color: " + display.gtk_rgba_to_css_string (foreground.handle) + "; }";
+	} else {
+		css += parent.cssForeground;
+	}
+	if (background != null) {
+		css += "button { background-image: none; background-color: " + display.gtk_rgba_to_css_string (background.handle) + "; }";
+	}
+
+	if (GTK.GTK4) {
+		GTK4.gtk_css_provider_load_from_data (provider, Converter.wcsToMbcs (css, true), -1);
+	} else {
+		GTK3.gtk_css_provider_load_from_data (provider, Converter.wcsToMbcs (css, true), -1, null);
+	}
+}
+
 @Override
 String getNameText() {
 	String nameText = super.getNameText();
@@ -1566,5 +1642,16 @@ long dpiChanged(long object, long arg0) {
 	}
 
 	return 0;
+}
+
+private void recreateMenuProxy() {
+	if ((style & SWT.DROP_DOWN) != 0 || proxyMenuItem != 0) {
+		if (GTK.GTK4) {
+			/* TODO: GTK4 have to implement our own overflow menu */
+		} else {
+			proxyMenuItem = 0;
+			proxyMenuItem = GTK3.gtk_tool_item_retrieve_proxy_menu_item (handle);
+		}
+	}
 }
 }

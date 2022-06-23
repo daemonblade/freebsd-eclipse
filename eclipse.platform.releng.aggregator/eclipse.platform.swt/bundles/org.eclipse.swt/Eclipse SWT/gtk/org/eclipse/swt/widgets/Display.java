@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -127,16 +127,18 @@ public class Display extends Device {
 	long fds;
 	int allocated_nfds;
 	boolean wake;
+	boolean windowSizeSet;
 	int [] max_priority = new int [1], timeout = new int [1];
 	Callback eventCallback;
 	long eventProc, windowProc2, windowProc3, windowProc4, windowProc5, windowProc6;
 	long changeValueProc;
-	long snapshotDrawProc, keyPressReleaseProc, focusProc, enterMotionProc, leaveProc,
+	long snapshotDrawProc, keyPressReleaseProc, focusProc, windowActiveProc, enterMotionProc, leaveProc,
 		 scrollProc, resizeProc, activateProc, gesturePressReleaseProc;
 	long notifyProc;
+	long computeSizeProc;
 	Callback windowCallback2, windowCallback3, windowCallback4, windowCallback5, windowCallback6;
 	Callback changeValue;
-	Callback snapshotDraw, keyPressReleaseCallback, focusCallback, enterMotionCallback,
+	Callback snapshotDraw, keyPressReleaseCallback, focusCallback, windowActiveCallback, enterMotionCallback, computeSizeCallback,
 			 scrollCallback, leaveCallback, resizeCallback, activateCallback, gesturePressReleaseCallback;
 	Callback notifyCallback;
 	EventTable eventTable, filterTable;
@@ -219,19 +221,6 @@ public class Display extends Device {
 	SessionManagerDBus sessionManagerDBus;
 	SessionManagerListener sessionManagerListener;
 	Runnable [] disposeList;
-
-	/*
-	 * DBus objects to be freed upong Display release. Only public for use in
-	 * other areas of SWT (i.e. WebKit). See bug 540060.
-	 */
-	/** @noreference */
-	public ArrayList<Long> dBusServers = new ArrayList<>();
-	/** @noreference */
-	public ArrayList<Long> dBusAuthObservers = new ArrayList<>();
-	/** @noreference */
-	public ArrayList<Long> dBusGUIDS = new ArrayList<>();
-	/** @noreference */
-	public ArrayList<Long> dBusConnections = new ArrayList<>();
 
 	/* Deferred Layout list */
 	Composite[] layoutDeferred;
@@ -507,7 +496,7 @@ public class Display extends Device {
 
 	/* Multiple Displays. */
 	static Display Default;
-	static Display [] Displays = new Display [4];
+	static Display [] Displays = new Display [1];
 
 	/* Skinning support */
 	Widget [] skinList = new Widget [GROW_SIZE];
@@ -526,7 +515,7 @@ public class Display extends Device {
 
 	/* Minimum GTK version requirement */
 	static final int GTK3_MAJOR = 3;
-	static final int GTK3_MINOR = 20;
+	static final int GTK3_MINOR = 22;
 	static final int GTK3_MICRO = 0;
 
 	/* Latest GTK version support */
@@ -859,7 +848,7 @@ void addPopup (Menu menu) {
 
 void addSkinnableWidget (Widget widget) {
 	if (skinCount >= skinList.length) {
-		Widget[] newSkinWidgets = new Widget [skinList.length + GROW_SIZE];
+		Widget[] newSkinWidgets = new Widget [(skinList.length + 1) * 3 / 2];
 		System.arraycopy (skinList, 0, newSkinWidgets, 0, skinList.length);
 		skinList = newSkinWidgets;
 	}
@@ -1156,6 +1145,7 @@ void createDisplay (DeviceData data) {
 		GDK.gdk_threads_enter ();
 	}
 	boolean init;
+	windowSizeSet = false;
 	if (GTK.GTK4) {
 		init = GTK4.gtk_init_check();
 	} else {
@@ -1376,7 +1366,7 @@ Image createImage (String name) {
 		OS.g_object_unref(paintable);
 	} else {
 		long iconTheme = GTK3.gtk_icon_theme_get_default();
-		pixbuf = GTK3.gtk_icon_theme_load_icon(iconTheme, buffer, 48, GTK.GTK_ICON_LOOKUP_FORCE_SIZE, 0);
+		pixbuf = GTK3.gtk_icon_theme_load_icon(iconTheme, buffer, 48, GTK.GTK_ICON_LOOKUP_FORCE_SIZE|GTK.GTK_ICON_LOOKUP_FORCE_REGULAR, 0);
 	}
 
 	if (pixbuf == 0) return null;
@@ -1765,45 +1755,29 @@ Rectangle getBoundsInPixels () {
 	checkDevice ();
 	Rectangle bounds = new Rectangle(0, 0, 0, 0);
 	int maxWidth = 0, maxHeight = 0;
-	if (GTK.GTK_VERSION >= OS.VERSION(3, 22, 0)) {
-		long display = GDK.gdk_display_get_default();
-		int monitorCount = 0;
-		long monitorList = 0;
-		if (GTK.GTK4) {
-			monitorList = GDK.gdk_display_get_monitors(display);
-			monitorCount = OS.g_list_model_get_n_items(monitorList);
-		} else {
-			monitorCount = GDK.gdk_display_get_n_monitors(display);
-		}
-
-		if (monitorCount > 0) {
-			for (int i = 0; i < monitorCount; i++) {
-				long monitor = GTK.GTK4 ? OS.g_list_model_get_item(monitorList, i) : GDK.gdk_display_get_monitor(display, i);
-				GdkRectangle geometry = new GdkRectangle();
-				GDK.gdk_monitor_get_geometry(monitor, geometry);
-
-				if ((geometry.x + geometry.width) > maxWidth) maxWidth = geometry.x + geometry.width;
-				if ((geometry.y + geometry.height) > maxHeight) maxHeight = geometry.y + geometry.height;
-			}
-
-			bounds.width = maxWidth;
-			bounds.height = maxHeight;
-			return bounds;
-		}
+	long display = GDK.gdk_display_get_default();
+	int monitorCount = 0;
+	long monitorList = 0;
+	if (GTK.GTK4) {
+		monitorList = GDK.gdk_display_get_monitors(display);
+		monitorCount = OS.g_list_model_get_n_items(monitorList);
 	} else {
-		long screen = GDK.gdk_screen_get_default();
-		int monitorCount = GDK.gdk_screen_get_n_monitors(screen);
-		if (monitorCount > 0) {
-			for (int i = 0; i < monitorCount; i++) {
-				GdkRectangle dest = new GdkRectangle ();
-				GDK.gdk_screen_get_monitor_geometry (screen, i, dest);
-				if ((dest.x + dest.width) > maxWidth) maxWidth = dest.x + dest.width;
-				if ((dest.y + dest.height) > maxHeight) maxHeight = dest.y + dest.height;
-			}
-			bounds.width = maxWidth;
-			bounds.height = maxHeight;
-			return bounds;
+		monitorCount = GDK.gdk_display_get_n_monitors(display);
+	}
+
+	if (monitorCount > 0) {
+		for (int i = 0; i < monitorCount; i++) {
+			long monitor = GTK.GTK4 ? OS.g_list_model_get_item(monitorList, i) : GDK.gdk_display_get_monitor(display, i);
+			GdkRectangle geometry = new GdkRectangle();
+			GDK.gdk_monitor_get_geometry(monitor, geometry);
+
+			if ((geometry.x + geometry.width) > maxWidth) maxWidth = geometry.x + geometry.width;
+			if ((geometry.y + geometry.height) > maxHeight) maxHeight = geometry.y + geometry.height;
 		}
+
+		bounds.width = maxWidth;
+		bounds.height = maxHeight;
+		return bounds;
 	}
 
 	if (GTK.GTK4) {
@@ -2574,10 +2548,6 @@ int getLastEventTime () {
 	return lastEventTime;
 }
 
-int getMessageCount () {
-	return synchronizer.getMessageCount ();
-}
-
 Dialog getModalDialog () {
 	return modalDialog;
 }
@@ -2604,11 +2574,11 @@ Rectangle getWorkArea() {
 	Rectangle result = null;
 	if (data [0] != 0) {
 		if (actualLength [0] == 16) {
-			int values [] = new int [4];
+			int[] values  = new int [4];
 			C.memmove (values, data[0], 16);
 			result = new Rectangle (values [0],values [1],values [2],values [3]);
 		} else if (actualLength [0] == 32) {
-			long values [] = new long [4];
+			long[] values  = new long [4];
 			C.memmove (values, data[0], 32);
 			result = new Rectangle ((int)values [0],(int)values [1],(int)values [2],(int)values [3]);
 		}
@@ -2628,77 +2598,47 @@ public Monitor[] getMonitors() {
 	checkDevice();
 	Monitor[] monitors = null;
 	Rectangle workArea = DPIUtil.autoScaleDown(getWorkArea ());
-	if (GTK.GTK_VERSION >= OS.VERSION(3, 22, 0)) {
-		long display = GDK.gdk_display_get_default();
-		if (display != 0) {
-			int monitorCount;
-			long monitorList = 0;
-			if (GTK.GTK4) {
-				monitorList = GDK.gdk_display_get_monitors(display);
-				monitorCount = OS.g_list_model_get_n_items(monitorList);
-			} else {
-				monitorCount = GDK.gdk_display_get_n_monitors(display);
-			}
-
-			if (monitorCount > 0) {
-				monitors = new Monitor[monitorCount];
-				GdkRectangle geometry = new GdkRectangle();
-				for (int i = 0; i < monitorCount; i++) {
-					long gdkMonitor = GTK.GTK4 ? OS.g_list_model_get_item(monitorList, i) : GDK.gdk_display_get_monitor(display, i);
-					GDK.gdk_monitor_get_geometry(gdkMonitor, geometry);
-
-					Monitor monitor = new Monitor();
-					monitor.handle = gdkMonitor;
-					monitor.x = DPIUtil.autoScaleDown(geometry.x);
-					monitor.y = DPIUtil.autoScaleDown(geometry.y);
-					monitor.width = DPIUtil.autoScaleDown(geometry.width);
-					monitor.height = DPIUtil.autoScaleDown(geometry.height);
-					if (!OS.isX11()) {
-						int scaleFactor = (int) GDK.gdk_monitor_get_scale_factor(gdkMonitor);
-						monitor.zoom = scaleFactor * 100;
-					} else {
-						monitor.zoom = Display._getDeviceZoom(monitor.handle);
-					}
-
-					/* workarea was defined in GTK 3.4. If present, it will return the best results
-					 * since it takes into account per-monitor trim. Not available in GTK4.
-					 */
-					if (!GTK.GTK4) GDK.gdk_monitor_get_workarea(gdkMonitor, geometry);
-					monitor.clientX = DPIUtil.autoScaleDown(geometry.x);
-					monitor.clientY = DPIUtil.autoScaleDown(geometry.y);
-					monitor.clientWidth = DPIUtil.autoScaleDown(geometry.width);
-					monitor.clientHeight = DPIUtil.autoScaleDown(geometry.height);
-
-					monitors[i] = monitor;
-				}
-			}
+	long display = GDK.gdk_display_get_default();
+	if (display != 0) {
+		int monitorCount;
+		long monitorList = 0;
+		if (GTK.GTK4) {
+			monitorList = GDK.gdk_display_get_monitors(display);
+			monitorCount = OS.g_list_model_get_n_items(monitorList);
+		} else {
+			monitorCount = GDK.gdk_display_get_n_monitors(display);
 		}
-	} else {
-		long screen = GDK.gdk_screen_get_default ();
-		if (screen != 0) {
-			int monitorCount = GDK.gdk_screen_get_n_monitors (screen);
-			if (monitorCount > 0) {
-				monitors = new Monitor [monitorCount];
-				GdkRectangle dest = new GdkRectangle ();
-				for (int i = 0; i < monitorCount; i++) {
-					GDK.gdk_screen_get_monitor_geometry (screen, i, dest);
-					Monitor monitor = new Monitor ();
-					monitor.handle = i;
-					monitor.x = DPIUtil.autoScaleDown (dest.x);
-					monitor.y = DPIUtil.autoScaleDown (dest.y);
-					monitor.width = DPIUtil.autoScaleDown (dest.width);
-					monitor.height = DPIUtil.autoScaleDown (dest.height);
-					monitor.zoom = Display._getDeviceZoom(monitor.handle);
 
-					// workarea was defined in GTK 3.4. If present, it will return the best results
-					// since it takes into account per-monitor trim
-					GDK.gdk_screen_get_monitor_workarea (screen, i, dest);
-					monitor.clientX = DPIUtil.autoScaleDown (dest.x);
-					monitor.clientY = DPIUtil.autoScaleDown (dest.y);
-					monitor.clientWidth = DPIUtil.autoScaleDown (dest.width);
-					monitor.clientHeight = DPIUtil.autoScaleDown (dest.height);
-					monitors [i] = monitor;
+		if (monitorCount > 0) {
+			monitors = new Monitor[monitorCount];
+			GdkRectangle geometry = new GdkRectangle();
+			for (int i = 0; i < monitorCount; i++) {
+				long gdkMonitor = GTK.GTK4 ? OS.g_list_model_get_item(monitorList, i) : GDK.gdk_display_get_monitor(display, i);
+				GDK.gdk_monitor_get_geometry(gdkMonitor, geometry);
+
+				Monitor monitor = new Monitor();
+				monitor.handle = gdkMonitor;
+				monitor.x = DPIUtil.autoScaleDown(geometry.x);
+				monitor.y = DPIUtil.autoScaleDown(geometry.y);
+				monitor.width = DPIUtil.autoScaleDown(geometry.width);
+				monitor.height = DPIUtil.autoScaleDown(geometry.height);
+				if (!OS.isX11()) {
+					int scaleFactor = (int) GDK.gdk_monitor_get_scale_factor(gdkMonitor);
+					monitor.zoom = scaleFactor * 100;
+				} else {
+					monitor.zoom = Display._getDeviceZoom(monitor.handle);
 				}
+
+				/* workarea was defined in GTK 3.4. If present, it will return the best results
+				 * since it takes into account per-monitor trim. Not available in GTK4.
+				 */
+				if (!GTK.GTK4) GDK.gdk_monitor_get_workarea(gdkMonitor, geometry);
+				monitor.clientX = DPIUtil.autoScaleDown(geometry.x);
+				monitor.clientY = DPIUtil.autoScaleDown(geometry.y);
+				monitor.clientWidth = DPIUtil.autoScaleDown(geometry.width);
+				monitor.clientHeight = DPIUtil.autoScaleDown(geometry.height);
+
+				monitors[i] = monitor;
 			}
 		}
 	}
@@ -2745,7 +2685,7 @@ public Monitor getPrimaryMonitor() {
 
 	if (GTK.GTK4) {
 		primaryMonitorIndex = 0;
-	} else if (GTK.GTK_VERSION >= OS.VERSION(3, 22, 0)) {
+	} else {
 		//attempt to find actual primary monitor if one is configured:
 		long display = GDK.gdk_display_get_default();
 		long monitor = GDK.gdk_display_get_primary_monitor(display);
@@ -2755,12 +2695,6 @@ public Monitor getPrimaryMonitor() {
 				primaryMonitorIndex = i;
 				break;
 			}
-		}
-	} else {
-		long screen = GDK.gdk_screen_get_default();
-		if (screen != 0) {
-			//if no primary monitor is configured by the user, this returns 0.
-			primaryMonitorIndex = GDK.gdk_screen_get_primary_monitor(screen);
 		}
 	}
 
@@ -3000,23 +2934,23 @@ public Image getSystemImage (int id) {
 	switch (id) {
 		case SWT.ICON_ERROR:
 			if (errorImage == null) {
-				errorImage = createImage ("dialog-error"); //$NON-NLS-1$
+				errorImage = createImage ("dialog-error-symbolic"); //$NON-NLS-1$
 			}
 			return errorImage;
 		case SWT.ICON_INFORMATION:
 		case SWT.ICON_WORKING:
 			if (infoImage == null) {
-				infoImage = createImage ("dialog-information"); //$NON-NLS-1$
+				infoImage = createImage ("dialog-information-symbolic"); //$NON-NLS-1$
 			}
 			return infoImage;
 		case SWT.ICON_QUESTION:
 			if (questionImage == null) {
-				questionImage = createImage ("dialog-question"); //$NON-NLS-1$
+				questionImage = createImage ("dialog-question-symbolic"); //$NON-NLS-1$
 			}
 			return questionImage;
 		case SWT.ICON_WARNING:
 			if (warningImage == null) {
-				warningImage = createImage ("dialog-warning"); //$NON-NLS-1$
+				warningImage = createImage ("dialog-warning-symbolic"); //$NON-NLS-1$
 			}
 			return warningImage;
 	}
@@ -3532,11 +3466,12 @@ void initializeCallbacks () {
 	signalIds [Widget.MAP_EVENT] = OS.g_signal_lookup (OS.map_event, GTK.GTK_TYPE_WIDGET ());
 	signalIds [Widget.MNEMONIC_ACTIVATE] = OS.g_signal_lookup (OS.mnemonic_activate, GTK.GTK_TYPE_WIDGET ());
 	signalIds [Widget.MOTION_NOTIFY_EVENT] = OS.g_signal_lookup (OS.motion_notify_event, GTK.GTK_TYPE_WIDGET ());
+	signalIds [Widget.COMPUTE_SIZE] = OS.g_signal_lookup(OS.compute_size, GTK.GTK_TYPE_WIDGET() );
 	/*
-	 * Connect to the "popped-up" signal on GTK3.22+ if the user has specified the
+	 * Connect to the "popped-up" signal if the user has specified the
 	 * SWT_MENU_LOCATION_DEBUGGING environment variable.
 	 */
-	if (GTK.GTK_VERSION >= OS.VERSION(3, 22, 0) && OS.SWT_MENU_LOCATION_DEBUGGING) {
+	if (OS.SWT_MENU_LOCATION_DEBUGGING) {
 		long menuType = GTK3.GTK_TYPE_MENU ();
 		OS.g_type_class_ref (menuType);
 		signalIds [Widget.POPPED_UP] = OS.g_signal_lookup (OS.popped_up, menuType);
@@ -3569,6 +3504,9 @@ void initializeCallbacks () {
 		focusCallback = new Callback(this, "focusProc", void.class, new Type[] {long.class, long.class}); //$NON-NLS-1$
 		focusProc = focusCallback.getAddress();
 
+		windowActiveCallback = new Callback(this, "windowActiveProc", void.class, new Type[] {long.class, long.class}); //$NON-NLS-1$
+		windowActiveProc = windowActiveCallback.getAddress();
+
 		enterMotionCallback = new Callback(this, "enterMotionProc", void.class, new Type[] {
 				long.class, double.class, double.class, long.class}); //$NON-NLS-1$
 		enterMotionProc = enterMotionCallback.getAddress ();
@@ -3589,6 +3527,9 @@ void initializeCallbacks () {
 
 		activateCallback = new Callback(this, "activateProc", void.class, new Type[] {long.class, long.class, long.class}); //$NON-NLS-1$
 		activateProc = activateCallback.getAddress();
+
+		computeSizeCallback = new Callback(this, "computeSizeProc", void.class, new Type[] {long.class, long.class, long.class}); //$NON-NLS-1$
+		computeSizeProc = computeSizeCallback.getAddress();
 	}
 
 	notifyCallback = new Callback(this, "notifyProc", long.class, new Type[] {
@@ -3664,7 +3605,6 @@ void initializeCallbacks () {
 	closuresProc [Widget.TOGGLED] = windowProc3;
 	closuresProc [Widget.UNMAP_EVENT] = windowProc3;
 	closuresProc [Widget.WINDOW_STATE_EVENT] = windowProc3;
-	closuresProc [Widget.ROW_DELETED] = windowProc3;
 	closuresProc [Widget.DIRECTION_CHANGED] = windowProc3;
 
 	windowCallback4 = new Callback (this, "windowProc", 4); //$NON-NLS-1$
@@ -3679,7 +3619,6 @@ void initializeCallbacks () {
 	closuresProc [Widget.SWITCH_PAGE] = windowProc4;
 	closuresProc [Widget.TEST_COLLAPSE_ROW] = windowProc4;
 	closuresProc [Widget.TEST_EXPAND_ROW] = windowProc4;
-	closuresProc [Widget.ROW_INSERTED] = windowProc4;
 	closuresProc [Widget.ROW_HAS_CHILD_TOGGLED] = windowProc4;
 	closuresProc [Widget.DELETE_FROM_CURSOR] = windowProc4;
 	closuresProc [Widget.DELETE_FROM_CURSOR_INVERSE] = windowProc4;
@@ -3842,44 +3781,6 @@ void initializeSessionManager() {
 	sessionManagerDBus = new SessionManagerDBus();
 	sessionManagerListener = new SessionManagerListener(this);
 	sessionManagerDBus.addListener(sessionManagerListener);
-}
-
-/**
- * Some parts of SWT (like WebKit) use GDBus for IPC. Some of these objects
- * cannot be disposed of in their own classes due to design challenges.
- * In these instances we release them along with this Display. This ensures
- * no Browser will be using them at disposal time.
- */
-void releaseDBusServices() {
-	releaseSessionManager();
-	for (long connection : dBusConnections) {
-		if (OS.g_dbus_connection_is_closed(connection)) continue;
-		long [] error = new long [1];
-		boolean closed = OS.g_dbus_connection_close_sync(connection, 0, error);
-		if (error[0] != 0) {
-			String msg = extractFreeGError(error[0]);
-			System.err.println("SWT Display: error closing connection: " + msg);
-		}
-		if (closed) {
-			// Free this as we added a reference to it
-			OS.g_object_unref(connection);
-		}
-	}
-	for (long server : dBusServers) {
-		OS.g_dbus_server_stop(server);
-		OS.g_object_unref(server);
-	}
-	for (long authObserver : dBusAuthObservers) {
-		OS.g_object_unref(authObserver);
-	}
-	for (long guid : dBusGUIDS) {
-		OS.g_free(guid);
-	}
-	dBusConnections.clear();
-	dBusServers.clear();
-	dBusAuthObservers.clear();
-	dBusGUIDS.clear();
-	dBusServers = dBusAuthObservers = dBusGUIDS = dBusConnections = null;
 }
 
 /**
@@ -4665,7 +4566,6 @@ protected void release () {
 
 		synchronizer.releaseSynchronizer ();
 		synchronizer = null;
-		releaseDBusServices ();
 		releaseSessionManager ();
 		releaseDisplay ();
 		super.release ();
@@ -4695,6 +4595,10 @@ void releaseDisplay () {
 		focusCallback.dispose();
 		focusCallback = null;
 		focusProc = 0;
+
+		windowActiveCallback.dispose();
+		windowActiveCallback = null;
+		windowActiveProc = 0;
 
 		enterMotionCallback.dispose();
 		enterMotionCallback = null;
@@ -5079,12 +4983,7 @@ String dumpWidgetTableInfo() {
 	for (int i = 0; i < widgetTable.length; i++) {
 		Widget w = widgetTable[i];
 		if (w != null && w.isDisposed()) {
-			Collection<Integer> list = disposed.get(w);
-			if (list == null) {
-				list = new ArrayList<>();
-				disposed.put(w, list);
-			}
-			list.add(Integer.valueOf(i));
+			disposed.computeIfAbsent(w, k -> new ArrayList<>()).add(Integer.valueOf(i));
 		}
 	}
 	if (!disposed.isEmpty()) {
@@ -5287,6 +5186,17 @@ public static void setAppVersion (String version) {
  * @since 2.1
  */
 public void setCursorLocation (int x, int y) {
+	/*
+	 * Wayland does not support mouse warping, thus setCursorLocation
+	 * is not supported due to gdk_device_warp not being implemented
+	 * in Wayland. There currently is no good solution that could be
+	 * implemented, so a log entry was determined to be sufficient.
+	 *
+	 * See Bug 577099
+	 */
+	if(!OS.isX11()) {
+		System.err.println("SWT Display.java Error: setCursorLocation only supported on X11. \n");
+	}
 	setCursorLocation(new Point (x, y));
 }
 
@@ -5652,7 +5562,7 @@ public boolean sleep () {
 		runSettings = true;
 		return false;
 	}
-	if (getMessageCount () != 0) return true;
+	if (!synchronizer.isMessagesEmpty()) return true;
 	sendPreExternalEventDispatchEvent ();
 	if (!GTK.GTK4) GDK.gdk_threads_leave ();
 	/*
@@ -5692,7 +5602,7 @@ public boolean sleep () {
 			OS.g_main_context_check (context, max_priority [0], fds, nfds);
 			OS.g_main_context_release (context);
 		}
-	} while (!result && getMessageCount () == 0 && !wake);
+	} while (!result && synchronizer.isMessagesEmpty() && !wake);
 	wake = false;
 	if (!GTK.GTK4) GDK.gdk_threads_enter ();
 	sendPostExternalEventDispatchEvent ();
@@ -6001,6 +5911,54 @@ public void syncExec (Runnable runnable) {
 	synchronizer.syncExec (runnable);
 }
 
+/**
+ * Calls the callable on the user-interface thread at the next reasonable
+ * opportunity, and returns the its result from this method. The thread which
+ * calls this method is suspended until the callable completes.
+ * <p>
+ * Note that at the time the callable is invoked, widgets that have the receiver
+ * as their display may have been disposed. Therefore, it is necessary to check
+ * for this case inside the callable before accessing the widget.
+ * </p>
+ * <p>
+ * Any exception that is thrown from the callable is re-thrown in the calling
+ * thread. Note: The exception retains its original stack trace from the
+ * throwing thread. The call to {@code syncCall} will not be present in the
+ * stack trace.
+ * </p>
+ *
+ * @param callable the code to call on the user-interface thread
+ *
+ * @exception SWTException <code>ERROR_DEVICE_DISPOSED</code> - if the receiver
+ *                         has been disposed
+ * @exception E            An exception that is thrown by the callable on the
+ *                         user-interface thread, and re-thrown on the calling
+ *                         thread
+ *
+ * @see #syncExec(Runnable)
+ * @see SwtCallable#call()
+ * @since 3.118
+ */
+public <T, E extends Exception> T syncCall(SwtCallable<T, E> callable) throws E {
+	Objects.nonNull(callable);
+	@SuppressWarnings("unchecked")
+	T[] t = (T[]) new Object[1];
+	Object[] ex = new Object[1];
+	syncExec(() -> {
+		try {
+			t[0] = callable.call();
+		} catch (Exception e) {
+			ex[0] = e;
+		}
+	});
+	if (ex[0] != null) {
+		@SuppressWarnings("unchecked")
+		E e = (E) ex[0];
+		throw e;
+	}
+	return t[0];
+}
+
 static int translateKey (int key) {
 	for (int i=0; i<KeyTable.length; i++) {
 		if (KeyTable [i] [0] == key) return KeyTable [i] [1];
@@ -6071,11 +6029,16 @@ boolean scrollProc(long controller, double dx, double dy, long user_data) {
 	return false;
 }
 
-void focusProc(long controller, long user_data) {
+void focusProc(long controller, long user_data) {;
 	long handle = GTK.gtk_event_controller_get_widget(controller);
 	Widget widget = getWidget(handle);
 
 	if (widget != null) widget.focusProc(controller, user_data);
+}
+
+void windowActiveProc(long handle, long user_data) {;
+	Widget widget = getWidget(handle);
+	if (widget != null) widget.windowActiveProc(handle, user_data);
 }
 
 boolean keyPressReleaseProc(long controller, int keyval, int keycode, int state, long user_data) {
@@ -6098,6 +6061,10 @@ void leaveProc(long controller, long user_data) {
 	Widget widget = getWidget(handle);
 
 	if (widget != null) widget.leaveProc(controller, handle, user_data);
+}
+
+void computeSizeProc(long toplevel, long size, long user_data) {
+	//TODO: GTK4 - Could be needed for minimum Size, signal remains connected
 }
 
 void activateProc(long action, long parameter, long user_data) {
@@ -6221,18 +6188,10 @@ static int _getDeviceZoom (long monitor_num) {
 	 * if gdk_screen_set_resolution has not been called.
 	 */
 	int dpi = 96;
-	if (GTK.GTK_VERSION >= OS.VERSION(3, 22, 0)) {
-		long display = GDK.gdk_display_get_default();
-		long monitor = GDK.gdk_display_get_monitor_at_point(display, 0, 0);
-		int scale = GDK.gdk_monitor_get_scale_factor(monitor);
-		dpi = dpi * scale;
-	} else {
-		long screen = GDK.gdk_screen_get_default ();
-		dpi = (int) GDK.gdk_screen_get_resolution (screen);
-		if (dpi <= 0) dpi = 96; // gdk_screen_get_resolution returns -1 in case of error
-		int scale = GDK.gdk_screen_get_monitor_scale_factor (screen, (int) monitor_num);
-		dpi = dpi * scale;
-	}
+	long display = GDK.gdk_display_get_default();
+	long monitor = GDK.gdk_display_get_monitor_at_point(display, 0, 0);
+	int scale = GDK.gdk_monitor_get_scale_factor(monitor);
+	dpi = dpi * scale;
 	return DPIUtil.mapDPIToZoom (dpi);
 }
 }

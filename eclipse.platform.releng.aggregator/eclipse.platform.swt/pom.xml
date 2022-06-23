@@ -16,7 +16,7 @@
   <parent>
     <groupId>org.eclipse</groupId>
     <artifactId>eclipse-platform-parent</artifactId>
-    <version>4.21.0-SNAPSHOT</version>
+    <version>4.24.0-SNAPSHOT</version>
     <relativePath>../eclipse-platform-parent</relativePath>
   </parent>
 
@@ -25,7 +25,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <tycho.scmUrl>scm:git:https://git.eclipse.org/r/platform/eclipse.platform.swt.git</tycho.scmUrl>
+    <tycho.scmUrl>scm:git:https://github.com/eclipse-platform/eclipse.platform.swt.git</tycho.scmUrl>
     <os-jvm-flags></os-jvm-flags>
   </properties>
 
@@ -76,6 +76,29 @@
 	  <modules>
 	    <module>tests/org.eclipse.swt.tests.cocoa</module>
 	  </modules>
+	  <build>
+	      <plugins>
+	        <plugin>
+	          <groupId>org.eclipse.tycho</groupId>
+	          <artifactId>target-platform-configuration</artifactId>
+	          <version>${tycho.version}</version>
+	          <configuration>
+	            <environments>
+	            	<environment>
+	            		<os>macosx</os>
+	            		<ws>cocoa</ws>
+	            		<arch>x86_64</arch> 
+					</environment>
+					<environment>
+		              <os>macosx</os>
+		              <ws>cocoa</ws>
+		              <arch>aarch64</arch>
+		            </environment>
+	            </environments>
+	          </configuration>
+	        </plugin>
+	      </plugins>
+      </build>
 	<properties>
 		<os-jvm-flags>-XstartOnFirstThread</os-jvm-flags>
 	</properties>
@@ -88,10 +111,39 @@
 	</os>
       </activation>
 	  <modules>
-		<!-- disabled
+<!-- disabled
 	    <module>tests/org.eclipse.swt.tests.gtk</module>
-		  -->
+-->
 	  </modules>
+	  <build>
+	      <plugins>
+	        <plugin>
+	          <groupId>org.eclipse.tycho</groupId>
+	          <artifactId>target-platform-configuration</artifactId>
+	          <version>${tycho.version}</version>
+	          <configuration>
+	            <environments>
+	            	<environment>
+						<os>freebsd</os>
+						<ws>gtk</ws>
+						<arch>amd64</arch>
+					</environment>
+					<environment>
+			            <os>freebsd</os>
+			            <ws>gtk</ws>
+			            <arch>powerpc64</arch>
+			          </environment>
+	            	</environments>
+					<environment>
+			            <os>freebsd</os>
+			            <ws>gtk</ws>
+			            <arch>powerpc64le</arch>
+			          </environment>
+	            	</environments>
+	          </configuration>
+	        </plugin>
+	      </plugins>
+      </build>
     </profile>
     <profile>
       <id>windows</id>
@@ -103,6 +155,24 @@
 	  <modules>
 	    <module>tests/org.eclipse.swt.tests.win32</module>
 	  </modules>
+	  <build>
+	      <plugins>
+	        <plugin>
+	          <groupId>org.eclipse.tycho</groupId>
+	          <artifactId>target-platform-configuration</artifactId>
+	          <version>${tycho.version}</version>
+	          <configuration>
+	            <environments>
+	            	<environment>
+						<os>win32</os>
+						<ws>win32</ws>
+						<arch>x86_64</arch>
+					</environment>
+	            </environments>
+	          </configuration>
+	        </plugin>
+	      </plugins>
+      </build>
     </profile>
   </profiles>
 
@@ -118,10 +188,7 @@
     <module>examples/org.eclipse.swt.examples.launcher</module>
     <module>examples/org.eclipse.swt.examples.ole.win32</module>
     <module>examples/org.eclipse.swt.examples.views</module>
-    <module>tests/org.eclipse.swt.tests.fragments.feature</module>
-	<!-- disabled
     <module>tests/org.eclipse.swt.tests</module>
-	  -->
     <module>features/org.eclipse.swt.tools.feature</module>
   </modules>
 </project>

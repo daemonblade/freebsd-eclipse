@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -304,7 +304,7 @@ void createHandle (int index) {
 
 	switch (style & bits) {
 		case SWT.ARROW:
-			byte arrowType [] = GTK.GTK_NAMED_ICON_GO_UP;
+			byte[] arrowType  = GTK.GTK_NAMED_ICON_GO_UP;
 			if ((style & SWT.UP) != 0) arrowType = GTK.GTK_NAMED_ICON_GO_UP;
 			if ((style & SWT.DOWN) != 0) arrowType = GTK.GTK_NAMED_ICON_GO_DOWN;
 			if ((style & SWT.LEFT) != 0) arrowType = GTK.GTK_NAMED_ICON_GO_PREVIOUS;
@@ -844,7 +844,7 @@ void _setAlignment (int alignment) {
 		style &= ~(SWT.UP | SWT.DOWN | SWT.LEFT | SWT.RIGHT);
 		style |= alignment & (SWT.UP | SWT.DOWN | SWT.LEFT | SWT.RIGHT);
 		boolean isRTL = (style & SWT.RIGHT_TO_LEFT) != 0;
-		byte arrowType [] = GTK.GTK_NAMED_ICON_GO_UP;
+		byte[] arrowType  = GTK.GTK_NAMED_ICON_GO_UP;
 		switch (alignment) {
 			case SWT.UP: arrowType = GTK.GTK_NAMED_ICON_GO_UP; break;
 			case SWT.DOWN: arrowType = GTK.GTK_NAMED_ICON_GO_DOWN; break;
@@ -1005,7 +1005,7 @@ int setBounds (int x, int y, int width, int height, boolean move, boolean resize
 		Point sizes = resizeCalculationsGTK3(boxHandle, boxWidth, boxHeight);
 		allocation.width = sizes.x;
 		allocation.height = sizes.y;
-		GTK3.gtk_widget_size_allocate (boxHandle, allocation);
+		gtk_widget_size_allocate(boxHandle, allocation, -1);
 	}
 	return result;
 }
@@ -1013,7 +1013,7 @@ int setBounds (int x, int y, int width, int height, boolean move, boolean resize
 @Override
 void setFontDescription (long fontDesc) {
 	// Don't set the font if we have no text set
-	if (GTK.GTK_VERSION >= OS.VERSION(3, 22, 0) && ((text != null && text.isEmpty()) || text == null)) {
+	if ((text != null && text.isEmpty()) || text == null) {
 		return;
 	} else {
 		super.setFontDescription (fontDesc);
@@ -1127,10 +1127,7 @@ public void setGrayed (boolean grayed) {
  * Sets the receiver's image to the argument, which may be
  * <code>null</code> indicating that no image should be displayed.
  * <p>
- * Note that a Button can display an image and text simultaneously
- * on Windows (starting with XP), GTK+ and OSX.  On other platforms,
- * a Button that has an image and text set into it will display the
- * image or text that was set most recently.
+ * Note that a Button can display an image and text simultaneously.
  * </p>
  * @param image the image to display on the receiver (may be <code>null</code>)
  *
@@ -1187,7 +1184,7 @@ void setOrientation (boolean create) {
 		if (labelHandle != 0) GTK.gtk_widget_set_direction (labelHandle, dir);
 		if (imageHandle != 0) GTK.gtk_widget_set_direction (imageHandle, dir);
 		if (arrowHandle != 0) {
-			byte arrowType [] = (style & SWT.RIGHT_TO_LEFT) != 0 ? GTK.GTK_NAMED_ICON_GO_NEXT : GTK.GTK_NAMED_ICON_GO_PREVIOUS;
+			byte[] arrowType  = (style & SWT.RIGHT_TO_LEFT) != 0 ? GTK.GTK_NAMED_ICON_GO_NEXT : GTK.GTK_NAMED_ICON_GO_PREVIOUS;
 			switch (style & (SWT.LEFT | SWT.RIGHT)) {
 				case SWT.LEFT: GTK3.gtk_image_set_from_icon_name (arrowHandle, arrowType, GTK.GTK_ICON_SIZE_MENU); break;
 				case SWT.RIGHT: GTK3.gtk_image_set_from_icon_name (arrowHandle, arrowType, GTK.GTK_ICON_SIZE_MENU); break;
@@ -1289,9 +1286,7 @@ public void setText (String string) {
 	_setAlignment (style);
 	// Now that text has been added, set the font. This ensures
 	// the Button's size is correctly calculated/updated.
-	if (GTK.GTK_VERSION >= OS.VERSION(3, 22, 0)) {
-		setFontDescription(font == null ? defaultFont().handle : font.handle);
-	}
+	setFontDescription(font == null ? defaultFont().handle : font.handle);
 }
 
 private void updateWidgetsVisibility() {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -15,6 +15,8 @@
 package org.eclipse.swt.internal.win32;
 
 
+import java.util.*;
+
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.widgets.*;
@@ -28,7 +30,27 @@ public class OS extends C {
 	* SWT Windows flags
 	*/
 	public static final boolean IsDBLocale;
+	/**
+	 * WARNING: This value can't be trusted since Win10. If the launcher's exe
+	 * doesn't have compatibility GUID in its manifest:<br>
+	 *   &lt;supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}"/&gt;<br>
+	 * then '6.2.9200' will be returned (version number for Win8).
+	 * JDK11 has the compatibility GUID, but Eclipse's launcher doesn't!
+	 * This may cause different behavior in debugger and in released SWT.
+	 */
 	public static final int WIN32_VERSION;
+	/**
+	 * Always reports the correct build number, regardless of manifest and
+	 * compatibility GUIDs. Note that build number alone is sufficient to
+	 * identify Windows version.
+	 */
+	public static final int WIN32_BUILD;
+	/**
+	 * Values taken from https://en.wikipedia.org/wiki/List_of_Microsoft_Windows_versions
+	 */
+	public static final int WIN32_BUILD_WIN10_1809 = 17763; // "Windows 10 October 2018 Update"
+	public static final int WIN32_BUILD_WIN10_2004 = 19041; // "Windows 10 May 2020 Update"
+	public static final int WIN32_BUILD_WIN11_21H2 = 22000; // Initial Windows 11 release
 
 	public static final String NO_MANIFEST = "org.eclipse.swt.internal.win32.OS.NO_MANIFEST";
 
@@ -43,6 +65,20 @@ public class OS extends C {
 		/* Get the Windows version */
 		int dwVersion = OS.GetVersion ();
 		WIN32_VERSION = VERSION (dwVersion & 0xff, (dwVersion >> 8) & 0xff);
+
+		/*
+		 * Starting with Windows 10, GetVersionEx() lies about version unless
+		 * application manifest has a proper entry. RtlGetVersion() always
+		 * reports true version.
+		 */
+		OSVERSIONINFOEX osVersionInfoEx = new OSVERSIONINFOEX ();
+		osVersionInfoEx.dwOSVersionInfoSize = OSVERSIONINFOEX.sizeof;
+		if (0 == OS.RtlGetVersion (osVersionInfoEx)) {
+			WIN32_BUILD = osVersionInfoEx.dwBuildNumber;
+		} else {
+			System.err.println ("SWT: OS: Failed to detect Windows build number");
+			WIN32_BUILD = 0;
+		}
 
 		/* Load the manifest to force the XP Theme */
 		if (System.getProperty (NO_MANIFEST) == null) {
@@ -307,6 +343,7 @@ public class OS extends C {
 	public static final int CW_USEDEFAULT = 0x80000000;
 	public static final int CWP_SKIPINVISIBLE = 0x0001;
 	public static final String DATETIMEPICK_CLASS = "SysDateTimePick32"; //$NON-NLS-1$
+	public static final int DC_BRUSH = 18;
 	public static final int DCX_CACHE = 0x2;
 	public static final int DEFAULT_CHARSET = 0x1;
 	public static final int DEFAULT_GUI_FONT = 0x11;
@@ -467,6 +504,7 @@ public class OS extends C {
 	public static final int FOS_PICKFOLDERS = 0x20;
 	public static final int FOS_FORCEFILESYSTEM = 0x40;
 	public static final int FOS_ALLOWMULTISELECT = 0x200;
+	public static final int FOS_FILEMUSTEXIST = 0x1000;
 	public static final int FR_PRIVATE = 0x10;
 	public static final int FSHIFT = 0x4;
 	public static final int FVIRTKEY = 0x1;
@@ -1274,6 +1312,7 @@ public class OS extends C {
 	public static final int S_OK = 0x0;
 	public static final int TABP_BODY = 10;
 	public static final int TBCDRF_USECDCOLORS = 0x800000;
+	public static final int TBCDRF_NOBACKGROUND = 0x00400000;
 	public static final int TBIF_COMMAND = 0x20;
 	public static final int TBIF_STATE = 0x4;
 	public static final int TBIF_IMAGE = 0x1;
@@ -1282,6 +1321,7 @@ public class OS extends C {
 	public static final int TBIF_STYLE = 0x8;
 	public static final int TBIF_TEXT = 0x2;
 	public static final int TB_GETEXTENDEDSTYLE = 0x400 + 85;
+	public static final int TB_GETRECT = 0x400 + 51;
 	public static final int TBM_GETLINESIZE = 0x418;
 	public static final int TBM_GETPAGESIZE = 0x416;
 	public static final int TBM_GETPOS = 0x400;
@@ -1919,6 +1959,7 @@ public static final native int NONCLIENTMETRICS_sizeof ();
 /** @method flags=const */
 public static final native int NOTIFYICONDATA_V2_SIZE ();
 public static final native int OUTLINETEXTMETRIC_sizeof ();
+public static final native int OSVERSIONINFOEX_sizeof ();
 public static final native int PAINTSTRUCT_sizeof ();
 public static final native int POINT_sizeof ();
 public static final native int PRINTDLG_sizeof ();
@@ -2098,23 +2139,30 @@ public static final boolean OpenPrinter (TCHAR pPrinterName, long [] phPrinter, 
 	return OpenPrinter (pPrinterName1, phPrinter, pDefault);
 }
 
-public static final int readRegistryDword(int hkeyLocation, String key, String valueName) throws Exception {
-	if (key == null || valueName == null) throw new Exception("Registry key/valueName is null.");
-	long [] phkResult = new long [1];
-	TCHAR regKey = new TCHAR (0, key, true);
-	TCHAR lpValueName = new TCHAR (0, valueName, true);
-	if (OS.RegOpenKeyEx(hkeyLocation, regKey, 0, OS.KEY_READ, phkResult) == 0) {
-		int[] lpcbData = new int[] { 4 };
-		int[] lpData = new int[1];
-		int result = OS.RegQueryValueEx(phkResult[0], lpValueName, 0, null, lpData, lpcbData);
+public static final int[] readRegistryDwords(int hkeyLocation, String key, String valueName) {
+	final int ERROR_MORE_DATA = 234;
+	Objects.requireNonNull("key", key);
+	Objects.requireNonNull("valueName", valueName);
+	long[] phkResult = new long[1];
+	TCHAR regKey = new TCHAR(0, key, true);
+	TCHAR lpValueName = new TCHAR(0, valueName, true);
+	if (OS.RegOpenKeyEx(hkeyLocation, regKey, 0, OS.KEY_READ, phkResult) != 0) {
+		return null; // Registry entry not found
+	}
+	int size = 2;
+	int result;
+	do {
+		int[] lpcbData = new int[] { 4 * size }; // 4 bytes per int
+		int[] lpData = new int[size];
+		result = OS.RegQueryValueEx(phkResult[0], lpValueName, 0, null, lpData, lpcbData);
 		OS.RegCloseKey(phkResult[0]);
 		if (result == 0) {
-			return lpData[0];
+			return lpData;
 		}
-	}
-	throw new Exception("Registry entry not found.");
+		size *= 2;
+	} while (result == ERROR_MORE_DATA);
+	return null; // other error
 }
-
 public static final int RegCreateKeyEx (long hKey, TCHAR lpSubKey, int Reserved, TCHAR lpClass, int dwOptions, int samDesired, long lpSecurityAttributes, long[] phkResult, long[] lpdwDisposition) {
 	char [] lpClass1 = lpClass == null ? null : lpClass.chars;
 	char [] lpSubKey1 = lpSubKey == null ? null : lpSubKey.chars;
@@ -2193,6 +2241,11 @@ public static final long SendMessage (long hWnd, int Msg, long wParam, TCHAR lPa
  * expected to configure individual tweaks instead of calling this method.
  * Please see <code>Display#setData()</code> and documentation for string keys
  * used there.
+ * </p>
+ * <p>
+ * On GTK, behavior may be different as the boolean flag doesn't force dark
+ * theme instead it specify that dark theme is preferred.
+ * </p>
  *
  * @param isDarkTheme <code>true</code> for dark theme
  */
@@ -2211,6 +2264,7 @@ public static final void setTheme(boolean isDarkTheme) {
 		throw new NullPointerException("Display must be already created before you call OS.setTheme()");
 
 	display.setData("org.eclipse.swt.internal.win32.useDarkModeExplorerTheme", isDarkTheme);
+	display.setData("org.eclipse.swt.internal.win32.useShellTitleColoring",    isDarkTheme);
 	display.setData("org.eclipse.swt.internal.win32.menuBarForegroundColor",   isDarkTheme ? new Color(display, 0xD0, 0xD0, 0xD0) : null);
 	display.setData("org.eclipse.swt.internal.win32.menuBarBackgroundColor",   isDarkTheme ? new Color(display, 0x30, 0x30, 0x30) : null);
 	display.setData("org.eclipse.swt.internal.win32.menuBarBorderColor",       isDarkTheme ? new Color(display, 0x50, 0x50, 0x50) : null);
@@ -2223,6 +2277,7 @@ public static final void setTheme(boolean isDarkTheme) {
 	display.setData("org.eclipse.swt.internal.win32.Label.disabledForegroundColor", isDarkTheme ? new Color(display, 0x80, 0x80, 0x80) : null);
 	display.setData("org.eclipse.swt.internal.win32.Combo.useDarkTheme",       isDarkTheme);
 	display.setData("org.eclipse.swt.internal.win32.ProgressBar.useColors",    isDarkTheme);
+	display.setData("org.eclipse.swt.internal.win32.Text.useDarkThemeIcons",   isDarkTheme);
 }
 
 public static final boolean SetWindowText (long hWnd, TCHAR lpString) {
@@ -2562,6 +2617,8 @@ public static final native int DrawThemeBackground (long hTheme, long hdc, int i
  * @param pRect flags=no_out
  */
 public static final native int DrawThemeText (long hTheme, long hdc, int iPartId, int iStateId, char[] pszText, int iCharCount, int dwTextFlags, int dwTextFlags2, RECT pRect);
+/** @param hwnd cast=(HDC) */
+public static final native boolean DwmSetWindowAttribute (long hwnd, int dwAttribute, int[] pvAttribute, int cbAttribute);
 /** @param hdc cast=(HDC) */
 public static final native boolean Ellipse (long hdc, int nLeftRect, int nTopRect, int nRightRect, int nBottomRect);
 /** @param hMenu cast=(HMENU) */
@@ -3857,6 +3914,8 @@ public static final native boolean ReplyMessage (long lResult);
 public static final native boolean RestoreDC (long hdc, int nSavedDC);
 /** @param hdc cast=(HDC) */
 public static final native boolean RoundRect (long hdc, int nLeftRect, int nTopRect, int nRightRect, int nBottomRect, int nWidth, int nHeight);
+/** @method flags=dynamic */
+public static final native int RtlGetVersion (OSVERSIONINFOEX lpVersionInformation);
 /** @param hdc cast=(HDC) */
 public static final native int SaveDC (long hdc);
 /** @param hWnd cast=(HWND) */
@@ -4210,6 +4269,7 @@ public static final native int SetCurrentProcessExplicitAppUserModelID (char[] A
 /** @param hCursor cast=(HCURSOR) */
 public static final native long SetCursor (long hCursor);
 public static final native boolean SetCursorPos (int X, int Y);
+public static final native int SetDCBrushColor (long hdc, int color);
 /**
  * @param hdc cast=(HDC)
  * @param pColors cast=(RGBQUAD *),flags=no_out critical

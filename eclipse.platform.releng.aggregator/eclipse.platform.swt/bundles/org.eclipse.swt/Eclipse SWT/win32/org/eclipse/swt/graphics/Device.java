@@ -54,7 +54,7 @@ public abstract class Device implements Drawable {
 	long fontCollection;
 	String[] loadedFonts;
 
-	boolean disposed;
+	volatile boolean disposed;
 
 	/* Auto-Scaling*/
 	boolean enableAutoScaling = true;
@@ -716,6 +716,7 @@ protected void init () {
 	int [] piNumScripts = new int [1];
 	OS.ScriptGetProperties (ppSp, piNumScripts);
 	scripts = new long [piNumScripts [0]];
+	// TODO do all the movememories here
 	OS.MoveMemory (scripts, ppSp [0], scripts.length * C.PTR_SIZEOF);
 }
 /**
@@ -765,9 +766,7 @@ public abstract void /*long*/ internal_dispose_GC (long hDC, GCData data);
  * @return <code>true</code> when the device is disposed and <code>false</code> otherwise
  */
 public boolean isDisposed () {
-	synchronized (Device.class) {
-		return disposed;
-	}
+	return disposed;
 }
 
 /**

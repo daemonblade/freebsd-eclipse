@@ -207,9 +207,13 @@ public class GTK4 {
 	/* GtkWindow */
 	public static final native long gtk_window_new();
 	/** @param window cast=(GtkWindow *) */
+	public static final native void gtk_window_maximize(long window);
+	/** @param window cast=(GtkWindow *) */
 	public static final native void gtk_window_minimize(long window);
 	/** @param window cast=(GtkWindow *) */
 	public static final native void gtk_window_unminimize(long window);
+	/** @param window cast=(GtkWindow *) */
+	public static final native boolean gtk_window_is_maximized(long window);
 	/**
 	 * @param window cast=(GtkWindow *)
 	 * @param default_widget cast=(GtkWidget *)
@@ -351,6 +355,8 @@ public class GTK4 {
 	public static final native long gtk_event_controller_focus_new();
 	/** @param controller cast=(GtkEventController *) */
 	public static final native long gtk_event_controller_get_current_event(long controller);
+	/** @param controller cast=(GtkEventController *) */
+	public static final native int gtk_event_controller_get_current_event_state(long controller);
 	public static final native long gtk_event_controller_key_new();
 	public static final native long gtk_event_controller_motion_new();
 	/** @param flag cast=(GtkEventControllerScrollFlags) */
@@ -532,4 +538,52 @@ public class GTK4 {
 	 * @param height cast=(int *)
 	 */
 	public static final native void gtk_tree_view_column_cell_get_size(long tree_column, int[] x_offset, int[] y_offset, int[] width, int[] height);
+
+	/* GdkToplevelSize */
+	/**
+	 * @param size cast=(GdkToplevelSize*)
+	 * @param bounds_width cast=(int *)
+	 * @param bounds_height cast=(int *)
+	 */
+	public static final native void gdk_toplevel_size_get_bounds(long size, int[] bounds_width, int[] bounds_height);
+	/**
+	 * @param size cast=(GdkToplevelSize*)
+	 * @param min_width cast=(int)
+	 * @param min_height cast=(int)
+	 */
+	public static final native void gdk_toplevel_size_set_min_size(long size, int min_width, int min_height);
+	/**
+	 * @param size cast=(GdkToplevelSize*)
+	 * @param width cast=(int)
+	 * @param height cast=(int)
+	 */
+	public static final native void gdk_toplevel_size_set_size(long size, int width, int height);
+
+	/* GdkClipboard */
+	/**
+	 * @param clipboard cast=(GdkClipboard*)
+	 * @param text cast=(const char *)
+	 */
+	public static final native void gdk_clipboard_set_text(long clipboard, byte[] text);
+	/**
+	 * @param clipboard cast=(GdkClipboard*)
+	 * @param type cast=(GType)
+	 */
+	public static final native void gdk_clipboard_set(long clipboard, int type, long data);
+	/**
+	 * @param clipboard cast=(GdkClipboard*)
+	 */
+	public static final native void gdk_clipboard_get_formats(long clipboard);
+	/**
+	 * @param clipboard cast=(GdkClipboard*)
+	 */
+	public static final native long gdk_clipboard_get_content(long clipboard);
+	/**
+	 * @param provider cast=(GdkContentProvider *)
+	 * @param value cast=(GValue *)
+	 * @param error cast=(GError **)
+	 */
+	public static final native boolean gdk_content_provider_get_value(long provider, long value, long[] error);
+
+
 }

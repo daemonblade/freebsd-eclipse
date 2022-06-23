@@ -242,7 +242,9 @@ public abstract class Widget {
 	static final int DPI_CHANGED = 104;
 	static final int NOTIFY_DEFAULT_HEIGHT = 105;
 	static final int NOTIFY_DEFAULT_WIDTH = 106;
-	static final int LAST_SIGNAL = 107;
+	static final int NOTIFY_MAXIMIZED = 107;
+	static final int COMPUTE_SIZE = 108;
+	static final int LAST_SIGNAL = 109;
 
 	static final String IS_ACTIVE = "org.eclipse.swt.internal.control.isactive"; //$NON-NLS-1$
 	static final String KEY_CHECK_SUBWINDOW = "org.eclipse.swt.internal.control.checksubwindow"; //$NON-NLS-1$
@@ -253,7 +255,9 @@ public abstract class Widget {
 /**
  * Prevents uninitialized instances from being created outside the package.
  */
-Widget () {}
+Widget () {
+	notifyCreationTracker();
+}
 
 /**
  * Constructs a new instance of this class given its parent
@@ -290,6 +294,7 @@ public Widget (Widget parent, int style) {
 	this.style = style;
 	display = parent.display;
 	reskinWidget ();
+	notifyCreationTracker();
 }
 
 void _addListener (int eventType, Listener listener) {
@@ -791,6 +796,15 @@ void gtk4_key_release_event(long controller, int keyval, int keycode, int state,
 void gtk4_focus_enter_event(long controller, long event) {}
 
 /**
+ * @param handle the handle of the window that caused the event
+ * @param event the type of event, should be FocusIn or FocusOut
+ */
+void gtk4_focus_window_event(long handle, long event) {
+	if(event == SWT.FocusIn) gtk_focus_in_event (handle, event);
+	else gtk_focus_out_event(handle, event);
+}
+
+/**
  * @param controller the corresponding controller responsible for capturing the event
  * @param event the GdkEvent captured
  */
@@ -1001,14 +1015,6 @@ long gtk_row_activated (long tree, long path, long column) {
 	// Note on SWT Tree/Table/List. This signal is no longer used for sending events, instead
 	// Send DefaultSelection is manually emitted. We use this function to know whether a
 	// 'row-activated' is triggered. See Bug 312568, 518414.
-}
-
-long gtk_row_deleted (long model, long path) {
-	return 0;
-}
-
-long gtk_row_inserted (long model, long path, long iter) {
-	return 0;
 }
 
 long gtk_row_has_child_toggled (long model, long path, long iter) {
@@ -1351,6 +1357,7 @@ void release (boolean destroy) {
 				releaseHandle ();
 			}
 		}
+		notifyDisposalTracker();
 	}
 }
 
@@ -1589,7 +1596,8 @@ char [] sendIMKeyEvent (int type, long event, char [] chars) {
 	int index = 0, count = 0, state = 0;
 	long ptr = 0;
 	if (event == 0) {
-		ptr = GTK3.gtk_get_current_event ();
+		long controller = Control.getControl(this.handle).keyController;
+		ptr = GTK.GTK4 ? GTK4.gtk_event_controller_get_current_event(controller):GTK3.gtk_get_current_event ();
 		if (ptr != 0) {
 			int eventType = GDK.gdk_event_get_event_type(ptr);
 			eventType = Control.fixGdkEventTypeValues(eventType);
@@ -1609,9 +1617,13 @@ char [] sendIMKeyEvent (int type, long event, char [] chars) {
 					break;
 			}
 		} else {
-			int [] buffer = new int [1];
-			GTK3.gtk_get_current_event_state (buffer);
-			state = buffer [0];
+			if(GTK.GTK4) {
+				state = GTK4.gtk_event_controller_get_current_event_state(controller);
+			} else {
+				int [] buffer = new int [1];
+				GTK3.gtk_get_current_event_state (buffer);
+				state = buffer [0];
+			}
 		}
 	} else {
 		ptr = event;
@@ -1633,13 +1645,13 @@ char [] sendIMKeyEvent (int type, long event, char [] chars) {
 		* the key by returning null.
 		*/
 		if (isDisposed ()) {
-			if (ptr != 0 && ptr != event) gdk_event_free (ptr);
+			if (ptr != 0 && ptr != event && !GTK.GTK4) gdk_event_free (ptr);
 			return null;
 		}
 		if (javaEvent.doit) chars [count++] = chars [index];
 		index++;
 	}
-	if (ptr != 0 && ptr != event) gdk_event_free (ptr);
+	if (ptr != 0 && ptr != event && !GTK.GTK4) gdk_event_free (ptr);
 	if (count == 0) return null;
 	if (index != count) {
 		char [] result = new char [count];
@@ -2301,6 +2313,12 @@ void focusProc(long controller, long user_data) {
 	}
 }
 
+void windowActiveProc(long handle, long user_data) {
+	long eventType = GTK.gtk_window_is_active(handle) ? SWT.FocusIn:SWT.FocusOut;
+
+	gtk4_focus_window_event(handle, eventType);
+}
+
 boolean keyPressReleaseProc(long controller, int keyval, int keycode, int state, long user_data) {
 	long event = GTK4.gtk_event_controller_get_current_event(controller);
 
@@ -2345,6 +2363,7 @@ long notifyProc (long object, long arg0, long user_data) {
 		case NOTIFY_STATE: return notifyState(object, arg0);
 		case NOTIFY_DEFAULT_HEIGHT:
 		case NOTIFY_DEFAULT_WIDTH:
+		case NOTIFY_MAXIMIZED:
 			return gtk_size_allocate(object, 0);
 	}
 	return 0;
@@ -2427,7 +2446,6 @@ long windowProc (long handle, long arg0, long user_data) {
 		case TOGGLED: return gtk_toggled (handle, arg0);
 		case UNMAP_EVENT: return gtk_unmap_event (handle, arg0);
 		case WINDOW_STATE_EVENT: return gtk_window_state_event (handle, arg0);
-		case ROW_DELETED: return gtk_row_deleted (handle, arg0);
 		default: return 0;
 	}
 }
@@ -2443,7 +2461,6 @@ long windowProc (long handle, long arg0, long arg1, long user_data) {
 		case SWITCH_PAGE: return gtk_switch_page(handle, arg0, (int)arg1);
 		case TEST_COLLAPSE_ROW: return gtk_test_collapse_row (handle, arg0, arg1);
 		case TEST_EXPAND_ROW: return gtk_test_expand_row(handle, arg0, arg1);
-		case ROW_INSERTED: return gtk_row_inserted (handle, arg0, arg1);
 		case ROW_HAS_CHILD_TOGGLED: return gtk_row_has_child_toggled(handle, arg0, arg1);
 		default: return 0;
 	}
@@ -2519,4 +2536,25 @@ void setToolTipText(long tipWidget, String string) {
 
 	GTK.gtk_widget_set_tooltip_text(tipWidget, buffer);
 }
+
+void gtk_widget_size_allocate (long widget, GtkAllocation allocation, int baseline) {
+	if (GTK.GTK4) {
+		GTK4.gtk_widget_size_allocate(widget, allocation, baseline);
+	} else {
+		GTK3.gtk_widget_size_allocate(widget, allocation);
+	}
+}
+
+void notifyCreationTracker() {
+	if (WidgetSpy.isEnabled) {
+		WidgetSpy.getInstance().widgetCreated(this);
+	}
+}
+
+void notifyDisposalTracker() {
+	if (WidgetSpy.isEnabled) {
+		WidgetSpy.getInstance().widgetDisposed(this);
+	}
+}
+
 }

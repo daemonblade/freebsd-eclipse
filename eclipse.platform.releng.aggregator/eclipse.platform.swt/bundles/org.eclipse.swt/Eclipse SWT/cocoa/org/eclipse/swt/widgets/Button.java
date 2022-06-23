@@ -173,7 +173,8 @@ NSSize cellSizeForBounds (long id, long sel, NSRect cellFrame) {
 		NSAttributedString attribStr = createString(text, null, foreground, style, true, true, true);
 		NSRect rect = attribStr.boundingRectWithSize(wrapSize, OS.NSStringDrawingUsesLineFragmentOrigin);
 		attribStr.release();
-		double trimHeight = size.height - titleRect.height;
+		// Avoid trim height to be set to a negative value
+		double trimHeight = Math.max(size.height - titleRect.height, 0);
 		size.height = rect.height;
 		if (image != null && ((style & (SWT.CHECK|SWT.RADIO)) !=0)) {
 			NSSize imageSize = image.handle.size();
@@ -893,10 +894,7 @@ public void setGrayed(boolean grayed) {
  * Sets the receiver's image to the argument, which may be
  * <code>null</code> indicating that no image should be displayed.
  * <p>
- * Note that a Button can display an image and text simultaneously
- * on Windows (starting with XP), GTK+ and OSX.  On other platforms,
- * a Button that has an image and text set into it will display the
- * image or text that was set most recently.
+ * Note that a Button can display an image and text simultaneously.
  * </p>
  * @param image the image to display on the receiver (may be <code>null</code>)
  *

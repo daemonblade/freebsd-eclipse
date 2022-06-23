@@ -380,7 +380,6 @@ public void test_setHeaderBackgroundLorg_eclipse_swt_graphics_Color() {
 	assertEquals(color, tree.getHeaderBackground());
 	tree.setHeaderBackground(null);
 	assertFalse(tree.getHeaderBackground().equals(color));
-	color.dispose();
 }
 
 @Test
@@ -391,7 +390,6 @@ public void test_setHeaderForegroundLorg_eclipse_swt_graphics_Color() {
 	assertEquals(color, tree.getHeaderForeground());
 	tree.setHeaderForeground(null);
 	assertFalse(tree.getHeaderForeground().equals(color));
-	color.dispose();
 }
 
 @Test
@@ -975,5 +973,53 @@ public void test_Virtual() {
 	// the "* 3" allows some surplus for platforms that pre-fetch items to improve scrolling performance:
 	assertTrue("SetData callback count not in range: " + dataCounter[0],
 			dataCounter[0] > visibleCount / 2 && dataCounter[0] <= visibleCount * 3);
+}
+
+@Test
+public void test_emptinessChanged() {
+	int NOT_EMPTY = 0;
+	int EMPTY = 1;
+	int[] count = { 0, 0 };
+	tree.addListener(SWT.EmptinessChanged, e -> ++count[e.detail] );
+
+	// Create first item. Expected one NOT_EMPTY event.
+	TreeItem item1 = new TreeItem(tree, SWT.NONE);
+	assertEquals(1, count[NOT_EMPTY]);
+	assertEquals(0, count[EMPTY]);
+
+	// Create second item. Expected no further event.
+	TreeItem item2 = new TreeItem(tree, SWT.NONE);
+	assertEquals(1, count[NOT_EMPTY]);
+	assertEquals(0, count[EMPTY]);
+
+	// Remove one item. Expected no further event.
+	item1.dispose();
+	assertEquals(1, count[NOT_EMPTY]);
+	assertEquals(0, count[EMPTY]);
+
+	// Remove last item. Expected one EMPTY event.
+	item2.dispose();
+	assertEquals(1, count[NOT_EMPTY]);
+	assertEquals(1, count[EMPTY]);
+
+	// Create first item. Expected one more NOT_EMPTY event.
+	item1 = new TreeItem(tree, SWT.NONE);
+	assertEquals(2, count[NOT_EMPTY]);
+	assertEquals(1, count[EMPTY]);
+
+	// Create second item as child of the first item. Expected no further event.
+	item2 = new TreeItem(item1, SWT.NONE);
+	assertEquals(2, count[NOT_EMPTY]);
+	assertEquals(1, count[EMPTY]);
+
+	// Remove both items. Expected one more EMPTY event.
+	item1.dispose();
+	assertEquals(2, count[NOT_EMPTY]);
+	assertEquals(2, count[EMPTY]);
+
+	// Noop. Expected no further event.
+	item2.dispose();
+	assertEquals(2, count[NOT_EMPTY]);
+	assertEquals(2, count[EMPTY]);
 }
 }

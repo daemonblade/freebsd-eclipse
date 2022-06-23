@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -231,6 +231,7 @@ public String open () {
 	int[] options = new int[1];
 	fileDialog.GetOptions(options);
 	options[0] |= OS.FOS_FORCEFILESYSTEM | OS.FOS_NOCHANGEDIR;
+	options[0] &= ~OS.FOS_FILEMUSTEXIST;
 	if ((style & SWT.SAVE) != 0) {
 		if (!overwrite) options[0] &= ~OS.FOS_OVERWRITEPROMPT;
 	} else {
@@ -264,14 +265,9 @@ public String open () {
 		 */
 		if (!name.contains("*.")) {
 			/* By default value is on, in case of missing registry entry assumed to be on */
-			int result = 1;
-			try {
-				result = OS.readRegistryDword(OS.HKEY_CURRENT_USER,
-						"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", "HideFileExt");
-			} catch (Exception e) {
-				/* Registry entry not found, hence honor the default value */
-			}
-			if (result == 0) {
+			int[] result = OS.readRegistryDwords(OS.HKEY_CURRENT_USER,
+					"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", "HideFileExt");
+			if (result != null && result[0] == 0) {
 				name = name.replace(" (" + extension + ")", "");
 			}
 		}
@@ -286,6 +282,9 @@ public String open () {
 	for (int i = 0; i < filterSpec.length; i++) {
 		OS.HeapFree(hHeap, 0, filterSpec[i]);
 	}
+
+	/* Enable automatic appending of extensions to saved file names */
+	fileDialog.SetDefaultExtension(new char[1]);
 
 	/* Set initial filter */
 	fileDialog.SetFileTypeIndex(filterIndex + 1);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -69,6 +69,32 @@ public final class TextLayout extends Resource {
 	static final int GOFFSET_SIZEOF = 8;
 	static final int MERGE_MAX = 512;
 	static final int TOO_MANY_RUNS = 1024;
+	/**
+	 * Runs over a certain length (32000 characters / 65536 Glyphs / 32768 pixels -
+	 * these numbers come from WinAPI docs + analysis done in Bug 23406 Comment 31)
+	 * will fail to render in ScriptTextOut, ScriptShape, ScriptPlace so such
+	 * long runs need to be split into shorter runs. Because it is expensive to
+	 * keep testing (with Script*) to maximize the length we use this heuristic
+	 * to minimize the length. However splitting the runs into too short pieces
+	 * affects performance, so this is a balance.
+	 */
+	static final int MAX_RUN_LENGTH = 32000;
+	/**
+	 * When splitting a run (see {@link #MAX_RUN_LENGTH}) the run needs to split
+	 * in a way that does not affect the display of the glyphs, so it is important
+	 * to not split the run in the middle of a glyph. We use the same info to find
+	 * where we can wrap text to find where we can break the runs (ScriptBreak's info).
+	 * This setting limits how far back from {@link #MAX_RUN_LENGTH} the code
+	 * will search for a break before forcing a break at {@link #MAX_RUN_LENGTH}.
+	 */
+	static final int MAX_SEARCH_RUN_BREAK = 1000;
+	{
+		// While developing the splitting long runs it can be useful to
+		// make these constants smaller, but these invariants must
+		// preserved even in such cases.
+		assert MAX_RUN_LENGTH > 1;
+		assert MAX_SEARCH_RUN_BREAK < MAX_RUN_LENGTH;
+	}
 
 	/* IME has a copy of these constants */
 	static final int UNDERLINE_IME_DOT = 1 << 16;
@@ -105,6 +131,7 @@ public final class TextLayout extends Resource {
 		long justify;
 
 		/* ScriptBreak */
+		int pslaAllocSize;
 		long psla;
 
 		long fallbackFont;
@@ -222,6 +249,7 @@ void breakRun(StyleItem run) {
 	char[] chars = new char[run.length];
 	segmentsText.getChars(run.start, run.start + run.length, chars, 0);
 	long hHeap = OS.GetProcessHeap();
+	run.pslaAllocSize = SCRIPT_LOGATTR.sizeof * chars.length;
 	run.psla = OS.HeapAlloc(hHeap, OS.HEAP_ZERO_MEMORY, SCRIPT_LOGATTR.sizeof * chars.length);
 	if (run.psla == 0) SWT.error(SWT.ERROR_NO_HANDLES);
 	OS.ScriptBreak(chars, chars.length, run.analysis, run.psla);
@@ -266,6 +294,11 @@ void computeRuns (GC gc) {
 					run.width = tabX - lineWidth;
 				}
 			}
+
+			/*
+			 * This block adjusts the indentation after merged tabs stops.
+			 * The extra tabs are removed in merge.
+			 */
 			int length = run.length;
 			if (length > 1) {
 				int stop = j + length - 1;
@@ -1697,10 +1730,8 @@ Rectangle getBoundsInPixels (int start, int end) {
 				GlyphMetrics metrics = run.style.metrics;
 				cx = metrics.getWidthInPixels() * (start - run.start);
 			} else if (!run.tab) {
-				int[] piX = new int[1];
-				long advances = run.justify != 0 ? run.justify : run.advances;
-				OS.ScriptCPtoX(start - run.start, false, run.length, run.glyphCount, run.clusters, run.visAttrs, advances, run.analysis, piX);
-				cx = isRTL ? run.width - piX[0] : piX[0];
+				int iX = ScriptCPtoX(start - run.start, false, run);
+				cx = isRTL ? run.width - iX : iX;
 			}
 			if (run.analysis.fRTL ^ isRTL) {
 				runTrail = run.x + cx;
@@ -1714,10 +1745,8 @@ Rectangle getBoundsInPixels (int start, int end) {
 				GlyphMetrics metrics = run.style.metrics;
 				cx = metrics.getWidthInPixels() * (end - run.start + 1);
 			} else if (!run.tab) {
-				int[] piX = new int[1];
-				long advances = run.justify != 0 ? run.justify : run.advances;
-				OS.ScriptCPtoX(end - run.start, true, run.length, run.glyphCount, run.clusters, run.visAttrs, advances, run.analysis, piX);
-				cx = isRTL ? run.width - piX[0] : piX[0];
+				int iX = ScriptCPtoX(end - run.start, true, run);
+				cx = isRTL ? run.width - iX : iX;
 			}
 			if (run.analysis.fRTL ^ isRTL) {
 				runLead = run.x + cx;
@@ -2088,17 +2117,31 @@ Point getLocationInPixels (int offset, boolean trailing) {
 				width = (trailing || (offset == length)) ? run.width : 0;
 			} else {
 				int runOffset = offset - run.start;
-				int cChars = run.length;
-				int gGlyphs = run.glyphCount;
-				int[] piX = new int[1];
-				long advances = run.justify != 0 ? run.justify : run.advances;
-				OS.ScriptCPtoX(runOffset, trailing, cChars, gGlyphs, run.clusters, run.visAttrs, advances, run.analysis, piX);
-				width = (orientation & SWT.RIGHT_TO_LEFT) != 0 ? run.width - piX[0] : piX[0];
+				final int iX = ScriptCPtoX(runOffset, trailing, run);
+				width = (orientation & SWT.RIGHT_TO_LEFT) != 0 ? run.width - iX : iX;
 			}
 			return new Point(run.x + width, DPIUtil.autoScaleUp(getDevice(), lineY[line]) + getScaledVerticalIndent());
 		}
 	}
 	return new Point(0, 0);
+}
+
+/**
+ * Wrapper around
+ * {@link OS#ScriptCPtoX(int, boolean, int, int, long, long, long, SCRIPT_ANALYSIS, int[])}
+ * to handle common arguments consistently.
+ *
+ * @param characterPosition the first argument of OS.ScriptCPtoX
+ * @param trailing          the first argument of OS.ScriptCPtoX
+ * @param run               used to define remaining arguments of OS.ScriptCPtoX
+ * @return x position of the caret.
+ */
+private int ScriptCPtoX(int characterPosition, boolean trailing, StyleItem run) {
+	int[] piX = new int[1];
+	long advances = run.justify != 0 ? run.justify : run.advances;
+	OS.ScriptCPtoX(characterPosition, trailing, run.length, run.glyphCount, run.clusters, run.visAttrs, advances,
+			run.analysis, piX);
+	return piX[0];
 }
 
 /**
@@ -2360,16 +2403,12 @@ void getPartialSelection(StyleItem run, int selectionStart, int selectionEnd, RE
 	int end = run.start + run.length - 1;
 	int selStart = Math.max(selectionStart, run.start) - run.start;
 	int selEnd = Math.min(selectionEnd, end) - run.start;
-	int cChars = run.length;
-	int gGlyphs = run.glyphCount;
-	int[] piX = new int[1];
 	int x = rect.left;
-	long advances = run.justify != 0 ? run.justify : run.advances;
-	OS.ScriptCPtoX(selStart, false, cChars, gGlyphs, run.clusters, run.visAttrs, advances, run.analysis, piX);
-	int runX = (orientation & SWT.RIGHT_TO_LEFT) != 0 ? run.width - piX[0] : piX[0];
+	int iX = ScriptCPtoX(selStart, false, run);
+	int runX = (orientation & SWT.RIGHT_TO_LEFT) != 0 ? run.width - iX : iX;
 	rect.left = x + runX;
-	OS.ScriptCPtoX(selEnd, true, cChars, gGlyphs, run.clusters, run.visAttrs, advances, run.analysis, piX);
-	runX = (orientation & SWT.RIGHT_TO_LEFT) != 0 ? run.width - piX[0] : piX[0];
+	iX = ScriptCPtoX(selEnd, true, run);
+	runX = (orientation & SWT.RIGHT_TO_LEFT) != 0 ? run.width - iX : iX;
 	rect.right = x + runX;
 }
 
@@ -2706,22 +2745,14 @@ StyleItem[] itemize () {
 		scriptState.fArabicNumContext = true;
 	}
 
-	/*
-	* In the version of Usp10.h that SWT is compiled the fReserved field is declared
-	* as a bitfield size 8. In newer versions of the Uniscribe, the first bit of fReserved
-	* was used to implement the fMergeNeutralItems feature which can be used to increase
-	* performance by reducing the number of SCRIPT_ITEM returned by ScriptItemize.
-	*
-	* Note: This code is wrong on a big endian machine.
-	*
-	* Note: This code is intentionally commented because it causes bug#377472.
-	*/
-//	scriptControl.fReserved = 0x1;
-
 	OS.ScriptApplyDigitSubstitution(0, scriptControl, scriptState);
 
 	long hHeap = OS.GetProcessHeap();
-	long pItems = OS.HeapAlloc(hHeap, OS.HEAP_ZERO_MEMORY, MAX_ITEM * SCRIPT_ITEM.sizeof);
+	// This buffer needs to be one entry bigger than the cMaxItems param to ScriptItemize
+	// see https://docs.microsoft.com/en-us/windows/win32/api/usp10/nf-usp10-scriptitemize
+	// and https://bugzilla.mozilla.org/show_bug.cgi?id=366643 which was a similar bug
+	// in Mozilla. The MSDN docs have been updated since the Mozilla bug to make this clear
+	long pItems = OS.HeapAlloc(hHeap, OS.HEAP_ZERO_MEMORY, (1 + MAX_ITEM) * SCRIPT_ITEM.sizeof);
 	if (pItems == 0) SWT.error(SWT.ERROR_NO_HANDLES);
 	int[] pcItems = new int[1];
 	char[] chars = new char[length];
@@ -2729,25 +2760,31 @@ StyleItem[] itemize () {
 	// enable font ligatures
 	scriptControl.fMergeNeutralItems = true;
 	/*
-	 * With font ligatures enabled: CJK characters are not rendered properly when
-	 * used in Java comments, workaround is to avoid ligatures between ascii and
-	 * non-ascii chars. For more details refer bug 565526
+	 * When RIGHT_TO_LEFT Arabic like characters are used, it's not rendered
+	 * properly. For more details refer bug 579626(SWT issue #37)
 	 */
-	for (int i = 0, latestNeutralIndex = -2, latestUnicodeIndex = -2; i < length; i++) {
-		char c = chars[i];
+	if (BidiUtil.resolveTextDirection(text) != SWT.RIGHT_TO_LEFT) {
+		/*
+		 * With font ligatures enabled: CJK characters are not rendered properly when
+		 * used in Java comments, workaround is to avoid ligatures between ascii and
+		 * non-ascii chars. For more details refer bug 565526
+		 */
+		for (int i = 0, latestNeutralIndex = -2, latestUnicodeIndex = -2; i < length; i++) {
+			char c = chars[i];
 
-		if (c >= ' ' && c <= '~' && !Character.isAlphabetic(c)) {
-			latestNeutralIndex = i;
-		} else if (c > 255) {
-			latestUnicodeIndex = i;
-		} else {
-			continue;
-		}
+			if (c >= ' ' && c <= '~' && !Character.isAlphabetic(c)) {
+				latestNeutralIndex = i;
+			} else if (c > 255) {
+				latestUnicodeIndex = i;
+			} else {
+				continue;
+			}
 
-		// If the latest neutral and unicode characters are adjacent
-		if (Math.abs(latestNeutralIndex - latestUnicodeIndex) == 1) {
-			// Change the neutral into a non-neutral alphabet character
-			chars[latestNeutralIndex] = 'A';
+			// If the latest neutral and unicode characters are adjacent
+			if (Math.abs(latestNeutralIndex - latestUnicodeIndex) == 1) {
+				// Change the neutral into a non-neutral alphabet character
+				chars[latestNeutralIndex] = 'A';
+			}
 		}
 	}
 
@@ -2769,8 +2806,13 @@ StyleItem[] merge (long items, int itemCount) {
 		System.arraycopy(styles, 0, newStyles, 0, stylesCount);
 		styles = newStyles;
 	}
-	int count = 0, start = 0, end = segmentsText.length(), itemIndex = 0, styleIndex = 0;
-	StyleItem[] runs = new StyleItem[itemCount + stylesCount];
+	final int end = segmentsText.length();
+	int start = 0, itemIndex = 0, styleIndex = 0;
+	/*
+	 * Maximum size of runs is each itemized item + each style needing its own run +
+	 * enough space for splitting runs that are too long.
+	 */
+	List<StyleItem> runs = new ArrayList<>(itemCount + stylesCount + (end + MAX_RUN_LENGTH - 1) / MAX_RUN_LENGTH);
 	SCRIPT_ITEM scriptItem = new SCRIPT_ITEM();
 	int itemLimit = -1;
 	int nextItemIndex = 0;
@@ -2781,7 +2823,7 @@ StyleItem[] merge (long items, int itemCount) {
 		StyleItem item = new StyleItem();
 		item.start = start;
 		item.style = styles[styleIndex].style;
-		runs[count++] = item;
+		runs.add(item);
 		OS.MoveMemory(scriptItem, items + itemIndex * SCRIPT_ITEM.sizeof, SCRIPT_ITEM.sizeof);
 		item.analysis = scriptItem.a;
 		scriptItem.a = new SCRIPT_ANALYSIS();
@@ -2808,6 +2850,13 @@ StyleItem[] merge (long items, int itemCount) {
 				OS.MoveMemory(scriptItem, items + nextItemIndex * SCRIPT_ITEM.sizeof, SCRIPT_ITEM.sizeof);
 				itemLimit = scriptItem.iCharPos;
 			}
+
+			/*
+			 * This block merges a bunch of tabs or non-complex scripts into a single item
+			 * run. This is done so that less item runs are needed and is used when there
+			 * could be a performance penalty because of too many runs.
+			 * The tabs need to be "restored", see computeRuns
+			 */
 			if (nextItemIndex < itemCount && merge) {
 				if (!item.lineBreak) {
 					OS.MoveMemory(sp, device.scripts[item.analysis.eScript], SCRIPT_PROPERTIES.sizeof);
@@ -2828,20 +2877,28 @@ StyleItem[] merge (long items, int itemCount) {
 			}
 		}
 
+		boolean mayNeedSplit = true;
 		int styleLimit = translateOffset(styles[styleIndex + 1].start);
 		if (styleLimit <= itemLimit) {
-			styleIndex++;
-			start = styleLimit;
-			if (start < itemLimit && 0 < start && start < end) {
-				char pChar = segmentsText.charAt(start - 1);
-				char tChar = segmentsText.charAt(start);
-				if (Character.isLetter(pChar) && Character.isLetter(tChar)) {
-					item.analysis.fLinkAfter = true;
-					linkBefore = true;
+			int runLen = styleLimit - start;
+			if (runLen < MAX_RUN_LENGTH) {
+				mayNeedSplit = false;
+				styleIndex++;
+				start = styleLimit;
+				if (start < itemLimit && 0 < start && start < end) {
+					char pChar = segmentsText.charAt(start - 1);
+					char tChar = segmentsText.charAt(start);
+					if (Character.isLetter(pChar) && Character.isLetter(tChar)) {
+						item.analysis.fLinkAfter = true;
+						linkBefore = true;
+					}
 				}
 			}
 		}
-		if (itemLimit <= styleLimit) {
+		int runLen = itemLimit - start;
+		if (mayNeedSplit && runLen > MAX_RUN_LENGTH) {
+			start += splitLongRun(item);
+		} else if (itemLimit <= styleLimit) {
 			itemIndex = nextItemIndex;
 			start = itemLimit;
 			itemLimit = -1;
@@ -2852,13 +2909,43 @@ StyleItem[] merge (long items, int itemCount) {
 	item.start = end;
 	OS.MoveMemory(scriptItem, items + itemCount * SCRIPT_ITEM.sizeof, SCRIPT_ITEM.sizeof);
 	item.analysis = scriptItem.a;
-	runs[count++] = item;
-	if (runs.length != count) {
-		StyleItem[] result = new StyleItem[count];
-		System.arraycopy(runs, 0, result, 0, count);
-		return result;
+	runs.add(item);
+	return runs.toArray(StyleItem[]::new);
+}
+
+/**
+ * Use OS.ScriptBreak to identify where in the run it is safe to split a character.
+ * @param run the run to split
+ * @return how many characters into the run is the best place to split
+ */
+int splitLongRun(StyleItem run) {
+	run.length = MAX_RUN_LENGTH;
+	breakRun(run);
+	SCRIPT_LOGATTR logAttr = new SCRIPT_LOGATTR();
+	int best = MAX_RUN_LENGTH;
+	for (int i = MAX_RUN_LENGTH - 1; i >= MAX_RUN_LENGTH - MAX_SEARCH_RUN_BREAK; i--) {
+		int memoryIndex = i * SCRIPT_LOGATTR.sizeof;
+		if (memoryIndex + SCRIPT_LOGATTR.sizeof > run.pslaAllocSize) {
+			throw new IndexOutOfBoundsException();
+		}
+		OS.MoveMemory(logAttr, run.psla + memoryIndex, SCRIPT_LOGATTR.sizeof);
+		if (logAttr.fSoftBreak || logAttr.fWhiteSpace || logAttr.fWordStop) {
+			best = i;
+			break;
+		}
 	}
-	return runs;
+
+	/*
+	 * In the improbable case that the entire run has nowhere to split we need to
+	 * make sure that at least we don't split a surrogate pair. This can happen
+	 * if ScriptBreak above identifies nowhere that can be split, and the last
+	 * character is the first part of a surrogate pair.
+	 */
+	if (Character.isHighSurrogate(segmentsText.charAt(run.start + best - 1))) {
+		best--;
+	}
+
+	return best;
 }
 
 /*
@@ -3441,11 +3528,18 @@ boolean shape (long hdc, StyleItem run, char[] chars, int[] glyphCount, int maxG
 			return false;
 		}
 	}
-	int hr = OS.ScriptShape(hdc, run.psc, chars, chars.length, maxGlyphs, run.analysis, run.glyphs, run.clusters, run.visAttrs, glyphCount);
-	run.glyphCount = glyphCount[0];
-	if (useCMAPcheck) return true;
+	int scriptShaprHr = OS.ScriptShape(hdc, run.psc, chars, chars.length, maxGlyphs, run.analysis, run.glyphs,
+			run.clusters, run.visAttrs, glyphCount);
+	if (scriptShaprHr == OS.S_OK) {
+		run.glyphCount = glyphCount[0];
+		if (useCMAPcheck) return true;
 
-	if (hr != OS.USP_E_SCRIPT_NOT_IN_FONT) {
+		/*
+		 * scriptShapeHr could have been OS.USP_E_SCRIPT_NOT_IN_FONT which indicates
+		 * the whole run doesn't work with the font. The rest of this method verifies that
+		 * none of the individual glyphs are missing an entry in the font.
+		 * The fallback is to try other fonts (See caller)
+		 */
 		if (run.analysis.fNoGlyphIndex) return true;
 		SCRIPT_FONTPROPERTIES fp = new SCRIPT_FONTPROPERTIES ();
 		fp.cBytes = SCRIPT_FONTPROPERTIES.sizeof;

@@ -21,22 +21,38 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTException;
@@ -59,17 +75,29 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
+import org.junit.After;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
+import org.junit.runners.MethodSorters;
 
 /**
  * Automated Test Suite for class org.eclipse.swt.browser.Browser
  *
  * @see org.eclipse.swt.browser.Browser
  */
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class Test_org_eclipse_swt_browser_Browser extends Test_org_eclipse_swt_widgets_Composite {
+
+	static {
+		try {
+			printSystemEnv();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 
 	// CONFIG
 	/** This forces tests to display the shell/browser for a brief moment. Useful to see what's going on with broken jUnits */
@@ -86,7 +114,7 @@ public class Test_org_eclipse_swt_browser_Browser extends Test_org_eclipse_swt_w
 	public TestName name = new TestName();
 
 	Browser browser;
-	boolean isChromium = false, isEdge = false;
+	boolean isEdge = false;
 
 	static int[] webkitGtkVersionInts = new int[3];
 
@@ -96,11 +124,20 @@ public class Test_org_eclipse_swt_browser_Browser extends Test_org_eclipse_swt_w
 		testLog.append("  " + msg + "\n");
 	}
 
+	static int testNumber;
+	int openedDescriptors;
+	static List<String> initialOpenedDescriptors = new ArrayList<>();
+
+	List<Browser> createdBroswers = new ArrayList<>();
+	boolean ignoreNonDisposedShells;
+	static List<String> descriptors = new ArrayList<>();
 
 @Override
 @Before
 public void setUp() {
 	super.setUp();
+	testNumber ++;
+	ignoreNonDisposedShells = false;
 	secondsToWaitTillFail = Math.max(15, debug_show_browser_timeout_seconds);
 
 	// If webkit crashes, it's very hard to tell which jUnit caused the JVM crash.
@@ -110,9 +147,8 @@ public void setUp() {
 	System.out.println("Running Test_org_eclipse_swt_browser_Browser#" + name.getMethodName());
 
 	shell.setLayout(new FillLayout());
-	browser = new Browser(shell, SWT.NONE);
+	browser = createBrowser(shell, SWT.NONE);
 
-	isChromium = browser.getBrowserType().equals("chromium");
 	isEdge = browser.getBrowserType().equals("edge");
 
 	String shellTitle = name.getMethodName();
@@ -127,8 +163,96 @@ public void setUp() {
 	setWidget(browser); // For browser to occupy the whole shell, not just half of it.
 
 	testLog = new StringBuilder("\nTest log:\n");
+	if (SwtTestUtil.isGTK) {
+		// process pending events to properly cleanup GTK browser resources
+		processUiEvents();
+
+		descriptors = Collections.unmodifiableList(getOpenedDescriptors());
+		System.out.println("\n### Descriptors opened BEFORE " + name.getMethodName() + ": " + descriptors.size());
+	}
 }
 
+@Override
+@After
+public void tearDown() {
+	super.tearDown();
+	Shell[] shells = Display.getDefault().getShells();
+	int disposedShells = 0;
+	for (Shell shell : shells) {
+		if(!shell.isDisposed()) {
+			System.out.println("Not disposed shell: " + shell);
+			shell.dispose();
+			disposedShells ++;
+		}
+	}
+	if(!ignoreNonDisposedShells) {
+		assertEquals("Found " + disposedShells + " not disposed shells!", 0, disposedShells);
+	}
+
+	int disposedBrowsers = 0;
+	for (Browser browser : createdBroswers) {
+		if(!browser.isDisposed()) {
+			System.out.println("Not disposed browsers: " + browser);
+			browser.dispose();
+			disposedBrowsers ++;
+		}
+	}
+	assertEquals("Found " + disposedBrowsers + " not disposed browsers!", 0, disposedBrowsers);
+	boolean verbose = false;
+	if(verbose) {
+		if(testNumber % 2 == 0) {
+			printMemoryUse();
+		} else {
+			printThreadsInfo();
+		}
+	}
+	if (SwtTestUtil.isGTK) {
+		int descriptorDiff = reportOpenedDescriptors();
+		if(descriptorDiff > 0) {
+			processUiEvents();
+			try {
+				Thread.sleep(500);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			processUiEvents();
+			descriptorDiff = reportOpenedDescriptors();
+			if(descriptorDiff > 0) {
+				processUiEvents();
+			}
+		}
+	}
+}
+
+private int reportOpenedDescriptors() {
+	List<String> newDescriptors = getOpenedDescriptors();
+	System.out.println("\n### Descriptors opened AFTER " + name.getMethodName() + ": " + newDescriptors.size());
+	int count = newDescriptors.size();
+	int diffToPrevious = count - descriptors.size();
+	int diffToInitial = count - initialOpenedDescriptors.size();
+	if(diffToPrevious > 0) {
+		System.out.println("Delta to previous test: " + diffToPrevious);
+		List<String> newDescriptorsCopy = new ArrayList<>(newDescriptors);
+		newDescriptors.removeAll(descriptors);
+		newDescriptors.forEach(p -> System.out.println("\t" + p));
+		System.out.println();
+
+		System.out.println("Delta to first test: " + diffToInitial);
+		if(diffToInitial > testNumber + 50) {
+			newDescriptorsCopy.removeAll(initialOpenedDescriptors);
+			newDescriptorsCopy.forEach(p -> System.out.println("\t" + p));
+			fail("Too many (" + diffToInitial + ") leaked file descriptors: " + newDescriptorsCopy);
+		}
+		System.out.println("########################################\n");
+	}
+	return diffToPrevious;
+}
+
+private Browser createBrowser(Shell s, int flags) {
+	Browser b = new Browser(s, flags);
+	createdBroswers.add(b);
+	return b;
+}
 
 /**
  * Test that if Browser is constructed with the parent being "null", Browser throws an exception.
@@ -136,12 +260,12 @@ public void setUp() {
 @Override
 @Test(expected = IllegalArgumentException.class)
 public void test_ConstructorLorg_eclipse_swt_widgets_CompositeI() {
-	Browser browser = new Browser(shell, SWT.NONE);
+	Browser browser = createBrowser(shell, SWT.NONE);
 	browser.dispose();
-	browser = new Browser(shell, SWT.BORDER);
+	browser = createBrowser(shell, SWT.BORDER);
 	// System.out.println("Test_org_eclipse_swt_browser_Browser#test_Constructor*#getBrowserType(): " + browser.getBrowserType());
 	browser.dispose();
-	browser = new Browser(null, SWT.NONE); // Should throw.
+	browser = createBrowser(null, SWT.NONE); // Should throw.
 }
 
 
@@ -151,7 +275,7 @@ public void test_evalute_Cookies () {
 	browser.addProgressListener(ProgressListener.completedAdapter(event -> loaded.set(true)));
 
 	// Using JavaScript Cookie API on local (file) URL gives DOM Exception 18
-	browser.setUrl("http://www.eclipse.org/swt");
+	browser.setUrl("https://www.eclipse.org/swt");
 	shell.open();
 	waitForPassCondition(loaded::get);
 
@@ -175,25 +299,25 @@ public void test_ClearAllSessionCookies () {
 	browser.addProgressListener(ProgressListener.completedAdapter(event -> loaded.set(true)));
 
 	// Using JavaScript Cookie API on local (file) URL gives DOM Exception 18
-	browser.setUrl("http://www.eclipse.org/swt");
+	browser.setUrl("https://www.eclipse.org/swt");
 	shell.open();
 	waitForPassCondition(loaded::get);
 
 	// Set the cookies
-	Browser.setCookie("cookie1=value1", "http://www.eclipse.org/swt");
-	Browser.setCookie("cookie2=value2", "http://www.eclipse.org/swt");
+	Browser.setCookie("cookie1=value1", "https://www.eclipse.org/swt");
+	Browser.setCookie("cookie2=value2", "https://www.eclipse.org/swt");
 
 	// Get the cookies
-	String v1 = Browser.getCookie("cookie1", "http://www.eclipse.org/swt");
-	String v2 = Browser.getCookie("cookie2", "http://www.eclipse.org/swt");
+	String v1 = Browser.getCookie("cookie1", "https://www.eclipse.org/swt");
+	String v2 = Browser.getCookie("cookie2", "https://www.eclipse.org/swt");
 	assertEquals("value1", v1);
 	assertEquals("value2", v2);
 
 	Browser.clearSessions();
 
 	// Should be empty
-	String e1 = Browser.getCookie("cookie1", "http://www.eclipse.org/swt");
-	String e2 = Browser.getCookie("cookie2", "http://www.eclipse.org/swt");
+	String e1 = Browser.getCookie("cookie1", "https://www.eclipse.org/swt");
+	String e2 = Browser.getCookie("cookie2", "https://www.eclipse.org/swt");
 	assertTrue(e1 == null || e1.isEmpty());
 	assertTrue(e2 == null || e2.isEmpty());
 }
@@ -206,18 +330,18 @@ public void test_get_set_Cookies() {
 	browser.addProgressListener(ProgressListener.completedAdapter(event -> loaded.set(true)));
 
 	// Using JavaScript Cookie API on local (file) URL gives DOM Exception 18
-	browser.setUrl("http://www.eclipse.org/swt");
+	browser.setUrl("https://www.eclipse.org/swt");
 	shell.open();
 	waitForPassCondition(loaded::get);
 
 	// Set the cookies
-	Browser.setCookie("cookie1=value1", "http://www.eclipse.org/swt");
-	Browser.setCookie("cookie2=value2", "http://www.eclipse.org/swt");
+	Browser.setCookie("cookie1=value1", "https://www.eclipse.org/swt");
+	Browser.setCookie("cookie2=value2", "https://www.eclipse.org/swt");
 
 	// Get the cookies
-	String v1 = Browser.getCookie("cookie1", "http://www.eclipse.org/swt");
+	String v1 = Browser.getCookie("cookie1", "https://www.eclipse.org/swt");
 	assertEquals("value1", v1);
-	String v2 = Browser.getCookie("cookie2", "http://www.eclipse.org/swt");
+	String v2 = Browser.getCookie("cookie2", "https://www.eclipse.org/swt");
 	assertEquals("value2", v2);
 }
 
@@ -226,10 +350,10 @@ public void test_get_set_Cookies() {
 public void test_getChildren() {
 	// Win32's Browser is a special case. It has 1 child by default, the OleFrame.
 	// See Bug 499387 and Bug 511874
-	if (SwtTestUtil.isWindows && !isChromium && !isEdge) {
+	if (SwtTestUtil.isWindows && !isEdge) {
 		int childCount = composite.getChildren().length;
 		String msg = "Browser on Win32 is a special case, the first child is an OleFrame (ActiveX control). Actual child count is: " + childCount;
-		assertTrue(msg, childCount == 1);
+		assertEquals(msg, 1, childCount);
 	} else {
 		super.test_getChildren();
 	}
@@ -239,7 +363,7 @@ public void test_getChildren() {
 public void test_CloseWindowListener_closeShell() {
 	Display display = Display.getCurrent();
 	Shell shell = new Shell(display);
-	Browser browser = new Browser(shell, SWT.NONE);
+	Browser browser = createBrowser(shell, SWT.NONE);
 	browser.addCloseWindowListener(event -> {}); // shouldn't throw
 	shell.close();
 }
@@ -278,7 +402,7 @@ public void test_CloseWindowListener_close () {
 public void test_LocationListener_adapter_closeShell() {
 	Display display = Display.getCurrent();
 	Shell shell = new Shell(display);
-	Browser browser = new Browser(shell, SWT.NONE);
+	Browser browser = createBrowser(shell, SWT.NONE);
 	LocationAdapter adapter = new LocationAdapter() {};
 	browser.addLocationListener(adapter); // shouldn't throw
 	shell.close();
@@ -313,11 +437,7 @@ public void test_LocationListener_changing() {
 	AtomicBoolean changingFired = new AtomicBoolean(false);
 	browser.addLocationListener(changingAdapter(e -> changingFired.set(true)));
 	shell.open();
-	if (isChromium) {
-		browser.setUrl("about:version");
-	} else { // Chromium cannot fire changing event for setText
-		browser.setText("Hello world");
-	}
+	browser.setText("Hello world");
 	boolean passed = waitForPassCondition(changingFired::get);
 	assertTrue("LocationListener.changing() event was never fired", passed);
 }
@@ -354,11 +474,7 @@ public void test_LocationListener_changingAndOnlyThenChanged() {
 		}
 	});
 	shell.open();
-	if (isChromium) {
-		browser.setUrl("about:version");
-	} else { // Chromium cannot fire changing event for setText
-		browser.setText("Hello world");
-	}
+	browser.setText("Hello world");
 	waitForPassCondition(finished::get);
 
 	if (finished.get() && changingFired.get() && changedFired.get() && !changedFiredTooEarly.get()) {
@@ -435,11 +551,7 @@ public void test_LocationListener_ProgressListener_cancledLoad () {
 		}
 	}));
 	shell.open();
-	if (isChromium) {
-	    browser.setUrl("about:version");
-	} else { // Chromium cannot fire changing event for setText
-	    browser.setText("You should not see this message.");
-	}
+	browser.setText("You should not see this message.");
 
 	// We must wait for events *not* to fire.
 	// On Gtk, Quadcore (Intel i7-4870HQ pci-e SSD, all events fire after ~80ms.
@@ -495,7 +607,7 @@ public void test_LocationListener_ProgressListener_noExtraEvents() {
 public void test_OpenWindowListener_closeShell() {
 	Display display = Display.getCurrent();
 	Shell shell = new Shell(display);
-	Browser browser = new Browser(shell, SWT.NONE);
+	Browser browser = createBrowser(shell, SWT.NONE);
 	browser.addOpenWindowListener(event -> {});
 	shell.close();
 }
@@ -520,10 +632,10 @@ public void test_OpenWindowListener_addAndRemove() {
 @Test
 public void test_OpenWindowListener_openHasValidEventDetails() {
 	AtomicBoolean openFiredCorrectly = new AtomicBoolean(false);
-	final Browser browserChild = new Browser(shell, SWT.None);
+	final Browser browserChild = createBrowser(shell, SWT.None);
 	browser.addOpenWindowListener(event -> {
-		assertTrue("Expected Browser1 instance, but have another instance", (Browser) event.widget == browser);
-		assertTrue("Expected event.browser to be null", event.browser == null);
+		assertSame("Expected Browser1 instance, but have another instance", browser, event.widget);
+		assertNull("Expected event.browser to be null", event.browser);
 		openFiredCorrectly.set(true);
 		event.browser = browserChild;
 	});
@@ -544,7 +656,7 @@ public void test_OpenWindowListener_open_ChildPopup() {
 	Shell childShell = new Shell(shell, SWT.None);
 	childShell.setText("Child shell");
 	childShell.setLayout(new FillLayout());
-	final Browser browserChild = new Browser(childShell, SWT.NONE);
+	final Browser browserChild = createBrowser(childShell, SWT.NONE);
 
 	browser.addOpenWindowListener(event -> {
 		event.browser = browserChild;
@@ -581,7 +693,7 @@ public void test_OpenWindow_Progress_Listener_ValidateEventOrder() {
 	Shell childShell = new Shell(shell, SWT.None);
 	childShell.setText("Child shell");
 	childShell.setLayout(new FillLayout());
-	final Browser browserChild = new Browser(childShell, SWT.NONE);
+	final Browser browserChild = createBrowser(childShell, SWT.NONE);
 
 	browser.addOpenWindowListener(event -> {
 		event.browser = browserChild;
@@ -631,7 +743,7 @@ public void test_ProgressListener_newProgressAdapter() {
 public void test_ProgressListener_newProgressAdapter_closeShell() {
 	Display display = Display.getCurrent();
 	Shell shell = new Shell(display);
-	Browser browser = new Browser(shell, SWT.NONE);
+	Browser browser = createBrowser(shell, SWT.NONE);
 	browser.addProgressListener(new ProgressAdapter() {});
 	shell.close();
 }
@@ -640,7 +752,7 @@ public void test_ProgressListener_newProgressAdapter_closeShell() {
 public void test_ProgressListener_newListener_closeShell() {
 	Display display = Display.getCurrent();
 	Shell shell = new Shell(display);
-	Browser browser = new Browser(shell, SWT.NONE);
+	Browser browser = createBrowser(shell, SWT.NONE);
 	browser.addProgressListener(new ProgressListener() {
 		@Override
 		public void changed(ProgressEvent event) {
@@ -743,7 +855,7 @@ public void test_StatusTextListener_hoverMouseOverLink() {
 	int size = 500;
 
 	// 1) Create a page that has a hyper link (covering the whole page)
-	Browser browser = new Browser(shell, SWT.NONE);
+	Browser browser = createBrowser(shell, SWT.NONE);
 	StringBuilder longhtml = new StringBuilder();
 	for (int i = 0; i < 200; i++) {
 		longhtml.append("text text text text text text text text text text text text text text text text text text text text text text text text<br>");
@@ -783,7 +895,7 @@ public void test_StatusTextListener_hoverMouseOverLink() {
 public void test_TitleListener_addListener_closeShell() {
 	Display display = Display.getCurrent();
 	Shell shell = new Shell(display);
-	Browser browser = new Browser(shell, SWT.NONE);
+	Browser browser = createBrowser(shell, SWT.NONE);
 	browser.addTitleListener(event -> {
 	});
 	shell.close();
@@ -861,7 +973,7 @@ public void test_setUrl_remote() {
 	// This test sometimes times out if build server has a bad connection. Thus for this test we have a longer timeout.
 	secondsToWaitTillFail = 35;
 
-	String url = "http://example.com"; // example.com loads very quickly and conveniently has a consistent title
+	String url = "https://example.com"; // example.com loads very quickly and conveniently has a consistent title
 
 	// Skip this test if we don't have a working Internet connection.
 	assumeTrue("Skipping test due to bad internet connection", checkInternet(url));
@@ -916,7 +1028,7 @@ private void validateTitleChanged(String expectedTitle, Runnable browserSetFunc)
 	final AtomicReference<String> actualTitle = new AtomicReference<>("");
 	browser.addTitleListener(event ->  {
 		testLog.append("TitleListener fired");
-		assertTrue("event title is empty" + testLog.toString(), event.title != null);
+		assertNotNull("event title is empty" + testLog.toString(), event.title);
 		actualTitle.set(event.title);
 	});
 	browserSetFunc.run();
@@ -945,7 +1057,7 @@ public void test_VisibilityWindowListener_newAdapter() {
 public void test_VisibilityWindowListener_newAdapter_closeShell() {
 	Display display = Display.getCurrent();
 	Shell shell = new Shell(display);
-	Browser browser = new Browser(shell, SWT.NONE);
+	Browser browser = createBrowser(shell, SWT.NONE);
 	browser.addVisibilityWindowListener(new VisibilityWindowAdapter(){});
 	shell.close();
 }
@@ -954,7 +1066,7 @@ public void test_VisibilityWindowListener_newAdapter_closeShell() {
 public void test_VisibilityWindowListener_newListener_closeShell() {
 	Display display = Display.getCurrent();
 	Shell shell = new Shell(display);
-	Browser browser = new Browser(shell, SWT.NONE);
+	Browser browser = createBrowser(shell, SWT.NONE);
 	browser.addVisibilityWindowListener(new VisibilityWindowListener() {
 		@Override
 		public void hide(WindowEvent event) {
@@ -993,7 +1105,6 @@ public void test_VisibilityWindowListener_addAndRemove() {
 /** Verify that if multiple child shells are open, no duplicate visibility events are sent. */
 @Test
 public void test_VisibilityWindowListener_multiple_shells() {
-		assumeTrue(!isChromium); // this fails sometimes due cef limitation, can be enabled on newer versions.
 		AtomicBoolean secondChildCompleted = new AtomicBoolean(false);
 		AtomicInteger childCount = new AtomicInteger(0);
 
@@ -1001,7 +1112,7 @@ public void test_VisibilityWindowListener_multiple_shells() {
 			Shell childShell = new Shell(shell);
 			childShell.setText("Child shell " + childCount.get());
 			childShell.setLayout(new FillLayout());
-			Browser browserChild = new Browser(childShell, SWT.NONE);
+			Browser browserChild = createBrowser(childShell, SWT.NONE);
 			event.browser = browserChild;
 			browserChild.setText("Child window");
 			browserChild.addVisibilityWindowListener(new VisibilityWindowAdapter() {
@@ -1060,7 +1171,7 @@ public void test_VisibilityWindowListener_eventSize() {
 	childShell.setSize(250, 350);
 	childShell.setText("Child shell");
 	childShell.setLayout(new FillLayout());
-	final Browser browserChild = new Browser(childShell, SWT.NONE);
+	final Browser browserChild = createBrowser(childShell, SWT.NONE);
 
 	browser.addOpenWindowListener(event -> {
 		event.browser = browserChild;
@@ -1180,7 +1291,7 @@ public void test_setJavascriptEnabled_multipleInstances() {
 	AtomicBoolean instanceTwoFinishedCorrectly = new AtomicBoolean(false);
 
 
-	Browser browserSecondInsance = new Browser(shell, SWT.None);
+	Browser browserSecondInsance = createBrowser(shell, SWT.None);
 
 	browser.addProgressListener(completedAdapter(event -> {
 		if (pageLoadCount.get() == 1) {
@@ -1257,13 +1368,9 @@ public void test_LocationListener_evaluateInCallback() {
 	});
 
 	shell.open();
-	if (isChromium) {
-		browser.setUrl("about:version");
-	} else { // Chromium cannot fire changing event for setText
-		browser.setText("<body>Hello <b>World</b></body>");
-	}
+	browser.setText("<body>Hello <b>World</b></body>");
 	// Wait till both listeners were fired.
-	if (SwtTestUtil.isWindows && !isChromium) {
+	if (SwtTestUtil.isWindows) {
 		waitForPassCondition(changingFinished::get); // Windows doesn't reach changedFinished.get();
 	} else
 		waitForPassCondition(() -> (changingFinished.get() && changedFinished.get()));
@@ -1279,10 +1386,7 @@ public void test_LocationListener_evaluateInCallback() {
 					"\n  changed:   fired:" + changedFinished.get() + "    evaluated:" + changed;
 	boolean passed = false;
 
-	if (isChromium) {
-		// On Chromium, evaluation in 'changing' fails.
-		passed = changingFinished.get() && changedFinished.get() && changed; // && changing (broken)
-	} else if (SwtTestUtil.isGTK) {
+	if (SwtTestUtil.isGTK) {
 		// Evaluation works in all cases.
 		passed = changingFinished.get() && changedFinished.get() && changed && changing;
 	} else if (SwtTestUtil.isCocoa) {
@@ -1299,7 +1403,6 @@ public void test_LocationListener_evaluateInCallback() {
 /** Verify that evaluation works inside an OpenWindowListener */
 @Test
 public void test_OpenWindowListener_evaluateInCallback() {
-	assumeTrue(!isChromium); // This works on Webkit1, but can sporadically fail, see Bug 509411
 	AtomicBoolean eventFired = new AtomicBoolean(false);
 	browser.addOpenWindowListener(event -> {
 		browser.evaluate("SWTopenListener = true");
@@ -1401,7 +1504,7 @@ public void test_setFocus_toChild_beforeOpen() {
 /** Text without html tags */
 @Test
 public void test_getText() {
-	if (SwtTestUtil.isWindows || isChromium) {
+	if (SwtTestUtil.isWindows) {
 		// Windows' Browser implementation returns the processed HTML rather than the original one.
 		// The processed webpage has html tags added to it.
 		getText_helper("helloWorld", "<html><head></head><body>helloWorld</body></html>");
@@ -1423,7 +1526,7 @@ public void test_getText_html() {
 @Test
 public void test_getText_script() {
 	String testString = "<html><head></head><body>hello World<script>document.body.style.backgroundColor = \"red\";</script></body></html>";
-	if (SwtTestUtil.isWindows || isChromium) {
+	if (SwtTestUtil.isWindows) {
 		// Windows' Browser implementation returns the processed HTML rather than the original one.
 		// The processed page injects "style" property into the body from the script.
 		getText_helper(testString, "<html><head></head><body style=\"background-color: red;\">hello World<script>document.body.style.backgroundColor = \"red\";</script></body></html>");
@@ -1439,7 +1542,7 @@ public void test_getText_script() {
 @Test
 public void test_getText_doctype() {
 	String testString = "<!DOCTYPE html><html><head></head><body>hello World</body></html>";
-	if (SwtTestUtil.isWindows && !isChromium) {
+	if (SwtTestUtil.isWindows) {
 		// Windows' Browser implementation returns the processed HTML rather than the original one.
 		// The processed page strips out DOCTYPE.
 		getText_helper(testString, "<html><head></head><body>hello World</body></html>");
@@ -1467,7 +1570,7 @@ private void getText_helper(String testString, String expectedOutput) {
 			+ "Expected:"+testString+"\n"
 			+ "Actual:"+returnString.get()
 			: "Test timed out";
-	assertTrue(error_msg, returnString.get().equals(expectedOutput));
+	assertEquals(error_msg, expectedOutput.toLowerCase(Locale.ENGLISH), returnString.get().replace("\r", "").replace("\n", "").toLowerCase(Locale.ENGLISH));
 }
 
 /**
@@ -1476,7 +1579,7 @@ private void getText_helper(String testString, String expectedOutput) {
 @Test
 public void test_stop() {
 	/* THIS TEST REQUIRES WEB ACCESS! How else can we really test the http:// part of a browser widget? */
-	browser.setUrl("http://www.eclipse.org/swt");
+	browser.setUrl("https://www.eclipse.org/swt");
 	waitForMilliseconds(1000);
 	browser.stop();
 }
@@ -1838,6 +1941,8 @@ ProgressListener callCustomFunctionUponLoad = completedAdapter(event ->	browser.
  */
 @Test
 public void test_BrowserFunction_callback () {
+	// There are shells left opened after this test
+	ignoreNonDisposedShells = true;
 	AtomicBoolean javaCallbackExecuted = new AtomicBoolean(false);
 
 	class JavascriptCallback extends BrowserFunction { // Note: Local class defined inside method.
@@ -2183,6 +2288,47 @@ public void test_BrowserFunction_callback_afterPageReload() {
 	assertTrue(message, passed);
 }
 
+@Test
+public void test_BrowserFunction_multiprocess() {
+	// Test that BrowserFunctions work in multiple Browser instances simultaneously.
+	Browser browser1 = createBrowser(shell, SWT.NONE);
+	Browser browser2 = createBrowser(shell, SWT.NONE);
+
+	class JavaFunc extends BrowserFunction {
+		JavaFunc(Browser browser) {
+			super(browser, "javaFunc");
+		}
+
+		@Override
+		public Object function(Object[] arguments) {
+			return arguments[0];
+		}
+	}
+	new JavaFunc(browser1);
+	new JavaFunc(browser2);
+	assertEquals("value1", browser1.evaluate("return javaFunc('value1')"));
+	assertEquals("value2", browser2.evaluate("return javaFunc('value2')"));
+
+	// Ensure that navigation to a different page preserves BrowserFunctions.
+	int[] completed = new int[1];
+	ProgressListener listener = new ProgressAdapter() {
+		@Override
+		public void completed(ProgressEvent event) {
+			completed[0]++;
+		}
+	};
+	browser1.addProgressListener(listener);
+	browser2.addProgressListener(listener);
+	browser1.setText("<body>new_page1");
+	browser2.setText("<body>new_page2");
+	waitForPassCondition(() -> completed[0] == 2);
+	assertEquals("value1", browser1.evaluate("return javaFunc('value1')"));
+	assertEquals("value2", browser2.evaluate("return javaFunc('value2')"));
+
+	browser1.dispose();
+	browser2.dispose();
+}
+
 
 /* custom */
 /**
@@ -2246,6 +2392,9 @@ void waitForMilliseconds(final int milliseconds) {
  * @return true if server responded with correct code (200), false otherwise.
  */
 private static Boolean checkInternet(String url) {
+	if (url!=null && url.toLowerCase().startsWith("http://")) {
+		throw new IllegalArgumentException("please use https instead, http do not work on mac out of the box and your test will hang there!");
+	}
 	HttpURLConnection connection = null;
 	try {
 		connection = (HttpURLConnection) new URL(url).openConnection();
@@ -2254,7 +2403,7 @@ private static Boolean checkInternet(String url) {
 		if (code == 200)
 			return true;
 	} catch (MalformedURLException e) {
-		System.err.println("Given url is malformed: " + url + "Try a fully formed url like: http://www.example.com");
+		System.err.println("Given url is malformed: " + url + "Try a fully formed url like: https://www.example.com");
 		e.printStackTrace();
 	} catch (IOException e) {
 		// No connection was made.
@@ -2264,6 +2413,108 @@ private static Boolean checkInternet(String url) {
 		}
 	}
 	return false;
+}
+
+
+private static void printMemoryUse() {
+	System.gc();
+	System.runFinalization();
+	long max = Runtime.getRuntime().maxMemory();
+	long total = Runtime.getRuntime().totalMemory();
+	long free = Runtime.getRuntime().freeMemory();
+	long used = total - free;
+	System.out.print("\n########### Memory usage reported by JVM ########");
+	System.out.printf(Locale.GERMAN, "%n%,16d bytes max heap", max);
+	System.out.printf(Locale.GERMAN, "%n%,16d bytes heap allocated", total);
+	System.out.printf(Locale.GERMAN, "%n%,16d bytes free heap", free);
+	System.out.printf(Locale.GERMAN, "%n%,16d bytes used heap", used);
+	System.out.println("\n#################################################\n");
+}
+
+
+private static void printThreadsInfo() {
+	System.out.println("\n########### Thread usage reported by JVM ########");
+	ThreadMXBean mxb = ManagementFactory.getThreadMXBean();
+	int peakThreadCount = mxb.getPeakThreadCount();
+	long[] threadIds = mxb.getAllThreadIds();
+	int threadCount = threadIds.length;
+	System.out.println("Peak threads count " + peakThreadCount);
+	System.out.println("Current threads count " + threadCount);
+
+	if(threadCount > 100) {
+		ThreadInfo[] allThreads = mxb.getThreadInfo(threadIds, 200);
+		System.out.println("Thread names:");
+		List<String> threadNames = new ArrayList<>();
+	    for (ThreadInfo threadInfo : allThreads) {
+	    	threadNames.add("\t" + threadInfo.getThreadName());
+	    }
+	    Collections.sort(threadNames);
+	    threadNames.forEach(n -> System.out.println(n));
+	}
+}
+
+private static void printSystemEnv() throws Exception {
+    Set<Entry<String, String>> set = new TreeMap<>(System.getenv()).entrySet();
+    StringBuilder sb = new StringBuilder("\n###################### System environment ######################\n");
+    for (Entry<String, String> entry : set) {
+        sb.append(" ").append(entry.getKey()).append("=").append(entry.getValue()).append("\n");
+    }
+
+    sb.append("\n###################### System properties ######################\n");
+    Set<Entry<String, String>> props = getPropertiesSafe();
+    for (Entry<String, String> entry : props) {
+        sb.append(" ").append(entry.getKey()).append("=").append(entry.getValue()).append("\n");
+    }
+    String env = sb.toString();
+    System.out.println(env);
+
+    if (SwtTestUtil.isGTK) {
+    	System.out.println("/proc/sys/kernel/threads-max: " + new String(Files.readAllBytes(Paths.get("/proc/sys/kernel/threads-max"))));
+    	System.out.println("/proc/self/limits: " + new String(Files.readAllBytes(Paths.get("/proc/self/limits"))));
+    }
+}
+
+/**
+ * Retrieves properties safely. In case if someone tries to change the properties set
+ * while iterating over the collection, we repeat the procedure till this
+ * works without an error.
+ */
+private static Set<Entry<String, String>> getPropertiesSafe() {
+    try {
+        return new TreeMap<>(System.getProperties().entrySet().stream()
+                .collect(Collectors.toMap(e -> String.valueOf(e.getKey()),
+                        e -> String.valueOf(e.getValue())))).entrySet();
+    } catch (Exception e) {
+        return getPropertiesSafe();
+    }
+}
+
+private static List<String> getOpenedDescriptors() {
+	List<String> paths = new ArrayList<>();
+	Path fd = Paths.get("/proc/self/fd/");
+	try(DirectoryStream<Path> directoryStream = Files.newDirectoryStream(fd)){
+		directoryStream.forEach(f -> {
+			try {
+				paths.add(Files.isSymbolicLink(f)? Files.readSymbolicLink(f).toString() : f.toString());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		});
+	} catch (IOException e1) {
+		e1.printStackTrace();
+	}
+	Collections.sort(paths);
+	if(initialOpenedDescriptors.size() == 0) {
+		initialOpenedDescriptors = Collections.unmodifiableList(paths);
+	}
+	return paths;
+}
+
+
+private static void processUiEvents() {
+	Display display = Display.getCurrent();
+	while (display != null && !display.isDisposed() && display.readAndDispatch()) {
+	}
 }
 
 }

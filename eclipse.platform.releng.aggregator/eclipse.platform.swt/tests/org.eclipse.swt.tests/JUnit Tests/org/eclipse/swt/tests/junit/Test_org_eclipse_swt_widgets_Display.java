@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -23,9 +23,11 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.SWTException;
 import org.eclipse.swt.graphics.DeviceData;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
@@ -276,7 +278,7 @@ public void test_getClientArea() {
 public void test_getCurrent() {
 	Display display = new Display();
 	try {
-		assertTrue(display.getThread() == Thread.currentThread());
+		assertSame(display.getThread(), Thread.currentThread());
 	} finally {
 		display.dispose();
 	}
@@ -397,7 +399,7 @@ public void test_getShells() {
 	try {
 		Shell shell1 = new Shell(display);
 		Shell shell2 = new Shell(display);
-		assertTrue(display.getShells().length == 2);
+		assertEquals(2, display.getShells().length);
 		shell1.dispose();
 		shell2.dispose();
 	} finally {
@@ -481,7 +483,7 @@ public void test_getSystemFont() {
 public void test_getThread() {
 	Display display = new Display();
 	try {
-		assertTrue(display.getThread() == Thread.currentThread());
+		assertSame(display.getThread(), Thread.currentThread());
 	} finally {
 		display.dispose();
 	}
@@ -1248,7 +1250,7 @@ public void test_setDataLjava_lang_Object() {
 		display.setData(Integer.valueOf(10));
 		Integer i = (Integer)display.getData();
 		assertNotNull(i);
-		assertTrue(i.equals(Integer.valueOf(10)));
+		assertEquals(Integer.valueOf(10), i);
 	} finally {
 		display.dispose();
 	}
@@ -1262,10 +1264,10 @@ public void test_setDataLjava_lang_StringLjava_lang_Object() {
 		display.setData("String", "xyz");
 		Integer i = (Integer)display.getData("Integer");
 		assertNotNull(i);
-		assertTrue(i.equals(Integer.valueOf(10)));
+		assertEquals(Integer.valueOf(10), i);
 		String s = (String)display.getData("String");
 		assertNotNull(s);
-		assertTrue(s.equals("xyz"));
+		assertEquals("xyz", s);
 	} finally {
 		display.dispose();
 	}
@@ -1276,6 +1278,8 @@ public void test_setSynchronizerLorg_eclipse_swt_widgets_Synchronizer() {
 	final Display display = new Display();
 	final boolean[] asyncExec0Ran = new boolean[] {false};
 	final boolean[] asyncExec1Ran = new boolean[] {false};
+	final boolean[] asyncExec2Ran = new boolean[] {false};
+	final boolean[] asyncExec3Ran = new boolean[] {false};
 
 	try {
 		try {
@@ -1298,15 +1302,20 @@ public void test_setSynchronizerLorg_eclipse_swt_widgets_Synchronizer() {
 		}
 
 		MySynchronizer mySynchronizer = new MySynchronizer(display);
+		mySynchronizer.asyncExec(() -> asyncExec3Ran[0] = asyncExec2Ran[0]); // assert it runs after 2
 		display.asyncExec(() -> asyncExec0Ran[0] = true);
+		display.asyncExec(() -> asyncExec2Ran[0] = asyncExec0Ran[0]); // assert it runs after 0
 		display.setSynchronizer(mySynchronizer);
 		display.asyncExec(() -> asyncExec1Ran[0] = true);
 		assertFalse(asyncExec0Ran[0]);
 		assertFalse(asyncExec1Ran[0]);
+		assertFalse(asyncExec2Ran[0]);
 		while (display.readAndDispatch()) {}
 		assertTrue(mySynchronizer.invoked);
 		assertTrue(asyncExec0Ran[0]);
 		assertTrue(asyncExec1Ran[0]);
+		assertTrue(asyncExec2Ran[0]);
+		assertTrue(asyncExec3Ran[0]);
 	} finally {
 		display.dispose();
 	}
@@ -1381,6 +1390,89 @@ public void test_syncExecLjava_lang_Runnable_dispose() {
 		display.syncExec(() -> display.dispose());
 	} finally {
 		assertTrue(display.isDisposed());
+	}
+}
+
+@Test
+public void test_syncCall() {
+	final Display display = new Display();
+	try {
+		int depth=display.syncCall(() -> display.getDepth());
+		assertEquals(display.getDepth(), depth);
+	} finally {
+		display.dispose();
+	}
+}
+
+@Test
+public void test_syncCall_dispose() {
+	final Display display = new Display();
+	try {
+		int magic=display.syncCall(() -> {display.dispose(); return 42;});
+		assertEquals(42, magic);
+	} finally {
+		assertTrue(display.isDisposed());
+	}
+}
+@Test
+public void test_syncCall_RuntimeException() {
+	final Display display = new Display();
+	try {
+		int depth=display.syncCall(() -> {throw new IllegalArgumentException("42");});
+		assertFalse("should not be reached "+depth, true);
+	} catch (RuntimeException e) {
+		assertEquals("42", e.getMessage());
+	} finally {
+		display.dispose();
+	}
+}
+@Test
+public void test_syncCall_Exception() {
+	final Display display = new Display();
+	try {
+		int depth=display.syncCall(() -> {throw new IOException("42");});
+		assertFalse("should not be reached "+depth, true);
+	} catch (IOException e) {
+		assertEquals("42", e.getMessage());
+	} finally {
+		display.dispose();
+	}
+}
+@Test
+public void test_syncCall_SWTException() {
+	final Display display = new Display();
+	display.dispose();
+	try {
+		int magic=display.syncCall(() -> {display.dispose(); return 42;});
+		assertFalse("should not be reached "+magic, true);
+	} catch (SWTException e) {
+		assertEquals("Device is disposed", e.getMessage());
+	}
+}
+@Test
+public void test_syncCall_concurrentCallable() {
+	final Display display = new Display();
+	try {
+		java.util.concurrent.Callable<Integer> c=() -> {return 42;};
+		int magic=display.syncCall(c::call);
+		assertEquals(42, magic);
+	} catch (Exception e) {
+		assertFalse("should not be reached ", true);
+	} finally {
+		display.dispose();
+	}
+}
+@Test
+public void test_syncCall_concurrentCallable_Exception() {
+	final Display display = new Display();
+	try {
+		java.util.concurrent.Callable<Integer> c=() -> {throw new IOException("42");};
+		int depth=display.syncCall(c::call);
+		assertFalse("should not be reached "+depth, true);
+	} catch (Exception e) {
+		assertEquals("42", e.getMessage());
+	} finally {
+		display.dispose();
 	}
 }
 

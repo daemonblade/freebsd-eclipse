@@ -1020,6 +1020,20 @@ public class SWT {
 	 */
 	public static final int ZoomChanged = 55;
 
+	/**
+	 * The SWT emptiness change event type (value is 56).
+	 *
+	 * <p>
+	 * This event is sent on <code>Tree</code> when the first <code>TreeItem</code> was
+	 * added to it (with the <code>detail</code> field set to 0) or the last
+	 * <code>TreeItem</code> was removed from it (with the <code>detail</code> field
+	 * set to 1).
+	 * </p>
+	 *
+	 * @since 3.118
+	 */
+	public static final int EmptinessChanged = 56;
+
 	/* Event Details */
 
 	/**
@@ -2261,6 +2275,7 @@ public class SWT {
 	 * <p><b>Used By:</b></p>
 	 * <ul>
 	 * <li><code>FormAttachment</code> in a <code>FormLayout</code></li>
+	 * <li><code>BoderData</code> in a <code>BoderLayout</code></li>
 	 * </ul>
 	 */
 	public static final int TOP = UP;
@@ -2285,6 +2300,7 @@ public class SWT {
 	 * <ul>
 	 * <li><code>FormAttachment</code> in a <code>FormLayout</code></li>
 	 * <li><code>TabFolder</code></li>
+	 * <li><code>BoderData</code> in a <code>BoderLayout</code></li>
 	 * </ul>
 	 */
 	public static final int BOTTOM             = DOWN;
@@ -2315,6 +2331,10 @@ public class SWT {
 	 * This constant can also be used to representing the left keyboard
 	 * location during a key event.
 	 * </p>
+	 * <p><b>Used By:</b></p>
+	 * <ul>
+	 * <li><code>BoderData</code> in a <code>BoderLayout</code></li>
+	 * </ul>
 	 */
 	public static final int LEFT               = LEAD;
 
@@ -2344,6 +2364,10 @@ public class SWT {
 	 * This constant can also be used to representing the right keyboard
 	 * location during a key event.
 	 * </p>
+	 * <p><b>Used By:</b></p>
+	 * <ul>
+	 * <li><code>BoderData</code> in a <code>BoderLayout</code></li>
+	 * </ul>
 	 */
 	public static final int RIGHT              = TRAIL;
 
@@ -2355,6 +2379,7 @@ public class SWT {
 	 * <li><code>Label</code></li>
 	 * <li><code>TableColumn</code></li>
 	 * <li><code>FormAttachment</code> in a <code>FormLayout</code></li>
+	 * <li><code>BoderData</code> in a <code>BoderLayout</code></li>
 	 * </ul>
 	 */
 	public static final int CENTER = 1 << 24;

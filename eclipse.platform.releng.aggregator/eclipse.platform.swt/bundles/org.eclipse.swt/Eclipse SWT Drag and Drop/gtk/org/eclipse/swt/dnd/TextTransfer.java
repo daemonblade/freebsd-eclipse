@@ -42,9 +42,9 @@ public class TextTransfer extends ByteArrayTransfer {
 	private static final String COMPOUND_TEXT = "COMPOUND_TEXT"; //$NON-NLS-1$
 	private static final String UTF8_STRING = "UTF8_STRING"; //$NON-NLS-1$
 	private static final String STRING = "STRING"; //$NON-NLS-1$
-	private static final int COMPOUND_TEXT_ID = registerType(COMPOUND_TEXT);
-	private static final int UTF8_STRING_ID = registerType(UTF8_STRING);
-	private static final int STRING_ID = registerType(STRING);
+	private static final int COMPOUND_TEXT_ID = GTK.GTK4 ? 0 : registerType(COMPOUND_TEXT);
+	private static final int UTF8_STRING_ID = GTK.GTK4 ? 0 : registerType(UTF8_STRING);
+	private static final int STRING_ID = GTK.GTK4 ? 0 : registerType(STRING);
 
 private TextTransfer() {}
 
@@ -142,6 +142,9 @@ protected int[] getTypeIds() {
 	if (OS.isX11()) {
 		return new int[] {UTF8_STRING_ID, COMPOUND_TEXT_ID, STRING_ID};
 	}
+	if(GTK.GTK4) {
+		return new int[] {(int) OS.G_TYPE_STRING()};
+	}
 	return new int[] {UTF8_STRING_ID, STRING_ID};
 }
 
@@ -150,6 +153,10 @@ protected String[] getTypeNames() {
 	if (OS.isX11()) {
 		return new String[] {UTF8_STRING, COMPOUND_TEXT, STRING};
 	}
+	if(GTK.GTK4) {
+		return new String[] {STRING};
+	}
+
 	return new String[] {UTF8_STRING, STRING};
 }
 

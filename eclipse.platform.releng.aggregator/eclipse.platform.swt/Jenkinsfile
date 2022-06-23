@@ -2,6 +2,7 @@ pipeline {
 	options {
 		timeout(time: 90, unit: 'MINUTES')
 		buildDiscarder(logRotator(numToKeepStr:'5'))
+		disableConcurrentBuilds(abortPrevious: true)
 	}
   agent {
     kubernetes {
@@ -21,7 +22,7 @@ spec:
         memory: "512Mi"
         cpu: "500m"  
   - name: container
-    image: akurtakov/swtbuild@sha256:2cd3dfdea1f250597c9e3797512953c03e2182344e86976c1b60117c5dd36a9e
+    image: akurtakov/swtbuild@sha256:fca953c5f0fa9fadb92b1875c1942f6042f4bd51327d1e1e8e40f39923103fe1
     tty: true
     command: [ "uid_entrypoint", "cat" ]
     resources:
@@ -87,7 +88,7 @@ spec:
 						checkout scm
 					}
 					dir ('eclipse.platform.swt.binaries') {
-					    checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'CloneOption', timeout: 120]], submoduleCfg: [], userRemoteConfigs: [[url: 'https://git.eclipse.org/r/platform/eclipse.platform.swt.binaries.git']]])
+					    checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'CloneOption', timeout: 120, depth: 1, shallow: true]], submoduleCfg: [], userRemoteConfigs: [[url: 'https://github.com/eclipse-platform/eclipse.platform.swt.binaries.git']]])
 					}
 				}
 			}
@@ -113,39 +114,7 @@ spec:
 					archiveArtifacts artifacts: '**/*.log,**/*.html,**/target/*.jar,**/target/*.zip'
 					publishIssues issues:[scanForIssues(tool: java()), scanForIssues(tool: mavenConsole())]
 				}
-				unstable {
-					gerritReview labels: [Verified: -1], message: "Build UNSTABLE (test failures) $BUILD_URL"
-				}
-				failure {
-					gerritReview labels: [Verified: -1], message: "Build FAILED $BUILD_URL"
-				}
 			}
-		}
-		stage('Check freeze period') {
-			when {
-				not {
-					branch 'master'
-				}
-			}
-			steps {
-				container('jnlp') {
-					sh "wget https://git.eclipse.org/c/platform/eclipse.platform.releng.aggregator.git/plain/scripts/verifyFreezePeriod.sh"
-					sh "chmod +x verifyFreezePeriod.sh"
-					withCredentials([string(credentialsId: 'google-api-key', variable: 'GOOGLE_API_KEY')]) {
-						sh './verifyFreezePeriod.sh'
-					}
-				}
-			}
-			post {
-				failure {
-					gerritReview labels: [Verified: -1], message: "Build and test are OK, but Eclipse project is currently in a code freeze period.\nPlease wait for end of code freeze period before merging.\n $BUILD_URL"
-				}
-			}
-		}
-	}
-	post {
-		success {
-			gerritReview labels: [Verified: 1], message: "Build Succcess $BUILD_URL"
 		}
 	}
 }

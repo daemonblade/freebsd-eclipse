@@ -17,6 +17,7 @@ package org.eclipse.swt.tests.junit;
 import static org.eclipse.swt.tests.junit.SwtTestUtil.assertSWTProblem;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -37,6 +38,7 @@ import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -250,9 +252,6 @@ public void test_drawImageLorg_eclipse_swt_graphics_ImageII() {
 	image.dispose();
 	imageTransparent.dispose();
 	imageAlpha.dispose();
-	c1.dispose();
-	c2.dispose();
-	c3.dispose();
 }
 
 @Test
@@ -294,9 +293,6 @@ public void test_drawImageLorg_eclipse_swt_graphics_ImageIIIIIIII() {
 	image.dispose();
 	imageAlpha.dispose();
 	imageTransparent.dispose();
-	c1.dispose();
-	c2.dispose();
-	c3.dispose();
 }
 
 @Test
@@ -471,23 +467,23 @@ public void test_getStyle() {
 	Canvas canvas = new Canvas(shell, SWT.NULL);
 	GC testGC = new GC(canvas, SWT.LEFT_TO_RIGHT);
 	int style = testGC.getStyle();
-	assertTrue((style & SWT.LEFT_TO_RIGHT) != 0);
+	assertNotEquals(0, (style & SWT.LEFT_TO_RIGHT));
 	testGC.dispose();
 	testGC = new GC(canvas);
 	style = testGC.getStyle();
-	assertTrue((style & SWT.LEFT_TO_RIGHT) != 0);
+	assertNotEquals(0, (style & SWT.LEFT_TO_RIGHT));
 	testGC.dispose();
 	testGC = new GC(canvas, SWT.RIGHT_TO_LEFT);
 	style = testGC.getStyle();
-	assertTrue((style &  SWT.RIGHT_TO_LEFT) != 0);
+	assertNotEquals(0, (style & SWT.RIGHT_TO_LEFT));
 	testGC.dispose();
 }
 
 @Test
 public void test_hashCode() {
-	assertTrue(gc.hashCode() == gc.hashCode());
+	assertEquals(gc.hashCode(), gc.hashCode());
 	GC gc2 = new GC(shell);
-	assertFalse(gc.hashCode() == gc2.hashCode());
+	assertNotEquals(gc2.hashCode(), gc.hashCode());
 	gc2.dispose();
 }
 
@@ -566,7 +562,7 @@ public void test_setClippingLorg_eclipse_swt_graphics_Rectangle() {
 public void test_setFontLorg_eclipse_swt_graphics_Font() {
 	gc.setFont(shell.getDisplay().getSystemFont());
 	Font font = gc.getFont();
-	assertTrue(font.equals(shell.getDisplay().getSystemFont()));
+	assertEquals(shell.getDisplay().getSystemFont(), font);
 }
 
 @Test
@@ -591,23 +587,23 @@ public void test_setForegroundLorg_eclipse_swt_graphics_Color() {
 @Test
 public void test_setLineStyleI() {
 	gc.setLineStyle(SWT.LINE_SOLID);
-	assertTrue(gc.getLineStyle() == SWT.LINE_SOLID);
+	assertEquals(SWT.LINE_SOLID, gc.getLineStyle());
 	gc.setLineStyle(SWT.LINE_DASH);
-	assertTrue(gc.getLineStyle() == SWT.LINE_DASH);
+	assertEquals(SWT.LINE_DASH, gc.getLineStyle());
 	gc.setLineStyle(SWT.LINE_DOT);
-	assertTrue(gc.getLineStyle() == SWT.LINE_DOT);
+	assertEquals(SWT.LINE_DOT, gc.getLineStyle());
 	gc.setLineStyle(SWT.LINE_DASHDOT);
-	assertTrue(gc.getLineStyle() == SWT.LINE_DASHDOT);
+	assertEquals(SWT.LINE_DASHDOT, gc.getLineStyle());
 	gc.setLineStyle(SWT.LINE_DASHDOTDOT);
-	assertTrue(gc.getLineStyle() == SWT.LINE_DASHDOTDOT);
+	assertEquals(SWT.LINE_DASHDOTDOT, gc.getLineStyle());
 }
 
 @Test
 public void test_setLineWidthI() {
 	gc.setLineWidth(10);
-	assertTrue(gc.getLineWidth() == 10);
+	assertEquals(10, gc.getLineWidth());
 	gc.setLineWidth(0);
-	assertTrue(gc.getLineWidth() == 0);
+	assertEquals(0, gc.getLineWidth());
 }
 
 @Test
@@ -644,6 +640,50 @@ public void test_toString() {
 	String s = gc.toString();
 	assertNotNull(s);
 	assertTrue(s.length() > 0);
+}
+
+@Test
+public void test_bug493455_drawImageAlpha_srcPos() {
+	Assume.assumeFalse("https://github.com/eclipse-platform/eclipse.platform.swt/issues/40 causes test to fail on Mac", SwtTestUtil.isCocoa);
+	RGB red = new RGB(255, 0, 0);
+	RGB green = new RGB(0, 255, 0);
+
+	ImageData initImageData = new ImageData(200, 200, 32, new PaletteData(0xff, 0xff00, 0xff0000));
+	initImageData.alphaData = new byte[200 * 200];
+	Image srcImage = new Image(display, initImageData);
+
+	GC srcImageGc = new GC(srcImage);
+	srcImageGc.setAdvanced(true);
+	srcImageGc.setBackground(new Color(red));
+	srcImageGc.fillRectangle(0, 0, 200, 200);
+	srcImageGc.setBackground(new Color(green));
+	srcImageGc.fillRectangle(100, 50, 100, 150);
+	srcImageGc.dispose();
+
+	gc.drawImage(srcImage, 100, 50, 100, 150, 0, 0, 100, 150);
+
+	ImageData srcImageData = srcImage.getImageData();
+	srcImage.dispose();
+
+	ImageData testImageData = image.getImageData();
+
+	assertNotNull(srcImageData.alphaData);
+
+	for (int i = 0; i < 200; ++i) {
+		for (int j = 0; j < 200; ++j) {
+			RGB expected = (i < 100 || j < 50) ? red : green;
+			RGB actual = srcImageData.palette.getRGB(srcImageData.getPixel(i, j));
+			assertEquals(expected, actual);
+		}
+	}
+
+	for (int i = 0; i < 100; ++i) {
+		for (int j = 0; j < 150; ++j) {
+			RGB rgb = testImageData.palette.getRGB(testImageData.getPixel(i, j));
+			assertEquals(green, rgb);
+		}
+	}
+
 }
 
 /* custom */

@@ -14,42 +14,26 @@
   <parent>
     <artifactId>eclipse.platform.swt.localbuild</artifactId>
     <groupId>eclipse.platform.swt</groupId>
-    <version>4.21.0-SNAPSHOT</version>
+    <version>4.24.0-SNAPSHOT</version>
     <relativePath>../../local-build/local-build-parent/</relativePath>
   </parent>
   <groupId>org.eclipse.swt</groupId>
   <artifactId>org.eclipse.swt.tests.gtk</artifactId>
-  <version>3.108.0-SNAPSHOT</version>
+  <version>3.108.100-SNAPSHOT</version>
   <packaging>eclipse-test-plugin</packaging>
   <properties>
     <code.ignoredWarnings>${tests.ignoredWarnings}</code.ignoredWarnings>
     <tycho.testArgLine></tycho.testArgLine>
+    <!-- Skip all tests on build servers, because it contains platform specific code -->
+    <skipNativeTests>true</skipNativeTests>
   </properties>
   <build>
     <plugins>
       <plugin>
         <groupId>org.eclipse.tycho</groupId>
-        <artifactId>target-platform-configuration</artifactId>
-        <configuration>
-          <!-- Make all platform-specific fragments available (and optional) via a feature -->
-	      <dependency-resolution>
-	         <extraRequirements>
-	            <requirement>
-	               <type>eclipse-feature</type>
-	               <id>org.eclipse.swt.tests.fragments.feature</id>
-	               <versionRange>0.0.0</versionRange>
-	            </requirement>
-	         </extraRequirements>
-	      </dependency-resolution>
-	      <!-- but only resolve against current environment as we don't want all fragments simultaneously in test -->
-	      <environments combine.self="override"/> <!--  we only want platform specific artifacts here -->
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.eclipse.tycho</groupId>
         <artifactId>tycho-surefire-plugin</artifactId>
         <configuration>
-          <skipTests>true</skipTests> <!-- Skip all tests on build servers, because it contains platform specific code -->
+          <skipTests>${skipNativeTests}</skipTests> 
         </configuration>
       </plugin>
     </plugins>

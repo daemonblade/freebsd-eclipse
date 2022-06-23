@@ -62,7 +62,7 @@ import org.eclipse.swt.internal.cocoa.*;
  * <dt><b>Styles:</b></dt>
  * <dd>SINGLE, MULTI, CHECK, FULL_SELECTION, VIRTUAL, NO_SCROLL</dd>
  * <dt><b>Events:</b></dt>
- * <dd>Selection, DefaultSelection, Collapse, Expand, SetData, MeasureItem, EraseItem, PaintItem</dd>
+ * <dd>Selection, DefaultSelection, Collapse, Expand, SetData, MeasureItem, EraseItem, PaintItem, EmptinessChanged</dd>
  * </dl>
  * <p>
  * Note: Only one of the styles SINGLE and MULTI may be specified.
@@ -593,6 +593,10 @@ void createHandle () {
 	widget.setIntercellSpacing(spacing);
 	widget.setDoubleAction (OS.sel_sendDoubleSelection);
 
+	if (OS.isBigSurOrLater()) {
+		OS.objc_msgSend(widget.id, OS.sel_setStyle, OS.NSTableViewStylePlain);
+	}
+
 	// This is to mirror Table's behavior, see code comment there
 	widget.setFocusRingType(OS.NSFocusRingTypeNone);
 
@@ -705,7 +709,10 @@ void createItem (TreeColumn column, int index) {
 	}
 }
 
-// For fast bulk insert, see comments for TreeItem#TreeItem(TreeItem,int,int)
+/**
+ * The fastest way to insert many items is documented in {@link TreeItem#TreeItem(org.eclipse.swt.widgets.Tree,int,int)}
+ * and {@link TreeItem#setItemCount}
+ */
 void createItem (TreeItem item, TreeItem parentItem, int index) {
 	int count;
 	TreeItem [] items;
@@ -757,6 +764,11 @@ void createItem (TreeItem item, TreeItem parentItem, int index) {
 		widget.expandItem (parentItem.handle);
 	}
 	ignoreExpand = false;
+	if (parentItem == null && this.itemCount == 1) {
+		Event event = new Event ();
+		event.detail = 0;
+		sendEvent (SWT.EmptinessChanged, event);
+	}
 }
 
 @Override
@@ -988,6 +1000,11 @@ void destroyItem (TreeItem item) {
 	setScrollWidth ();
 	if (this.itemCount == 0) imageBounds = null;
 	if (insertItem == item) insertItem = null;
+	if (parentItem == null && this.itemCount == 0) {
+		Event event = new Event ();
+		event.detail = 1;
+		sendEvent (SWT.EmptinessChanged, event);
+	}
 }
 
 @Override
@@ -2788,11 +2805,7 @@ boolean sendMouseEvent(NSEvent nsEvent, int type, boolean send) {
 	if (type == SWT.DragDetect) {
 		dragDetected = true;
 	} else if (type == SWT.MouseUp) {
-		/*
-		 * This code path handles the case of an unmodified click on an already-selected row.
-		 * To keep the order of events correct, deselect the other selected items and send the
-		 * selection event before MouseUp is sent. Ignore the next selection event.
-		 */
+		// See code comment in Table.handleClickSelected()
 		if (selectedRowIndex != -1) {
 			if (dragDetected) {
 				selectedRowIndex = -1;
@@ -2811,6 +2824,8 @@ boolean sendMouseEvent(NSEvent nsEvent, int type, boolean send) {
 
 				Event event = new Event ();
 				id itemID = widget.itemAtRow (selectedRowIndex);
+				// (itemID = null) means that item was removed after
+				// 'selectedRowIndex' was cached
 				if (itemID != null) {
 					Widget item = display.getWidget (itemID.id);
 					if (item != null && item instanceof TreeItem) {
@@ -2950,6 +2965,22 @@ void setFont (NSFont font) {
 	setScrollWidth ();
 }
 
+@Override
+void setFrameSize (long id, long sel, NSSize size) {
+	super.setFrameSize(id, sel, size);
+
+	/*
+	 * Bug 577767: Since macOS 10.15, NSTableView has 'autoresizingMask'
+	 * set to follow resizes of its NSClipView. This sometimes causes
+	 * Table/Tree to have wrong scroll range (note that size of NSClipView
+	 * is what you see and size of NSTableView is the size of entire
+	 * content, this defines scroll range). The workaround is to recalc
+	 * layout after resizing.
+	 */
+	if ((scrollView != null) && (id == scrollView.id))
+		((NSTableView)view).tile();
+}
+
 /**
  * Sets the header background color to the color specified
  * by the argument, or to the default system color if the argument is null.
@@ -3040,6 +3071,9 @@ public void setHeaderVisible (boolean show) {
 
 /**
  * Sets the number of root-level items contained in the receiver.
+ * <p>
+ * The fastest way to insert many items is documented in {@link TreeItem#TreeItem(Tree,int,int)}
+ * and {@link TreeItem#setItemCount}
  *
  * @param count the number of items
  *

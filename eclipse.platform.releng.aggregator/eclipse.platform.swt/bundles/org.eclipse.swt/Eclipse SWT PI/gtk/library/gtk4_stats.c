@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -21,13 +21,21 @@
 #ifdef NATIVE_STATS
 
 char * GTK4_nativeFunctionNames[] = {
+	"gdk_1clipboard_1get_1content",
+	"gdk_1clipboard_1get_1formats",
+	"gdk_1clipboard_1set",
+	"gdk_1clipboard_1set_1text",
 	"gdk_1content_1formats_1builder_1add_1mime_1type",
 	"gdk_1content_1formats_1builder_1free_1to_1formats",
 	"gdk_1content_1formats_1builder_1new",
+	"gdk_1content_1provider_1get_1value",
 	"gdk_1toplevel_1focus",
 	"gdk_1toplevel_1get_1state",
 	"gdk_1toplevel_1lower",
 	"gdk_1toplevel_1set_1icon_1list",
+	"gdk_1toplevel_1size_1get_1bounds",
+	"gdk_1toplevel_1size_1set_1min_1size",
+	"gdk_1toplevel_1size_1set_1size",
 	"gtk_1box_1append",
 	"gtk_1box_1insert_1child_1after",
 	"gtk_1box_1prepend",
@@ -57,6 +65,7 @@ char * GTK4_nativeFunctionNames[] = {
 	"gtk_1entry_1set_1buffer",
 	"gtk_1event_1controller_1focus_1new",
 	"gtk_1event_1controller_1get_1current_1event",
+	"gtk_1event_1controller_1get_1current_1event_1state",
 	"gtk_1event_1controller_1key_1new",
 	"gtk_1event_1controller_1motion_1new",
 	"gtk_1event_1controller_1scroll_1new",
@@ -132,6 +141,8 @@ char * GTK4_nativeFunctionNames[] = {
 	"gtk_1widget_1translate_1coordinates",
 	"gtk_1window_1destroy",
 	"gtk_1window_1get_1icon_1name",
+	"gtk_1window_1is_1maximized",
+	"gtk_1window_1maximize",
 	"gtk_1window_1minimize",
 	"gtk_1window_1new",
 	"gtk_1window_1set_1child",

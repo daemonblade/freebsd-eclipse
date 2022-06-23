@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -131,6 +131,7 @@ char * OS_nativeFunctionNames[] = {
 	"DrawThemeBackground",
 	"DrawThemeText",
 	"DuplicateHandle",
+	"DwmSetWindowAttribute",
 	"EMREXTCREATEFONTINDIRECTW_1sizeof",
 	"EMR_1sizeof",
 	"EXTLOGFONTW_1sizeof",
@@ -490,6 +491,7 @@ char * OS_nativeFunctionNames[] = {
 	"NONCLIENTMETRICS_1sizeof",
 	"NOTIFYICONDATA_1V2_1SIZE",
 	"NotifyWinEvent",
+	"OSVERSIONINFOEX_1sizeof",
 	"OUTLINETEXTMETRIC_1sizeof",
 	"OffsetRect",
 	"OffsetRgn",
@@ -542,6 +544,7 @@ char * OS_nativeFunctionNames[] = {
 	"ReplyMessage",
 	"RestoreDC",
 	"RoundRect",
+	"RtlGetVersion",
 	"SAFEARRAYBOUND_1sizeof",
 	"SAFEARRAY_1sizeof",
 	"SCRIPT_1ANALYSIS_1sizeof",
@@ -625,6 +628,7 @@ char * OS_nativeFunctionNames[] = {
 	"SetCurrentProcessExplicitAppUserModelID",
 	"SetCursor",
 	"SetCursorPos",
+	"SetDCBrushColor",
 	"SetDIBColorTable",
 	"SetFocus",
 	"SetForegroundWindow",

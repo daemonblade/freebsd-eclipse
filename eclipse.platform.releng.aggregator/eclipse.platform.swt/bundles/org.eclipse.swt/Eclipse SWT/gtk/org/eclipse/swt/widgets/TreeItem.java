@@ -17,6 +17,7 @@ package org.eclipse.swt.widgets;
 import org.eclipse.swt.*;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.internal.*;
+import org.eclipse.swt.internal.cairo.*;
 import org.eclipse.swt.internal.gtk.*;
 import org.eclipse.swt.internal.gtk3.*;
 
@@ -50,7 +51,8 @@ public class TreeItem extends Item {
  * Constructs <code>TreeItem</code> and <em>inserts</em> it into <code>Tree</code>.
  * Item is inserted as last direct child of the tree.
  * <p>
- * For bulk insert scenarios, see TreeItem#TreeItem(Tree,int,int)
+ * The fastest way to insert many items is documented in {@link TreeItem#TreeItem(Tree,int,int)}
+ * and {@link TreeItem#setItemCount}
  *
  * @param parent a tree control which will be the parent of the new instance (cannot be null)
  * @param style no styles are currently supported, pass SWT.NONE
@@ -79,6 +81,7 @@ public TreeItem (Tree parent, int style) {
  * <ol>
  * <li>Use {@link Tree#setRedraw} to disable drawing during bulk insert</li>
  * <li>Insert every item at index 0 (insert them in reverse to get the same result)</li>
+ * <li>Collapse the parent item before inserting (gives massive improvement on Windows)</li>
  * </ol>
  *
  * @param parent a tree control which will be the parent of the new instance (cannot be null)
@@ -107,7 +110,8 @@ public TreeItem (Tree parent, int style, int index) {
  * Constructs <code>TreeItem</code> and <em>inserts</em> it into <code>Tree</code>.
  * Item is inserted as last direct child of the specified <code>TreeItem</code>.
  * <p>
- * For bulk insert scenarios, see TreeItem#TreeItem(TreeItem,int,int)
+ * The fastest way to insert many items is documented in {@link TreeItem#TreeItem(Tree,int,int)}
+ * and {@link TreeItem#setItemCount}
  *
  * @param parentItem a tree control which will be the parent of the new instance (cannot be null)
  * @param style no styles are currently supported, pass SWT.NONE
@@ -132,12 +136,8 @@ public TreeItem (TreeItem parentItem, int style) {
  * Constructs <code>TreeItem</code> and <em>inserts</em> it into <code>Tree</code>.
  * Item is inserted as <code>index</code> direct child of the specified <code>TreeItem</code>.
  * <p>
- * The fastest way to insert many items is:
- * <ol>
- * <li>Use {@link Tree#setRedraw} to disable drawing during bulk insert</li>
- * <li>Insert child items while parent item is collapsed</li>
- * <li>Insert every item at index 0 (insert them in reverse to get the same result)</li>
- * </ol>
+ * The fastest way to insert many items is documented in {@link TreeItem#TreeItem(Tree,int,int)}
+ * and {@link TreeItem#setItemCount}
  *
  * @param parentItem a tree control which will be the parent of the new instance (cannot be null)
  * @param style no styles are currently supported, pass SWT.NONE
@@ -1107,9 +1107,6 @@ public void removeAll () {
 	if (length == 0) return;
 	long iter = OS.g_malloc (GTK.GtkTreeIter_sizeof ());
 	if (iter == 0) error (SWT.ERROR_NO_HANDLES);
-	if (parent.fixAccessibility ()) {
-		parent.ignoreAccessibility = true;
-	}
 	long selection = GTK.gtk_tree_view_get_selection (parent.handle);
 	int [] value = new int [1];
 	while (GTK.gtk_tree_model_iter_children (modelHandle, iter, handle)) {
@@ -1122,10 +1119,6 @@ public void removeAll () {
 			GTK.gtk_tree_store_remove (modelHandle, iter);
 			OS.g_signal_handlers_unblock_matched (selection, OS.G_SIGNAL_MATCH_DATA, 0, 0, 0, 0, CHANGED);
 		}
-	}
-	if (parent.fixAccessibility ()) {
-		parent.ignoreAccessibility = false;
-		OS.g_object_notify (parent.handle, OS.model);
 	}
 	OS.g_free (iter);
 }
@@ -1519,7 +1512,8 @@ public void setImage(int index, Image image) {
 		int imageIndex = imageList.indexOf(image);
 		// When we create a blank image surface gets created with dimensions 0, 0.
         // This call recreates the surface with correct dimensions
-		surface = ImageList.convertSurface(image);
+		long tempSurface = ImageList.convertSurface(image);
+		Cairo.cairo_surface_destroy(tempSurface);
 		if (imageIndex == -1) {
 			imageIndex = imageList.add(image);
 		}
@@ -1625,6 +1619,12 @@ public void setImage (Image [] images) {
 
 /**
  * Sets the number of child items contained in the receiver.
+ * <p>
+ * The fastest way to insert many items is:
+ * <ol>
+ * <li>Use {@link Tree#setRedraw} to disable drawing during bulk insert</li>
+ * <li>Collapse the parent item before inserting (gives massive improvement on Windows)</li>
+ * </ol>
  *
  * @param count the number of items
  *

@@ -52,10 +52,7 @@ public class Button extends Control {
 	String text = "", message = "";
 	Image image, disabledImage;
 	ImageList imageList;
-	boolean ignoreMouse, grayed;
-	int buttonBackground = -1;
-	// we need our own field, because setting Control.background causes two colored pixels around the button.
-	int buttonBackgroundAlpha = 255;
+	boolean ignoreMouse, grayed, useDarkModeExplorerTheme;
 	static final int MARGIN = 4;
 	static final int CHECK_WIDTH, CHECK_HEIGHT;
 	static final int ICON_WIDTH = 128, ICON_HEIGHT = 128;
@@ -446,11 +443,14 @@ void createHandle () {
 		if ((style & SWT.RADIO) != 0) {
 			state |= DRAW_BACKGROUND;
 		}
+
+		useDarkModeExplorerTheme = display.useDarkModeExplorerTheme;
+		maybeEnableDarkSystemTheme();
 	}
 }
 
 private boolean customBackgroundDrawing() {
-	return buttonBackground != -1 && !isRadioOrCheck();
+	return background != -1 && !isRadioOrCheck();
 }
 
 private boolean customDrawing() {
@@ -535,18 +535,6 @@ public int getAlignment () {
 	if ((style & SWT.CENTER) != 0) return SWT.CENTER;
 	if ((style & SWT.RIGHT) != 0) return SWT.RIGHT;
 	return SWT.LEFT;
-}
-
-@Override
-public Color getBackground () {
-	if (isRadioOrCheck()) {
-		return super.getBackground();
-	}
-	checkWidget ();
-	if (buttonBackground != -1) {
-		return Color.win32_new (display, buttonBackground, buttonBackgroundAlpha);
-	}
-	return Color.win32_new (display, defaultBackground());
 }
 
 boolean getDefault () {
@@ -672,14 +660,13 @@ boolean isTabItem () {
 
 @Override
 boolean mnemonicHit (char ch) {
-	if (!setFocus ()) return false;
 	/*
-	* Feature in Windows.  When a radio button gets focus,
-	* it selects the button in WM_SETFOCUS.  Therefore, it
-	* is not necessary to click the button or send events
-	* because this has already happened in WM_SETFOCUS.
-	*/
-	if ((style & SWT.RADIO) == 0) click ();
+	 * Feature in Windows. When a radio button gets focus, it selects the button in
+	 * WM_SETFOCUS. Workaround is to never set focus to an unselected radio button.
+	 * Therefore, don't try to set focus on radio buttons, click will set focus.
+	 */
+	if ((style & SWT.RADIO) == 0 && !setFocus ()) return false;
+	click();
 	return true;
 }
 
@@ -815,26 +802,8 @@ public void setAlignment (int alignment) {
  */
 @Override
 public void setBackground (Color color) {
-	checkWidget ();
-	if (isRadioOrCheck()) {
-		super.setBackground(color);
-	} else {
-		setButtonBackground (color);
-	}
-}
-
-private void setButtonBackground (Color color) {
-	int pixel = -1;
-	int alpha = 255;
-	if (color != null) {
-		if (color.isDisposed ()) error (SWT.ERROR_INVALID_ARGUMENT);
-		pixel = color.handle;
-		alpha = color.getAlpha();
-	}
-	if (pixel == buttonBackground && alpha == buttonBackgroundAlpha) return;
-	buttonBackground = pixel;
-	buttonBackgroundAlpha = alpha;
-	updateBackgroundColor ();
+	// This method only exists in order to provide custom documentation
+	super.setBackground(color);
 }
 
 void setDefault (boolean value) {
@@ -859,7 +828,7 @@ public boolean setFocus () {
 	* it selects the button in WM_SETFOCUS.  The fix is to
 	* not assign focus to an unselected radio button.
 	*/
-	if ((style & SWT.RADIO) != 0 && !isChecked () && display.fixFocus) return false;
+	if ((style & SWT.RADIO) != 0 && !isChecked ()) return false;
 	return super.setFocus ();
 }
 
@@ -867,10 +836,7 @@ public boolean setFocus () {
  * Sets the receiver's image to the argument, which may be
  * <code>null</code> indicating that no image should be displayed.
  * <p>
- * Note that a Button can display an image and text simultaneously
- * on Windows (starting with XP), GTK+ and OSX.  On other platforms,
- * a Button that has an image and text set into it will display the
- * image or text that was set most recently.
+ * Note that a Button can display an image and text simultaneously.
  * </p>
  * @param image the image to display on the receiver (may be <code>null</code>)
  *
@@ -1131,6 +1097,21 @@ long windowProc () {
 }
 
 @Override
+LRESULT wmColorChild (long wParam, long lParam) {
+	if (isRadioOrCheck()) {
+		// In order to match old SWT behavior and SWT behavior on other
+		// platforms, Radio and Check have their own background instead
+		// of showing parent's background.
+		return super.wmColorChild(wParam, lParam);
+	} else {
+		// Button has "transparent" portions which need to be filled with
+		// parent's (and not Button's) background. For example, SWT.PUSH
+		// button ~2px transparent area around the button.
+		return parent.wmColorChild(wParam, lParam);
+	}
+}
+
+@Override
 LRESULT WM_GETDLGCODE (long wParam, long lParam) {
 	LRESULT result = super.WM_GETDLGCODE (wParam, lParam);
 	if (result != null) return result;
@@ -1320,19 +1301,47 @@ LRESULT wmNotifyChild (NMHDR hdr, long wParam, long lParam) {
 				case OS.CDDS_PREPAINT: {
 					// buttons are ignoring SetBkColor, SetBkMode and SetTextColor
 					if (customBackgroundDrawing()) {
-						int pixel = buttonBackground;
+						int pixel = background;
 						if ((nmcd.uItemState & OS.CDIS_SELECTED) != 0) {
-							pixel = getDifferentColor(buttonBackground);
+							pixel = getDifferentColor(background);
 						} else if ((nmcd.uItemState & OS.CDIS_HOT) != 0) {
-							pixel = getSlightlyDifferentColor(buttonBackground);
+							pixel = getSlightlyDifferentColor(background);
 						}
 						if ((style & SWT.TOGGLE) != 0 && isChecked()) {
-							pixel = getDifferentColor(buttonBackground);
+							pixel = getDifferentColor(background);
 						}
-						RECT rect = new RECT ();
-						OS.SetRect (rect, nmcd.left+2, nmcd.top+2, nmcd.right-2, nmcd.bottom-2);
+
 						long brush = OS.CreateSolidBrush(pixel);
-						OS.FillRect(nmcd.hdc, rect, brush);
+
+						int inset = 2;
+						int radius = 3;
+						if (useDarkModeExplorerTheme && (OS.WIN32_BUILD >= OS.WIN32_BUILD_WIN11_21H2)) {
+							// On Win11, Light theme and Dark theme images have different sizes
+							inset = 1;
+							radius = 4;
+						}
+
+						int l = nmcd.left + inset;
+						int t = nmcd.top + inset;
+						int r = nmcd.right - inset;
+						int b = nmcd.bottom - inset;
+
+						if (OS.WIN32_BUILD >= OS.WIN32_BUILD_WIN11_21H2) {
+							// 'RoundRect' has left/top pixel reserved for border
+							l += 1;
+							t += 1;
+
+							// Win11 has buttons with rounded corners
+							OS.SaveDC(nmcd.hdc);
+							OS.SelectObject(nmcd.hdc, brush);
+							OS.SelectObject(nmcd.hdc, OS.GetStockObject(OS.NULL_PEN));
+							OS.RoundRect(nmcd.hdc, l, t, r, b, radius, radius);
+							OS.RestoreDC(nmcd.hdc, -1);
+						} else {
+							RECT rect = new RECT (l, t, r, b);
+							OS.FillRect(nmcd.hdc, rect, brush);
+						}
+
 						OS.DeleteObject(brush);
 					}
 					if (customForegroundDrawing()) {
@@ -1406,7 +1415,7 @@ LRESULT wmNotifyChild (NMHDR hdr, long wParam, long lParam) {
 									OS.SetRect (focusRect, nmcd.left+1+radioOrCheckTextPadding, nmcd.top, nmcd.right-2, nmcd.bottom-1);
 								}
 							} else {
-								OS.SetRect (focusRect, nmcd.left+2, nmcd.top+3, nmcd.right-2, nmcd.bottom-3);
+								OS.SetRect (focusRect, nmcd.left+4, nmcd.top+4, nmcd.right-4, nmcd.bottom-4);
 							}
 							OS.DrawFocusRect(nmcd.hdc, focusRect);
 						}
@@ -1420,6 +1429,71 @@ LRESULT wmNotifyChild (NMHDR hdr, long wParam, long lParam) {
 	return super.wmNotifyChild (hdr, wParam, lParam);
 }
 
+static int getThemeStateId(int style, boolean pressed, boolean enabled) {
+	int direction = style & (SWT.UP | SWT.DOWN | SWT.LEFT | SWT.RIGHT);
+
+	/*
+	 * Feature in Windows.  DrawThemeBackground() does not mirror the drawing.
+	 * The fix is switch left to right and right to left.
+	 */
+	if ((style & SWT.MIRRORED) != 0) {
+		if        (direction == SWT.LEFT) {
+			direction = SWT.RIGHT;
+		} else if (direction == SWT.RIGHT) {
+			direction = SWT.LEFT;
+		}
+	}
+
+	/*
+	 * On Win11, scrollbars no longer show arrows by default.
+	 * Arrows only show up when hot/disabled/pushed.
+	 * The workaround is to use hot image in place of default.
+	 */
+	boolean hot = false;
+	if (OS.WIN32_BUILD >= OS.WIN32_BUILD_WIN11_21H2) {
+		if (!pressed && enabled) {
+			hot = true;
+		}
+	}
+
+	if (hot) {
+		switch (direction) {
+			case SWT.UP:    return OS.ABS_UPHOT;
+			case SWT.DOWN:  return OS.ABS_DOWNHOT;
+			case SWT.LEFT:  return OS.ABS_LEFTHOT;
+			case SWT.RIGHT: return OS.ABS_RIGHTHOT;
+		}
+	}
+
+	if (pressed) {
+		switch (direction) {
+			case SWT.UP:    return OS.ABS_UPPRESSED;
+			case SWT.DOWN:  return OS.ABS_DOWNPRESSED;
+			case SWT.LEFT:  return OS.ABS_LEFTPRESSED;
+			case SWT.RIGHT: return OS.ABS_RIGHTPRESSED;
+		}
+	}
+
+	if (!enabled) {
+		switch (direction) {
+			case SWT.UP:    return OS.ABS_UPDISABLED;
+			case SWT.DOWN:  return OS.ABS_DOWNDISABLED;
+			case SWT.LEFT:  return OS.ABS_LEFTDISABLED;
+			case SWT.RIGHT: return OS.ABS_RIGHTDISABLED;
+		}
+	}
+
+	switch (direction) {
+		case SWT.UP:    return OS.ABS_UPNORMAL;
+		case SWT.DOWN:  return OS.ABS_DOWNNORMAL;
+		case SWT.LEFT:  return OS.ABS_LEFTNORMAL;
+		case SWT.RIGHT: return OS.ABS_RIGHTNORMAL;
+	}
+
+	// Have some sane value if all else fails
+	return OS.ABS_LEFTNORMAL;
+}
+
 @Override
 LRESULT wmDrawChild (long wParam, long lParam) {
 	if ((style & SWT.ARROW) == 0) return super.wmDrawChild (wParam, lParam);
@@ -1428,29 +1502,9 @@ LRESULT wmDrawChild (long wParam, long lParam) {
 	RECT rect = new RECT ();
 	OS.SetRect (rect, struct.left, struct.top, struct.right, struct.bottom);
 	if (OS.IsAppThemed ()) {
-		int iStateId = OS.ABS_LEFTNORMAL;
-		switch (style & (SWT.UP | SWT.DOWN | SWT.LEFT | SWT.RIGHT)) {
-			case SWT.UP: iStateId = OS.ABS_UPNORMAL; break;
-			case SWT.DOWN: iStateId = OS.ABS_DOWNNORMAL; break;
-			case SWT.LEFT: iStateId = OS.ABS_LEFTNORMAL; break;
-			case SWT.RIGHT: iStateId = OS.ABS_RIGHTNORMAL; break;
-		}
-		/*
-		* Feature in Windows.  DrawThemeBackground() does not mirror the drawing.
-		* The fix is switch left to right and right to left.
-		*/
-		if ((style & SWT.MIRRORED) != 0) {
-			if ((style & (SWT.LEFT | SWT.RIGHT)) != 0) {
-				iStateId = iStateId == OS.ABS_RIGHTNORMAL ? OS.ABS_LEFTNORMAL : OS.ABS_RIGHTNORMAL;
-			}
-		}
-		/*
-		* NOTE: The normal, hot, pressed and disabled state is
-		* computed relying on the fact that the increment between
-		* the direction states is invariant (always separated by 4).
-		*/
-		if (!getEnabled ()) iStateId += OS.ABS_UPDISABLED - OS.ABS_UPNORMAL;
-		if ((struct.itemState & OS.ODS_SELECTED) != 0) iStateId += OS.ABS_UPPRESSED - OS.ABS_UPNORMAL;
+		boolean pressed = ((struct.itemState & OS.ODS_SELECTED) != 0);
+		boolean enabled = getEnabled ();
+		int iStateId = getThemeStateId(style, pressed, enabled);
 		OS.DrawThemeBackground (display.hScrollBarTheme (), struct.hDC, OS.SBP_ARROWBTN, iStateId, rect, null);
 	} else {
 		int uState = OS.DFCS_SCROLLLEFT;

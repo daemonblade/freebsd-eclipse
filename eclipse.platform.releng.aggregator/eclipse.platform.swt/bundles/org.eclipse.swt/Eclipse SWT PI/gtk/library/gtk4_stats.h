@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -31,13 +31,21 @@ extern char* GTK4_nativeFunctionNames[];
 #endif
 
 typedef enum {
+	gdk_1clipboard_1get_1content_FUNC,
+	gdk_1clipboard_1get_1formats_FUNC,
+	gdk_1clipboard_1set_FUNC,
+	gdk_1clipboard_1set_1text_FUNC,
 	gdk_1content_1formats_1builder_1add_1mime_1type_FUNC,
 	gdk_1content_1formats_1builder_1free_1to_1formats_FUNC,
 	gdk_1content_1formats_1builder_1new_FUNC,
+	gdk_1content_1provider_1get_1value_FUNC,
 	gdk_1toplevel_1focus_FUNC,
 	gdk_1toplevel_1get_1state_FUNC,
 	gdk_1toplevel_1lower_FUNC,
 	gdk_1toplevel_1set_1icon_1list_FUNC,
+	gdk_1toplevel_1size_1get_1bounds_FUNC,
+	gdk_1toplevel_1size_1set_1min_1size_FUNC,
+	gdk_1toplevel_1size_1set_1size_FUNC,
 	gtk_1box_1append_FUNC,
 	gtk_1box_1insert_1child_1after_FUNC,
 	gtk_1box_1prepend_FUNC,
@@ -67,6 +75,7 @@ typedef enum {
 	gtk_1entry_1set_1buffer_FUNC,
 	gtk_1event_1controller_1focus_1new_FUNC,
 	gtk_1event_1controller_1get_1current_1event_FUNC,
+	gtk_1event_1controller_1get_1current_1event_1state_FUNC,
 	gtk_1event_1controller_1key_1new_FUNC,
 	gtk_1event_1controller_1motion_1new_FUNC,
 	gtk_1event_1controller_1scroll_1new_FUNC,
@@ -142,6 +151,8 @@ typedef enum {
 	gtk_1widget_1translate_1coordinates_FUNC,
 	gtk_1window_1destroy_FUNC,
 	gtk_1window_1get_1icon_1name_FUNC,
+	gtk_1window_1is_1maximized_FUNC,
+	gtk_1window_1maximize_FUNC,
 	gtk_1window_1minimize_FUNC,
 	gtk_1window_1new_FUNC,
 	gtk_1window_1set_1child_FUNC,

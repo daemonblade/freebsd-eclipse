@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -48,6 +48,7 @@ public class ToolItem extends Item {
 	Image disabledImage2;
 	int id;
 	short cx;
+	int foreground = -1, background = -1;
 
 /**
  * Constructs a new instance of this class given its parent
@@ -287,6 +288,27 @@ public Image getDisabledImage () {
 }
 
 /**
+ * Returns the receiver's background color.
+ * <p>
+ * Note: This operation is a hint and may be overridden by the platform.
+ * For example, on some versions of Windows the background of a TabFolder,
+ * is a gradient rather than a solid color.
+ * </p>
+ * @return the background color
+ *
+ * @exception SWTException <ul>
+ *    <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+ *    <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+ * </ul>
+ *
+ * @since 3.120
+ */
+public Color getBackground () {
+	checkWidget ();
+	return Color.win32_new (display, parent.getBackgroundPixel (this));
+}
+
+/**
  * Returns <code>true</code> if the receiver is enabled, and
  * <code>false</code> otherwise. A disabled control is typically
  * not selectable from the user interface and draws with an
@@ -309,6 +331,23 @@ public boolean getEnabled () {
 	long hwnd = parent.handle;
 	long fsState = OS.SendMessage (hwnd, OS.TB_GETSTATE, id, 0);
 	return (fsState & OS.TBSTATE_ENABLED) != 0;
+}
+
+/**
+ * Returns the foreground color that the receiver will use to draw.
+ *
+ * @return the receiver's foreground color
+ *
+ * @exception SWTException <ul>
+ *    <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+ *    <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+ * </ul>
+ *
+ * @since 3.120
+ */
+public Color getForeground () {
+	checkWidget ();
+	return Color.win32_new (display, parent.getForegroundPixel (this));
 }
 
 /**
@@ -458,6 +497,13 @@ boolean isTabGroup () {
 	return (previous.getStyle () & SWT.SEPARATOR) != 0;
 }
 
+void redraw () {
+	RECT rect = new RECT ();
+	if (OS.SendMessage (parent.handle, OS.TB_GETRECT, id, rect) != 0) {
+		OS.InvalidateRect (parent.handle, rect, true);
+	}
+}
+
 @Override
 void releaseWidget () {
 	super.releaseWidget ();
@@ -558,6 +604,37 @@ void selectRadio () {
 }
 
 /**
+ * Sets the receiver's background color to the color specified
+ * by the argument, or to the default system color for the control
+ * if the argument is null.
+ * <p>
+ * Note: This operation is a hint and may be overridden by the platform.
+ * </p>
+ * @param color the new color (or null)
+ *
+ * @exception IllegalArgumentException <ul>
+ *    <li>ERROR_INVALID_ARGUMENT - if the argument has been disposed</li>
+ * </ul>
+ * @exception SWTException <ul>
+ *    <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+ *    <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+ * </ul>
+ *
+ * @since 3.120
+ */
+public void setBackground (Color color) {
+	checkWidget ();
+	if (color != null && color.isDisposed ()) {
+		error (SWT.ERROR_INVALID_ARGUMENT);
+	}
+	parent.state |= CUSTOM_DRAW_ITEM;
+	int pixel = (color != null) ? color.handle : -1;
+	if (pixel == background) return;
+	background = pixel;
+	redraw ();
+}
+
+/**
  * Sets the control that is used to fill the bounds of
  * the item when the item is a <code>SEPARATOR</code>.
  *
@@ -579,6 +656,7 @@ public void setControl (Control control) {
 		if (control.parent != parent) error (SWT.ERROR_INVALID_PARENT);
 	}
 	if ((style & SWT.SEPARATOR) == 0) return;
+	parent.layout(true);
 	this.control = control;
 	/*
 	* Feature in Windows.  When a tool bar wraps, tool items
@@ -703,10 +781,43 @@ public void setEnabled (boolean enabled) {
  */
 public void setDisabledImage (Image image) {
 	checkWidget();
+	if (this.disabledImage == image) return;
 	if ((style & SWT.SEPARATOR) != 0) return;
 	if (image != null && image.isDisposed()) error(SWT.ERROR_INVALID_ARGUMENT);
+	parent.layout(isImageSizeChanged(disabledImage, image));
 	disabledImage = image;
 	updateImages (getEnabled () && parent.getEnabled ());
+}
+
+/**
+ * Sets the receiver's foreground color to the color specified
+ * by the argument, or to the default system color for the control
+ * if the argument is null.
+ * <p>
+ * Note: This operation is a hint and may be overridden by the platform.
+ * </p>
+ * @param color the new color (or null)
+ *
+ * @exception IllegalArgumentException <ul>
+ *    <li>ERROR_INVALID_ARGUMENT - if the argument has been disposed</li>
+ * </ul>
+ * @exception SWTException <ul>
+ *    <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+ *    <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+ * </ul>
+ *
+ * @since 3.120
+ */
+public void setForeground (Color color) {
+	checkWidget ();
+	if (color != null && color.isDisposed ()) {
+		error (SWT.ERROR_INVALID_ARGUMENT);
+	}
+	parent.state |= CUSTOM_DRAW_ITEM;
+	int pixel = (color != null) ? color.handle : -1;
+	if (pixel == foreground) return;
+	foreground = pixel;
+	redraw ();
 }
 
 /**
@@ -728,8 +839,10 @@ public void setDisabledImage (Image image) {
  */
 public void setHotImage (Image image) {
 	checkWidget();
+	if (this.hotImage == image) return;
 	if ((style & SWT.SEPARATOR) != 0) return;
 	if (image != null && image.isDisposed()) error(SWT.ERROR_INVALID_ARGUMENT);
+	parent.layout(isImageSizeChanged(hotImage, image));
 	hotImage = image;
 	updateImages (getEnabled () && parent.getEnabled ());
 }
@@ -737,10 +850,21 @@ public void setHotImage (Image image) {
 @Override
 public void setImage (Image image) {
 	checkWidget();
+	if (this.image == image) return;
 	if ((style & SWT.SEPARATOR) != 0) return;
 	if (image != null && image.isDisposed()) error(SWT.ERROR_INVALID_ARGUMENT);
+	parent.layout(isImageSizeChanged(super.image, image));
 	super.setImage (image);
 	updateImages (getEnabled () && parent.getEnabled ());
+}
+
+boolean isImageSizeChanged(Image oldImage, Image image) {
+	boolean changed = true;
+	// check if image size really changed for old and new images
+	if (oldImage != null && !oldImage.isDisposed() && image != null && !image.isDisposed()) {
+		changed = !oldImage.getBounds().equals(image.getBounds());
+	}
+	return changed;
 }
 
 boolean setRadioSelection (boolean value) {
@@ -876,6 +1000,7 @@ public void setText (String string) {
 	if (string == null) error (SWT.ERROR_NULL_ARGUMENT);
 	if ((style & SWT.SEPARATOR) != 0) return;
 	if (string.equals (text)) return;
+	parent.layout(true);
 	super.setText (string);
 	if ((state & HAS_AUTO_DIRECTION) == 0 || !updateTextDirection (AUTO_TEXT_DIRECTION)) {
 		_setText (string);

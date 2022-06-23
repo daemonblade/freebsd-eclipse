@@ -61,15 +61,6 @@ public class TabFolder extends Composite {
 	 * rather than tabfolder's parent swtFixed container.
 	 * Note, this reparenting is only on the GTK side, not on the SWT side.
 	 *
-	 * GTK2 and GTK3 child nesting behaviour differs now.
-	 * GTK2:
-	 *   swtFixed
-	 *   |-- GtkNoteBook
-	 *   |   |-- tabLabel1
-	 *   |   |-- tabLabel2
-	 *   |-- swtFixed (child1)  //child is sibling of Notebook
-	 *   |-- swtFixed (child2)
-	 *
 	 * GTK3+:
 	 * 	swtFixed
 	 * 	|--	GtkNoteBook
@@ -82,8 +73,6 @@ public class TabFolder extends Composite {
 	 *
 	 * This changes the hierarchy so that children are beneath gtkNotebook (as oppose to
 	 * being siblings) and thus fixes DND and background color issues.
-	 * In gtk2, reparenting doesn't function properly (tab content appear blank),
-	 * so this is a gtk3-specific behavior.
 	 *
 	 * Note about the reason for reparenting:
 	 * Reparenting (as opposed to adding widget to a tab in the first place) is necessary
@@ -267,6 +256,9 @@ void createHandle (int index) {
 
 	GTK.gtk_notebook_set_show_tabs (handle, true);
 	GTK.gtk_notebook_set_scrollable (handle, true);
+
+	if(GTK.GTK4) setInitialBackgroundGTK4(handle, null);
+
 	if ((style & SWT.BOTTOM) != 0) {
 		GTK.gtk_notebook_set_tab_pos (handle, GTK.GTK_POS_BOTTOM);
 	}
@@ -795,6 +787,21 @@ void setBackgroundGdkRGBA (long context, long handle, GdkRGBA rgba) {
 
 		// Apply background color and any cached foreground color
 	String finalCss = display.gtk_css_create_css_color_string (cssBackground, cssForeground, SWT.BACKGROUND);
+	gtk_css_provider_load_from_css (context, finalCss);
+}
+
+void setInitialBackgroundGTK4 (long handle, GdkRGBA rgba) {
+
+	//Get the "stack" widget as child and gets its context
+	long child = GTK4.gtk_widget_get_first_child(handle);
+	child = GTK4.gtk_widget_get_next_sibling(child);
+	long context = GTK.gtk_widget_get_style_context(child);
+
+	// Form background string
+	String css = "stack {background-color: " + display.gtk_rgba_to_css_string (rgba) + ";}";
+
+	// Apply background color
+	String finalCss = display.gtk_css_create_css_color_string (css, null, SWT.BACKGROUND);
 	gtk_css_provider_load_from_css (context, finalCss);
 }
 

@@ -459,7 +459,7 @@ public class StyledText extends Canvas {
 		} else if (scope == PrinterData.SELECTION) {
 			startLine = content.getLineAtOffset(selection[0].x);
 			if (selection[0].y > 0) {
-				endLine = content.getLineAtOffset(selection[0].x + selection[0].y - 1);
+				endLine = content.getLineAtOffset(selection[0].y);
 			} else {
 				endLine = startLine - 1;
 			}
@@ -1046,7 +1046,7 @@ public class StyledText extends Canvas {
 	 * has been called.
 	 * </p>
 	 */
-	class TextWriter {
+	static class TextWriter {
 		private StringBuilder buffer;
 		private int startOffset;	// offset of first character that will be written
 		private int endOffset;		// offset of last character that will be written.
@@ -1568,7 +1568,7 @@ void calculateTopIndex(int delta) {
 		// Set top index to partially visible top line if no line is fully
 		// visible but at least some of the widget client area is visible.
 		// Fixes bug 15088.
-		if (topIndex > 0) {
+		if (topIndex >= 0) {
 			if (clientAreaHeight > 0) {
 				int bottomPixel = getVerticalScrollOffset() + clientAreaHeight;
 				topIndexY = getLinePixel(topIndex);
@@ -2674,7 +2674,7 @@ void doLineDown(boolean select) {
 	for (int i = 0; i < caretOffsets.length; i++) {
 		int caretOffset = caretOffsets[i];
 		int caretLine = content.getLineAtOffset(caretOffset);
-		int x = getPointAtOffset(caretOffset).x;
+		int x = caretOffsets.length == 1 ? columnX : getPointAtOffset(caretOffset).x;
 		int y = 0;
 		boolean lastLine = false;
 		if (isWordWrap()) {
@@ -2775,7 +2775,7 @@ void doLineUp(boolean select) {
 	for (int i = 0; i < caretOffsets.length; i++) {
 		int caretOffset = caretOffsets[i];
 		int caretLine = content.getLineAtOffset(caretOffset);
-		int x = getPointAtOffset(caretOffset).x;
+		int x = caretOffsets.length == 1 ? columnX : getPointAtOffset(caretOffset).x;
 		int y = 0;
 		boolean firstLine = false;
 		if (isWordWrap()) {
@@ -6327,9 +6327,16 @@ void handleMouseDown(Event event) {
 		return;
 	}
 	clickCount = event.count;
+	boolean addSelection = (event.stateMask & SWT.MOD3) != 0;
 	if (clickCount == 1) {
-		boolean select = (event.stateMask & SWT.MOD2) != 0;
-		doMouseLocationChange(event.x, event.y, select);
+		if (addSelection && !blockSelection) {
+			int offset = getOffsetAtPoint(event.x, event.y, null);
+			addSelection(offset, 0);
+			sendSelectionEvent();
+		} else {
+			boolean expandSelection = (event.stateMask & SWT.MOD2) != 0;
+			doMouseLocationChange(event.x, event.y, expandSelection);
+		}
 	} else {
 		if (doubleClickEnabled) {
 			boolean wordSelect = (clickCount & 1) == 0;
@@ -6337,11 +6344,26 @@ void handleMouseDown(Event event) {
 			int lineIndex = content.getLineAtOffset(offset);
 			int lineOffset = content.getOffsetAtLine(lineIndex);
 			if (wordSelect) {
+				String line = content.getLine(lineIndex);
+				int lineLength = line.length();
 				int min = blockSelection ? lineOffset : 0;
-				int max = blockSelection ? lineOffset + content.getLine(lineIndex).length() : content.getCharCount();
+				int max = blockSelection ? lineOffset + lineLength : content.getCharCount();
+				final Point offsetPoint = getPointAtOffset(offset);
+				if (event.x > offsetPoint.x
+						&& offset < Math.min(max, lineOffset + lineLength) // Not beyond EOL
+						&& !Character.isWhitespace(line.charAt(offset - lineOffset))) { // Not on whitespace
+					offset++;
+				}
 				int start = Math.max(min, getWordPrevious(offset, SWT.MOVEMENT_WORD_START));
 				int end = Math.min(max, getWordNext(start, SWT.MOVEMENT_WORD_END));
-				setSelection(new int[] {start, end - start }, false, true);
+				int[] regions = new int[2];
+				if (addSelection) {
+					int[] current = getSelectionRanges();
+					regions = Arrays.copyOf(current, current.length + 2);
+				}
+				regions[regions.length - 2] = start;
+				regions[regions.length - 1] = end - start;
+				setSelection(regions, false, true);
 				sendSelectionEvent();
 			} else {
 				if (blockSelection) {
@@ -6351,7 +6373,14 @@ void handleMouseDown(Event event) {
 					if (lineIndex + 1 < content.getLineCount()) {
 						lineEnd = content.getOffsetAtLine(lineIndex + 1);
 					}
-					setSelection(new int[] {lineOffset, lineEnd - lineOffset}, false, false);
+					int[] regions = new int[2];
+					if (addSelection) {
+						int[] current = getSelectionRanges();
+						regions = Arrays.copyOf(current, current.length + 2);
+					}
+					regions[regions.length - 2] = lineOffset;
+					regions[regions.length - 1] = lineEnd - lineOffset;
+					setSelection(regions, false, false);
 					sendSelectionEvent();
 				}
 			}
@@ -6360,6 +6389,15 @@ void handleMouseDown(Event event) {
 		}
 	}
 }
+
+void addSelection(int offset, int length) {
+	int[] ranges = getSelectionRanges();
+	ranges = Arrays.copyOf(ranges, ranges.length + 2);
+	ranges[ranges.length - 2] = offset;
+	ranges[ranges.length - 1] = length;
+	setSelection(ranges, true, true);
+}
+
 /**
  * Updates the caret location and selection if mouse button 1 is pressed
  * during the mouse move.
@@ -8924,6 +8962,7 @@ void setCaretLocations(final Point[] locations, int direction) {
 				carets[i] = new Caret(this, firstCaret.getStyle());
 				carets[i].setImage(firstCaret.getImage());
 				carets[i].setFont(firstCaret.getFont());
+				carets[i].setSize(firstCaret.getSize());
 			}
 		} else if (locations.length < carets.length) {
 			for (int i = locations.length; i < carets.length; i++) {
@@ -8931,7 +8970,7 @@ void setCaretLocations(final Point[] locations, int direction) {
 			}
 			carets = Arrays.copyOf(carets, locations.length);
 		}
-		for (int i = 0; i < Math.min(caretOffsets.length, locations.length); i++) {
+		for (int i = Math.min(caretOffsets.length, locations.length)-1; i>=0; i--) { // reverse order, seee bug 579028#c7
 			final Caret caret = carets[i];
 			final int caretOffset = caretOffsets[i];
 			final Point location = locations[i];
@@ -9015,6 +9054,7 @@ void setCaretLocations(final Point[] locations, int direction) {
 			}
 		}
 		updateCaretVisibility();
+		super.redraw();
 	}
 	columnX = locations[0].x;
 }
@@ -9201,6 +9241,21 @@ public void setEnabled(boolean enabled) {
 		this.insideSetEnableCall = false;
 	}
 }
+
+@Override
+public boolean setFocus() {
+	boolean focusGained = super.setFocus();
+	if (focusGained && hasMultipleCarets()) {
+		// Multiple carets need to update their drawing. See bug 579179
+		setCaretLocations();
+	}
+	return focusGained;
+}
+
+private boolean hasMultipleCarets() {
+	return carets != null && carets.length > 1;
+}
+
 /**
  * Sets a new font to render text with.
  * <p>
@@ -11237,7 +11292,6 @@ void updateCaretVisibility() {
 				c.setVisible(visible);
 			});
 		}
-		redraw();
 	}
 }
 /**

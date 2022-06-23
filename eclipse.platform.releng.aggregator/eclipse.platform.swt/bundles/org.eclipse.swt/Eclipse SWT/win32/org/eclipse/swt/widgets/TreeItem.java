@@ -64,7 +64,8 @@ public class TreeItem extends Item {
  * Constructs <code>TreeItem</code> and <em>inserts</em> it into <code>Tree</code>.
  * Item is inserted as last direct child of the tree.
  * <p>
- * For bulk insert scenarios, see TreeItem#TreeItem(Tree,int,int)
+ * The fastest way to insert many items is documented in {@link TreeItem#TreeItem(Tree,int,int)}
+ * and {@link TreeItem#setItemCount}
  *
  * @param parent a tree control which will be the parent of the new instance (cannot be null)
  * @param style no styles are currently supported, pass SWT.NONE
@@ -82,7 +83,7 @@ public class TreeItem extends Item {
  * @see Widget#getStyle
  */
 public TreeItem (Tree parent, int style) {
-	this (parent, style, OS.TVGN_ROOT, OS.TVI_LAST, 0);
+	this (parent, style, OS.TVI_ROOT, OS.TVI_LAST, 0);
 }
 
 /**
@@ -93,6 +94,7 @@ public TreeItem (Tree parent, int style) {
  * <ol>
  * <li>Use {@link Tree#setRedraw} to disable drawing during bulk insert</li>
  * <li>Insert every item at index 0 (insert them in reverse to get the same result)</li>
+ * <li>Collapse the parent item before inserting (gives massive improvement on Windows)</li>
  * </ol>
  *
  * @param parent a tree control which will be the parent of the new instance (cannot be null)
@@ -114,14 +116,15 @@ public TreeItem (Tree parent, int style) {
  * @see Tree#setRedraw
  */
 public TreeItem (Tree parent, int style, int index) {
-	this (parent, style, OS.TVGN_ROOT, findPrevious (parent, index), 0);
+	this (parent, style, OS.TVI_ROOT, findPrevious (parent, index), 0);
 }
 
 /**
  * Constructs <code>TreeItem</code> and <em>inserts</em> it into <code>Tree</code>.
  * Item is inserted as last direct child of the specified <code>TreeItem</code>.
  * <p>
- * For bulk insert scenarios, see TreeItem#TreeItem(TreeItem,int,int)
+ * The fastest way to insert many items is documented in {@link TreeItem#TreeItem(Tree,int,int)}
+ * and {@link TreeItem#setItemCount}
  *
  * @param parentItem a tree control which will be the parent of the new instance (cannot be null)
  * @param style no styles are currently supported, pass SWT.NONE
@@ -146,12 +149,8 @@ public TreeItem (TreeItem parentItem, int style) {
  * Constructs <code>TreeItem</code> and <em>inserts</em> it into <code>Tree</code>.
  * Item is inserted as <code>index</code> direct child of the specified <code>TreeItem</code>.
  * <p>
- * The fastest way to insert many items is:
- * <ol>
- * <li>Use {@link Tree#setRedraw} to disable drawing during bulk insert</li>
- * <li>Insert child items while parent item is collapsed</li>
- * <li>Insert every item at index 0 (insert them in reverse to get the same result)</li>
- * </ol>
+ * The fastest way to insert many items is documented in {@link TreeItem#TreeItem(Tree,int,int)}
+ * and {@link TreeItem#setItemCount}
  *
  * @param parentItem a tree control which will be the parent of the new instance (cannot be null)
  * @param style no styles are currently supported, pass SWT.NONE
@@ -1698,6 +1697,12 @@ public void setImage (Image image) {
 
 /**
  * Sets the number of child items contained in the receiver.
+ * <p>
+ * The fastest way to insert many items is:
+ * <ol>
+ * <li>Use {@link Tree#setRedraw} to disable drawing during bulk insert</li>
+ * <li>Collapse the parent item before inserting (gives massive improvement on Windows)</li>
+ * </ol>
  *
  * @param count the number of items
  *
@@ -1711,9 +1716,7 @@ public void setImage (Image image) {
 public void setItemCount (int count) {
 	checkWidget ();
 	count = Math.max (0, count);
-	long hwnd = parent.handle;
-	long hItem = OS.SendMessage (hwnd, OS.TVM_GETNEXTITEM, OS.TVGN_CHILD, handle);
-	parent.setItemCount (count, handle, hItem);
+	parent.setItemCount (count, handle);
 }
 
 /**

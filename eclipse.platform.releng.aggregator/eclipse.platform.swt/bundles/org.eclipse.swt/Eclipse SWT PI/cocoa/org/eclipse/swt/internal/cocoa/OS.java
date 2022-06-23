@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2017 IBM Corporation and others.
+ * Copyright (c) 2007, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -21,13 +21,24 @@ public class OS extends C {
 		Library.loadLibrary("swt-pi"); //$NON-NLS-1$
 	}
 
+	/*
+	 * macOS version, encoded as ((major << 16) + (minor << 8) + bugfix).
+	 *
+	 * Note that for macOS >= 11, it has "wrong" values if executable's
+	 * SDK is below 10.15 (or is it 11.0?), where 10.16.0 is reported
+	 * regardless of actual macOS version. On the other hand, with good
+	 * executable's SDK, real version is reported.
+	 *
+	 * This also means that executables with old SDK can't distinguish
+	 * macOS 11 from macOS 12.
+	 */
 	public static final int VERSION;
 
 	public static int VERSION (int major, int minor, int bugfix) {
 		return (major << 16) + (minor << 8) + bugfix;
 	}
 
-	private static final boolean IS_X86_64 = System.getProperty("os.arch").equals("x86_64"); //$NON-NLS-1$
+	public static final boolean IS_X86_64 = System.getProperty("os.arch").equals("x86_64"); //$NON-NLS-1$
 
 	/*
 	 *  Magic number explanation, from Cocoa's TextSizingExample:
@@ -140,6 +151,10 @@ public class OS extends C {
 	public static final long sel_selectedContentBackgroundColor = Selector.sel_selectedContentBackgroundColor.value;
 	public static final long sel_unemphasizedSelectedContentBackgroundColor = Selector.sel_unemphasizedSelectedContentBackgroundColor.value;
 
+	/** 11.0 selector and enum */
+	public static final long sel_setStyle = Selector.sel_setStyle.value;
+	public static final int NSTableViewStylePlain = 4;
+
 	/* AWT application delegate. Remove these when JavaRuntimeSupport.framework has bridgesupport generated for it. */
 	public static final long class_JRSAppKitAWT = objc_getClass("JRSAppKitAWT");
 	public static final long sel_awtAppDelegate = Selector.sel_awtAppDelegate.value;
@@ -163,6 +178,24 @@ public class OS extends C {
 	 * Custom message that will be sent when setTheme is called for example from Platform UI code.
 	 */
 	public static final long sel_appAppearanceChanged = OS.sel_registerName("appAppearanceChanged");
+	
+	/**
+	 * Experimental API for dark theme.
+	 * <p>
+	 * On Windows, there is no OS API for dark theme yet, and this method only
+	 * configures various tweaks. Some of these tweaks have drawbacks. The tweaks
+	 * are configured with defaults that fit Eclipse. Non-Eclipse applications are
+	 * expected to configure individual tweaks instead of calling this method.
+	 * Please see <code>Display#setData()</code> and documentation for string keys
+	 * used there.
+	 * </p>
+	 * <p>
+	 * On GTK, behavior may be different as the boolean flag doesn't force dark
+	 * theme instead it specify that dark theme is preferred.
+	 * </p>
+	 * 
+	 * @param isDarkTheme <code>true</code> for dark theme
+	 */
 	public static void setTheme(boolean isDarkTheme) {
 		OS.objc_msgSend(NSApplication.sharedApplication().id, sel_appAppearanceChanged, isDarkTheme ? 1 : 0);
 	}
@@ -186,10 +219,7 @@ public class OS extends C {
 	 * @return true for macOS BigSur or later, returns false for macOS 10.15 and older
 	 */
 	public static boolean isBigSurOrLater () {
-		/*
-		 * Currently Big Sur OS version matches with 10.16 and not 11.0. This may be temporary.
-		 * Creating a method, so that it can be fixed in one place if/when this changes.
-		 */
+		// See comment for OS.VERSION for an explanation
 		return OS.VERSION >= OS.VERSION(10, 16, 0);
 	}
 

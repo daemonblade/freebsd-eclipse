@@ -154,11 +154,22 @@ case $SWT_OS.$SWT_ARCH in
 			export PKG_CONFIG_PATH="/usr/lib64/pkgconfig/"
 		fi
 		;;
+	"linux.loongarch64")
+		if [ "${CC}" = "" ]; then
+			export CC=gcc
+		fi
+		if [ "${JAVA_HOME}" = "" ]; then
+			export JAVA_HOME=`readlink -f /usr/bin/java | sed "s:jre/bin/java::"`
+		fi
+		if [ "${PKG_CONFIG_PATH}" = "" ]; then
+			export PKG_CONFIG_PATH="/usr/lib64/pkgconfig/"
+		fi
+		;;
 esac
 
 
 # For 64-bit CPUs, we have a switch
-if [ ${MODEL} = 'amd64' -o ${MODEL} = 'powerpc64' -o ${MODEL} = 'powerpc64le' -o ${MODEL} = 'aarch64' ]; then
+if [ ${MODEL} = 'amd64' -o ${MODEL} = 'powerpc64' -o ${MODEL} = 'powerpc64le' -o ${MODEL} = 'aarch64' -o ${MODEL} = 'loongarch64' ]; then
 	SWT_PTR_CFLAGS=-DJNI64
 	if [ -d /lib64 ]; then
 		XLIB64=-L/usr/X11R6/lib64
@@ -189,7 +200,7 @@ fi
 if [ ${SWT_OS} = 'win32' ]; then
 	AWT_LIB_EXPR="jawt.dll"
 else
-	AWT_LIB_EXPR="libjawt.*"
+	AWT_LIB_EXPR="libjawt.so"
 fi
 
 if [ -z "${AWT_LIB_PATH}" ]; then
@@ -269,14 +280,6 @@ func_echo_plus "Building SWT/GTK+ for Architectures: $SWT_OS $SWT_ARCH"
 func_build_gtk4 () {
 	export GTK_VERSION=4.0
 
-	# Dictate Webkit2 Extension only if pkg-config flags exist
-	pkg-config --exists webkit2gtk-web-extension-4.0
-	if [ $? = 0 ]; then
-		export BUILD_WEBKIT2EXTENSION="yes";
-	else
-		func_echo_error "Warning: Cannot compile Webkit2 Extension because 'pkg-config --exists webkit2gtk-web-extension-4.0' check failed. Please install webkitgtk4-devel.ARCH on your system."
-	fi
-
 	func_echo_plus "Building GTK4 bindings:"
 	${MAKE_TYPE} -f $MAKEFILE all $MAKE_CAIRO $MAKE_AWT "${@}"
 	RETURN_VALUE=$?   #make can return 1 or 2 if it fails. Thus need to cache it in case it's used programmatically somewhere.
@@ -288,33 +291,8 @@ func_build_gtk4 () {
 	fi
 }
 
-func_build_chromium () {
-	func_echo_plus "Building Chromium bindings:"
-	if [ -d "chromium_subp/cef_freebsd" ]; then
-		export CHROMIUM_HEADERS=./chromium_subp/cef_freebsd
-	else
-		export CHROMIUM_HEADERS=$CHROMIUM_OUTPUT_DIR/../../../../eclipse.platform.swt/bundles/org.eclipse.swt.browser.chromium/common/rust-library/chromium_subp/cef_freebsd
-	fi
-	${MAKE_TYPE} -f $MAKEFILE "${@}"
-	RETURN_VALUE=$?   #make can return 1 or 2 if it fails. Thus need to cache it in case it's used programmatically somewhere.
-	if [ "$RETURN_VALUE" -eq 0 ]; then
-		func_echo_plus "Chromium Build succeeded"
-	else
-		func_echo_error "Chromium Build failed, aborting further actions.."
-		exit $RETURN_VALUE
-	fi
-}
-
 func_build_gtk3 () {
 	export GTK_VERSION=3.0
-
-	# Dictate Webkit2 Extension only if pkg-config flags exist
-	pkg-config --exists webkit2gtk-web-extension-4.0
-	if [ $? = 0 ]; then
-		export BUILD_WEBKIT2EXTENSION="yes";
-	else
-		func_echo_error "Warning: Cannot compile Webkit2 Extension because 'pkg-config --exists webkit2gtk-web-extension-4.0' check failed. Please install webkitgtk4-devel.ARCH on your system."
-	fi
 
 	func_echo_plus "Building GTK3 bindings:"
 	${MAKE_TYPE} -f $MAKEFILE all $MAKE_CAIRO $MAKE_AWT "${@}"
@@ -340,8 +318,6 @@ elif [ "$1" = "-gtk4" ]; then
 elif [ "$1" = "-gtk3" ]; then
 	shift
 	func_build_gtk3 "$@"
-elif [ "$1" = "chromium_install" ] || [ "$1" = "chromium_cargo" ]; then
-	func_build_chromium "$@"
 elif [ "${GTK_VERSION}" = "4.0" ]; then
 	func_build_gtk4 "$@"
 elif [ "${GTK_VERSION}" = "3.0" -o "${GTK_VERSION}" = "" ]; then

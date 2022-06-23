@@ -52,7 +52,7 @@ public class GTK extends OS {
 	public static final int GTK_ICON_SIZE_SMALL_TOOLBAR = 2;
 	public static final int GTK_ICON_SIZE_DIALOG = 6;
 	public static final int GTK_ICON_LOOKUP_FORCE_SIZE = 4;
-	public static final int GTK_ICON_LOOKUP_FORCE_REGULAR = 0;
+	public static final int GTK_ICON_LOOKUP_FORCE_REGULAR = 32;
 	public static final int GTK_JUSTIFY_CENTER = 0x2;
 	public static final int GTK_JUSTIFY_LEFT = 0x0;
 	public static final int GTK_JUSTIFY_RIGHT = 0x1;
@@ -251,7 +251,7 @@ public class GTK extends OS {
 	public static final native boolean GTK_IS_CONTAINER(long obj);
 
 	// See os_custom.h
-	// Dynamically get's the function pointer to gtk_false(). Gtk2/Gtk3.
+	// Dynamically get's the function pointer to gtk_false(). Gtk3.
 	public static final native long GET_FUNCTION_POINTER_gtk_false();
 
 
@@ -869,10 +869,6 @@ public class GTK extends OS {
 	/** @param orientation cast=(GtkOrientation) */
 	public static final native long gtk_separator_new(int orientation);
 
-	// Get function pointer to gtk_status_icon_position_menu
-	// See os_custom.h
-	public static final native long gtk_status_icon_position_menu_func();
-
 	/* GtkIMContext */
 	/** @param context cast=(GtkIMContext *) */
 	public static final native void gtk_im_context_focus_in(long context);
@@ -1008,6 +1004,12 @@ public class GTK extends OS {
 	 * @param iter cast=(GtkTreeIter *)
 	 */
 	public static final native void gtk_list_store_set(long store, long iter, int column, boolean value, int terminator);
+	/**
+	 * @param store cast=(GtkListStore *)
+	 * @param iter cast=(GtkTreeIter *)
+	 * @param value cast=(GValue *)
+	 */
+	public static final native void gtk_list_store_set_value(long store, long iter, int column, long value);
 
 	/* GtkCssProvider */
 	public static final native long gtk_css_provider_new();
@@ -1752,6 +1754,13 @@ public class GTK extends OS {
 	public static final native long gtk_tree_model_get_path(long tree_model, long iter);
 	public static final native long gtk_tree_model_get_type();
 	/**
+	 * @param tree_model cast=(GtkTreeModel *)
+	 * @param iter cast=(GtkTreeIter *)
+	 * @param value cast=(GValue *)
+	 */
+	public static final native void gtk_tree_model_get_value(long tree_model, long iter, int column, long value);
+
+	/**
 	 * @param model cast=(GtkTreeModel *)
 	 * @param iter cast=(GtkTreeIter *)
 	 * @param parent cast=(GtkTreeIter *)
@@ -1861,6 +1870,13 @@ public class GTK extends OS {
 	 * @param position cast=(gint)
 	 */
 	public static final native void gtk_tree_store_insert(long store, long iter, long parent, int position);
+	/**
+	 * @param store cast=(GtkTreeStore *)
+	 * @param iter cast=(GtkTreeIter *)
+	 * @param parent cast=(GtkTreeIter *)
+	 * @param sibling cast=(GtkTreeIter *)
+	 */
+	public static final native void gtk_tree_store_insert_after(long store, long iter, long parent, long sibling);
 	/** @param types cast=(GType *) */
 	public static final native long gtk_tree_store_newv(int numColumns, long [] types);
 	/**
@@ -1900,6 +1916,12 @@ public class GTK extends OS {
 	 * @param iter cast=(GtkTreeIter *)
 	 */
 	public static final native void gtk_tree_store_set(long store, long iter, int column, boolean value, int terminator);
+	/**
+	 * @param store cast=(GtkTreeStore *)
+	 * @param iter cast=(GtkTreeIter *)
+	 * @param value cast=(GValue *)
+	 */
+	public static final native void gtk_tree_store_set_value(long store, long iter, int column, long value);
 
 	/* GtkTreeViewColumn */
 	/**

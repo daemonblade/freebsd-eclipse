@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-    Copyright (c) 2009, 2020 IBM Corporation and others.
+    Copyright (c) 2009, 2022 IBM Corporation and others.
 
     This program and the accompanying materials
     are made available under the terms of the Eclipse Public License 2.0
@@ -31,7 +31,7 @@
 
 <project name="swtbuild" basedir=".">
 	
-	<property name="gitroot" value="committer-id@dev.eclipse.org:/gitroot/platform/"/>
+	<property name="gitroot" value="git@github.com:eclipse-platform/"/>
 	<property name="TAG" value="master"/>
 	<property name="tmphome" value="../../../tmp"/>
 	<property name="tmpdir" value="${tmphome}/check.compile.${TAG}"/>
@@ -44,7 +44,6 @@
 	<property name="src_win32" value="${src_common} 'bundles/org.eclipse.swt/Eclipse SWT PI/win32/library' 'bundles/org.eclipse.swt/Eclipse SWT AWT/win32/library' 'bundles/org.eclipse.swt/Eclipse SWT OpenGL/win32/library'"/>
 	<property name="src_gtk" value="${src_common} 'bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library' 'bundles/org.eclipse.swt/Eclipse SWT AWT/gtk/library' 'bundles/org.eclipse.swt/Eclipse SWT OpenGL/glx/library' 'bundles/org.eclipse.swt/Eclipse SWT PI/cairo/library' 'bundles/org.eclipse.swt/Eclipse SWT WebKit/gtk/library' "/>
 	<property name="src_cocoa" value="${src_common} 'bundles/org.eclipse.swt/Eclipse SWT PI/cocoa/library' 'bundles/org.eclipse.swt/Eclipse SWT AWT/cocoa/library'"/>
-	<property name="src_chromium" value="'bundles/org.eclipse.swt.browser.chromium/common/library' 'bundles/org.eclipse.swt.browser.chromium/common/rust-library'"/>
 	<property name="file_library" value="bundles/org.eclipse.swt/Eclipse SWT PI/common/org/eclipse/swt/internal/Library.java"/>
 	<property name="file_make_common" value="bundles/org.eclipse.swt/Eclipse SWT/common/library/make_common.mak"/>
 	<property name="file_version" value="bundles/org.eclipse.swt/Eclipse SWT/common/version.txt"/>
@@ -67,19 +66,19 @@
 			<param name="fragment" value="org.eclipse.swt.cocoa.macosx.x86_64"/>
 		</antcall>
 		<antcall target="check_fragment_libraries">
-			<param name="library_count" value="8"/>
+			<param name="library_count" value="7"/>
 			<param name="fragment" value="org.eclipse.swt.gtk.freebsd.aarch64"/>
 		</antcall>
 		<antcall target="check_fragment_libraries">
-			<param name="library_count" value="8"/>
+			<param name="library_count" value="7"/>
 			<param name="fragment" value="org.eclipse.swt.gtk.freebsd.powerpc64"/>
 		</antcall>
 		<antcall target="check_fragment_libraries">
-			<param name="library_count" value="8"/>
+			<param name="library_count" value="7"/>
 			<param name="fragment" value="org.eclipse.swt.gtk.freebsd.powerpc64le"/>
 		</antcall>
 		<antcall target="check_fragment_libraries">
-			<param name="library_count" value="8"/>
+			<param name="library_count" value="7"/>
 			<param name="fragment" value="org.eclipse.swt.gtk.freebsd.amd64"/>
 		</antcall>
 		<antcall target="check_fragment_libraries">
@@ -91,7 +90,7 @@
 	<target name="check_fragment_libraries" depends="get_version">
 		<echo>Checking ${fragment}</echo>
 		<property name="checkdir" value="~/build/check_libraries"/>
-		<property name="library_count" value="34"/>
+		<property name="library_count" value="31"/>
 		<property name="fragment" value=""/>
 		<fileset id="match" dir="${repo.bin}/bundles/${fragment}" includes="**/org.eclipse.swt.gtk.freebsd.aarch64/**, **/org.eclipse.swt.gtk.freebsd.powerpc64/**, **/org.eclipse.swt.gtk.freebsd.powerpc64le/**, **/org.eclipse.swt.gtk.freebsd.amd64/**, **/org.eclipse.swt.win32.win32.x86_64/**, **/org.eclipse.swt.cocoa.macosx.aarch64/**, **/org.eclipse.swt.cocoa.macosx.x86_64/**">
 			<filename regex="[0-9][0-9][0-9][0-9]"/>
@@ -103,7 +102,6 @@
 			<filename regex="[0-9][0-9][0-9][0-9]"/>
 			<filename regex="${swt_version}" negate="true"/>
 			<exclude name="**/.git/**"/>
-			<exclude name="**/chromium.properties"/>
 		</fileset>
 		<property name="match_text" refid="not_match"/>
 		<property name="not_match_text" refid="not_match"/>
@@ -250,7 +248,6 @@
 		<!-- <property name="tmpdir" value="${tmphome}/check.compile.${TAG}"/> -->
 		<property name="buildDir" value="${tmpdir}/build"/>
 		<property name="projectDir" value="${repo.src}/bundles/org.eclipse.swt"/>
-		<property name="projectChromiumDir" value="${repo.src}/bundles/org.eclipse.swt.browser.chromium"/>
 
 		<!-- 64 bit -->
 		<antcall target="build_classes">
@@ -265,6 +262,19 @@
 		
 		<antcall target="check_preprocessing"/>
 	</target>
+	
+	<target name="check_compilation_one_platform">
+			<mkdir dir="${tmphome}"/>
+			<!-- <property name="tmpdir" value="${tmphome}/check.compile.${TAG}"/> -->
+			<property name="buildDir" value="${tmpdir}/build"/>
+			<property name="projectDir" value="${repo.src}/bundles/org.eclipse.swt"/>
+
+			<!-- 64 bit -->
+			<antcall target="build_classes">
+				<param name="cp" value="${platform_cp}"/>
+			</antcall>
+			<antcall target="check_preprocessing"/>
+		</target>
 	
 	<target name="update_sha1_file">
 		<!-- Update build.sha1 file -->
@@ -288,13 +298,6 @@
 			<param name="outputDir" expression="${buildDir}"/>
 		</xslt>
 		<ant antfile="${tmpdir}/copy.xml" target="copy_files"/>
-
-		<delete file="${tmpdir}/copy_chromium.xml"/>
-		<xslt style="${projectDir}/tasks/classpath.xls" in="${projectChromiumDir}/${cp}" out="${tmpdir}/copy_chromium.xml">
-			<param name="srcDir" expression="${projectChromiumDir}"/>
-			<param name="outputDir" expression="${buildDir}"/>
-		</xslt>
-		<ant antfile="${tmpdir}/copy_chromium.xml" target="copy_files"/>
 
 		<javac includeantruntime="false" srcdir="${buildDir}" encoding="utf8"></javac>
 	</target>
@@ -330,12 +333,11 @@
 
 		<!-- Commit the files -->
 		<antcall target="commit_sources"/>
-		<antcall target="commit_chromium_properties"/>
 	</target>
 
 	<target name="commit_sources" depends="get_version" if="natives_changed">
 		<exec dir="${repo.src}" executable="git" failonerror="true">
-			<arg line="add '${file_library}' '${file_version}' '${file_make_common}' 'bundles/org.eclipse.swt.browser.chromium/common/rust-library/chromium_swt/Cargo.toml'"/>
+			<arg line="add '${file_library}' '${file_version}' '${file_make_common}' "/>
 		</exec>
 		<exec dir="${repo.src}" executable="git" failonerror="true">
 			<arg line="status"/>
@@ -345,18 +347,6 @@
 		</exec>
 	</target>
 	
-	<target name="commit_chromium_properties" depends="get_version" if="natives_changed">
-			<exec dir="${repo.bin}" executable="git" failonerror="true">
-				<arg line="add 'bundles/org.eclipse.swt.browser.chromium.*/chromium-*/chromium.properties'"/>
-			</exec>
-			<exec dir="${repo.bin}" executable="git" failonerror="true">
-				<arg line="status"/>
-			</exec>
-			<exec dir="${repo.bin}" executable="git" failonerror="true">
-				<arg line="commit -m 'v${swt_version}'"/>
-			</exec>
-	</target>
-
 	<target name="increment_version" depends="get_version" if="natives_changed">
 		<antcall target="increment_version_impl"/>
 	</target>
@@ -375,10 +365,6 @@
 		<replace file="${repo.src}/${file_make_common}" token="maj_ver=${maj_ver}" value="maj_ver=${new_maj_ver}"/>
 		<replace file="${repo.src}/${file_make_common}" token="rev=${rev}" value="rev=${new_rev}"/>
 		<replace file="${repo.src}/${file_make_common}" token="comma_ver=${comma_ver}" value="comma_ver=${new_comma_ver}"/>
-		<replace file="${repo.src}/bundles/org.eclipse.swt.browser.chromium/common/rust-library/chromium_swt/Cargo.toml" token="${swt_version}" value="${new_version}"/>
-		<replace file="${repo.bin}/bundles/org.eclipse.swt.browser.chromium.gtk.freebsd.amd64/chromium-${cef_ver}/chromium.properties" token="${swt_version}" value="${new_version}"/>
-		<replace file="${repo.bin}/bundles/org.eclipse.swt.browser.chromium.cocoa.macosx.x86_64/chromium-${cef_ver}/chromium.properties" token="${swt_version}" value="${new_version}"/>
-		<replace file="${repo.bin}/bundles/org.eclipse.swt.browser.chromium.win32.win32.x86_64/chromium-${cef_ver}/chromium.properties" token="${swt_version}" value="${new_version}"/>
 	</target>
 
 	<!-- Set the last swt_tag -->
@@ -518,7 +504,6 @@
 			<arg line="${src_win32}"/>
 			<arg line="${src_gtk}"/>
 			<arg line="${src_cocoa}"/>
-			<arg line="${src_chromium}"/>
 		</exec>
 		<condition property="natives_changed">
 			<length string="${diffs}" trim="true" when="greater" length="0"/>
@@ -647,9 +632,6 @@
 		<!-- Get list of files to commit -->
 		<fileset id="addid" dir="${repo.bin}">
 			<include name="bundles/*/*${swt_version}*"/>
-			<include name="bundles/*/webkitextensions${swt_version}/*${swt_version}*"/>
-			<include name="bundles/*/chromium-*/*${swt_version}*"/>
-			<include name="bundles/*/chromium-*/*${swt_version}*.app/**"/>
 			<include name="bundles/*/build.sha1"/>
 			<exclude name="**/.git/**"/>
 			<exclude name="**/tmpdir/**"/>
@@ -756,7 +738,6 @@
 		<property name="targets" value="install"/>
 		<property name="project_dir" value="${basedir}/${repo.src}"/>
 		<property name="output_dir" value="${basedir}/${fragment_dir}"/>
-		<property name="chromium_output_dir" value="${basedir}/${fragment_dir}"/>
 		<property name="build_dir" value="${basedir}/${fragment_dir}/tmpdir"/>
 		<delete dir="${build_dir}" quiet="true"/>
 		<antcall target="copy.library.src"/>
@@ -817,24 +798,12 @@
 			port="${port}"
 			keyfile="${keyfile}"
 			trust="true"
-	 		command="rm -rf ${remotetmpdir}; mkdir ${remotetmpdir}; mkdir ${lib_output}; mkdir ${lib_output}/chromium-${cef_ver}; cd ${remotetmpdir}; unzip -aa ${remotebuilddir}/${zip_file}; ${exports} export MODEL=${swt.arch}; export OUTPUT_DIR=${lib_output}; export CHROMIUM_OUTPUT_DIR=${lib_output}/chromium-${cef_ver}; ${build_cmd} then ${exit_cmd} cd; else ${exit_cmd} cd; rm -rf ${remotetmpdir}; rm ${remotebuilddir}/${zip_file}; exit 1; fi"/>
+	 		command="rm -rf ${remotetmpdir}; mkdir ${remotetmpdir}; mkdir ${lib_output}; cd ${remotetmpdir}; unzip -aa ${remotebuilddir}/${zip_file}; ${exports} export MODEL=${swt.arch}; export OUTPUT_DIR=${lib_output}; ${build_cmd} then ${exit_cmd} cd; else ${exit_cmd} cd; rm -rf ${remotetmpdir}; rm ${remotebuilddir}/${zip_file}; exit 1; fi"/>
 		<scp file="swtbuild@${build_machine}:${lib_output}/${libs}"
 			todir="${output_dir}"
 			port="${port}"
 			keyfile="${keyfile}"
 			trust="true"/>
-		<scp file="swtbuild@${build_machine}:${lib_output}/webkitextensions${swt_version}/*"
-			todir="${output_dir}/webkitextensions${swt_version}/"
-			port="${port}"
-			keyfile="${keyfile}"
-			trust="true"
-			failonerror="false"/>
-		<scp file="swtbuild@${build_machine}:${lib_output}/chromium-${cef_ver}/*"
-			todir="${chromium_output_dir}/chromium-${cef_ver}"
-			port="${port}"
-			keyfile="${keyfile}"
-			trust="true"
-			failonerror="false"/>
 		<sshexec host="${build_machine}"
 			username="swtbuild"
 			port="${port}"
@@ -845,16 +814,11 @@
 
 	<target name="build_local">
 		<property name="gtk_version" value="3.0" />
-		<exec executable="mkdir">
-			<arg value="-p"/>
-			<arg value="${output_dir}/webkitextensions${swt_version}/"/>
-		</exec>
 		<exec dir="${build_dir}" executable="sh" failonerror="true">
 			<arg line="build.sh"/>
 			<env key="GTK_VERSION" value="${gtk_version}"/>
 			<env key="MODEL" value="${swt.arch}"/>
 			<env key="OUTPUT_DIR" value="${output_dir}"/>
-			<env key="CHROMIUM_OUTPUT_DIR" value="${chromium_output_dir}"/>
 			<arg line="${targets}"/>
 			<arg line="${clean}"/>
 		</exec>
@@ -864,16 +828,8 @@
 		<pathconvert property="win_output_dir">
 			<path location="${output_dir}"></path>
 		</pathconvert>
-		<pathconvert property="win_chromium_output_dir">
-			<path location="${chromium_output_dir}"></path>
-		</pathconvert>
-		<pathconvert property="win_chromium_rust_dir">
-			<path location="${chromium_output_dir}/../../../eclipse.platform.swt/bundles/org.eclipse.swt.browser.chromium/common/rust-library"></path>
-		</pathconvert>
 		<exec dir="${build_dir}" executable="${build_dir}/build.bat" failonerror="true">
 			<env key="OUTPUT_DIR" value="${win_output_dir}"/>
-			<env key="CHROMIUM_OUTPUT_DIR" value="${win_chromium_output_dir}"/>
-			<env key="CHROMIUM_RUST_DIR" value="${win_chromium_rust_dir}"/>
 			<arg line="${targets}"/>
 			<arg line="${clean}"/>
 		</exec>

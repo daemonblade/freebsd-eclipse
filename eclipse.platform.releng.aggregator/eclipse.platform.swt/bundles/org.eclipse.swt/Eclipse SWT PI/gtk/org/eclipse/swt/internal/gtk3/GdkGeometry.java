@@ -14,7 +14,8 @@
  *******************************************************************************/
 package org.eclipse.swt.internal.gtk3;
 
-public class GdkGeometry {
+import org.eclipse.swt.internal.gtk.*;
+public class GdkGeometry implements GeometryInterface{
 	public int min_width;
 	public int min_height;
 	public int max_width;
@@ -27,4 +28,65 @@ public class GdkGeometry {
 	public double max_aspect;
 	public int win_gravity;
 	public static final int sizeof = GTK3.GdkGeometry_sizeof();
+
+	@Override
+	public int getMinWidth() {
+		return min_width;
+	}
+	@Override
+	public int getMinHeight() {
+		return min_height;
+	}
+	@Override
+	public int getMaxWidth() {
+		return max_width;
+	}
+	@Override
+	public int getMaxHeight() {
+		return max_height;
+	}
+	@Override
+	public boolean getResize() {
+		return false;
+	}
+	@Override
+	public int getRequestedWidth() {
+		return 0;
+	}
+	@Override
+	public int getRequestedHeight() {
+		return 0;
+	}
+	@Override
+	public void setMinWidth(int value) {
+		min_width = value;
+	}
+	@Override
+	public void setMinHeight(int value) {
+		min_height = value;
+	}
+	@Override
+	public void setMaxWidth(int value) {
+		max_width = value;
+	}
+	@Override
+	public void setMaxHeight(int value) {
+		max_height = value;
+	}
+	@Override
+	public void setResize(boolean value) {
+	}
+	@Override
+	public void setRequestedWidth(int value) {
+	}
+	@Override
+	public void setRequestedHeight(int value) {
+	}
+	@Override
+	public boolean getMinSizeRequested() {
+		return false;
+	}
+	@Override
+	public void setMinSizeRequested(boolean value) {
+	}
 }

@@ -16,82 +16,65 @@
   <setupTask
       xsi:type="setup:EclipseIniTask"
       option="-Doomph.redirection.platform.swt"
-      value="=https://git.eclipse.org/c/platform/eclipse.platform.swt.git/plain/bundles/org.eclipse.swt.tools/Oomph/platformSwt.setup->${git.clone.platform.swt.location|uri}/bundles/org.eclipse.swt.tools/Oomph/platformSwt.setup"
+      value="=https://raw.githubusercontent.com/eclipse-platform/eclipse.platform.swt/master/bundles/org.eclipse.swt.tools/Oomph/platformSwt.setup->${github.clone.platform.swt.location|uri}/bundles/org.eclipse.swt.tools/Oomph/platformSwt.setup"
       vm="true"/>
   <setupTask
       xsi:type="git:GitCloneTask"
-      id="git.clone.platform.swt"
-      remoteURI="platform/eclipse.platform.swt"
+      id="github.clone.platform.swt"
+      remoteURI="eclipse-platform/eclipse.platform.swt"
       pushURI="">
     <annotation
         source="http://www.eclipse.org/oomph/setup/InducedChoices">
       <detail
           key="inherit">
-        <value>eclipse.git.gerrit.remoteURIs</value>
+        <value>github.remoteURIs</value>
       </detail>
       <detail
           key="label">
-        <value>Platform SWT Git or Gerrit Repository</value>
+        <value>Platform SWT Github Repository</value>
       </detail>
       <detail
           key="target">
         <value>remoteURI</value>
       </detail>
     </annotation>
-    <configSections
-        name="gerrit">
-      <properties
-          key="createchangeid"
-          value="true"/>
-    </configSections>
     <description>Platform SWT</description>
   </setupTask>
   <setupTask
       xsi:type="setup:ResourceCopyTask"
       excludedTriggers="BOOTSTRAP"
-      sourceURL="${git.clone.platform.swt.location|uri}/bundles/org.eclipse.swt/.classpath_${osgi.ws}"
-      targetURL="${git.clone.platform.swt.location|uri}/bundles/org.eclipse.swt/.classpath"/>
-  <setupTask
-      xsi:type="setup:ResourceCopyTask"
-      excludedTriggers="BOOTSTRAP"
-      sourceURL="${git.clone.platform.swt.location|uri}/bundles/org.eclipse.swt.browser.chromium/.classpath_${osgi.ws}"
-      targetURL="${git.clone.platform.swt.location|uri}/bundles/org.eclipse.swt.browser.chromium/.classpath"/>
+      sourceURL="${github.clone.platform.swt.location|uri}/bundles/org.eclipse.swt/.classpath_${osgi.ws}"
+      targetURL="${github.clone.platform.swt.location|uri}/bundles/org.eclipse.swt/.classpath"/>
   <setupTask
       xsi:type="setup.workingsets:WorkingSetTask"/>
   <setupTask
       xsi:type="git:GitCloneTask"
-      id="git.clone.platform.swt.binaries"
-      remoteURI="platform/eclipse.platform.swt.binaries"
+      id="github.clone.platform.swt.binaries"
+      remoteURI="eclipse-platform/eclipse.platform.swt.binaries"
       pushURI=""
       restrictToCheckoutBranch="true">
     <annotation
         source="http://www.eclipse.org/oomph/setup/InducedChoices">
       <detail
           key="inherit">
-        <value>eclipse.git.gerrit.remoteURIs</value>
+        <value>github.remoteURIs</value>
       </detail>
       <detail
           key="label">
-        <value>Platform SWT Git or Gerrit Repository</value>
+        <value>Platform SWT Github Repository</value>
       </detail>
       <detail
           key="target">
         <value>remoteURI</value>
       </detail>
     </annotation>
-    <configSections
-        name="gerrit">
-      <properties
-          key="createchangeid"
-          value="true"/>
-    </configSections>
     <description>Platform SWT</description>
   </setupTask>
   <setupTask
       xsi:type="setup:ResourceCopyTask"
       excludedTriggers="BOOTSTRAP"
-      sourceURL="${git.clone.platform.swt.location|uri}/examples/org.eclipse.swt.snippets/.classpath_${osgi.ws}"
-      targetURL="${git.clone.platform.swt.location|uri}/examples/org.eclipse.swt.snippets/.classpath"/>
+      sourceURL="${github.clone.platform.swt.location|uri}/examples/org.eclipse.swt.snippets/.classpath_${osgi.ws}"
+      targetURL="${github.clone.platform.swt.location|uri}/examples/org.eclipse.swt.snippets/.classpath"/>
   <setupTask
       xsi:type="setup.targlets:TargletTask">
     <targlet
@@ -100,7 +83,7 @@
       <requirement
           name="*"/>
       <sourceLocator
-          rootFolder="${git.clone.platform.swt.binaries.location}"
+          rootFolder="${github.clone.platform.swt.binaries.location}"
           locateNestedProjects="true">
         <predicate
             xsi:type="predicates:OrPredicate">
@@ -122,7 +105,7 @@
       <requirement
           name="*"/>
       <sourceLocator
-          rootFolder="${git.clone.platform.swt.location}"
+          rootFolder="${github.clone.platform.swt.location}"
           locateNestedProjects="true">
         <predicate
             xsi:type="predicates:OrPredicate">
@@ -166,7 +149,8 @@
     </targlet>
   </setupTask>
   <setupTask
-      xsi:type="setup.workingsets:WorkingSetTask">
+      xsi:type="setup.workingsets:WorkingSetTask"
+      id="workingsets.platform.swt">
     <workingSet
         name="SWT Tools">
       <predicate
@@ -212,7 +196,7 @@
             project="org.eclipse.swt"/>
         <operand
             xsi:type="workingsets:ExclusionPredicate"
-            excludedWorkingSet="//@setupTasks.8/@workingSets.2 //@setupTasks.8/@workingSets.1 //@setupTasks.8/@workingSets.0"/>
+            excludedWorkingSet="//'workingsets.platform.swt'/@workingSets[name='SWT%20Examples'] //'workingsets.platform.swt'/@workingSets[name='SWT%20Tests'] //'workingsets.platform.swt'/@workingSets[name='SWT%20Tools']"/>
       </predicate>
     </workingSet>
     <workingSet
@@ -221,7 +205,7 @@
           xsi:type="predicates:AndPredicate">
         <operand
             xsi:type="predicates:LocationPredicate"
-            pattern="\Q${git.clone.platform.swt.binaries.location|path}/\E.*"/>
+            pattern="\Q${github.clone.platform.swt.binaries.location|path}/\E.*"/>
       </predicate>
     </workingSet>
   </setupTask>
@@ -241,6 +225,58 @@
     <repository
         url="${eclipse.latest.p2}"/>
   </setupTask>
+  <project name="website"
+      label="Website">
+    <setupTask
+        xsi:type="git:GitCloneTask"
+        id="github.clone.swt.website"
+        remoteURI="eclipse-platform/www.eclipse.org-swt"
+        pushURI="">
+      <annotation
+          source="http://www.eclipse.org/oomph/setup/InducedChoices">
+        <detail
+            key="inherit">
+          <value>github.remoteURIs</value>
+        </detail>
+        <detail
+            key="label">
+          <value>Platform Website Github Repository</value>
+        </detail>
+        <detail
+            key="target">
+          <value>remoteURI</value>
+        </detail>
+      </annotation>
+      <description>SWT Website</description>
+    </setupTask>
+    <setupTask
+        xsi:type="setup.targlets:TargletTask">
+      <targlet
+          name="SWT Website">
+        <requirement
+            name="*"/>
+        <sourceLocator
+            rootFolder="${github.clone.swt.website.location}"/>
+      </targlet>
+    </setupTask>
+    <setupTask
+        xsi:type="setup.workingsets:WorkingSetTask"
+        id="swt.website.workingsets">
+      <workingSet
+          name="SWT  Website">
+        <predicate
+            xsi:type="predicates:AndPredicate">
+          <operand
+              xsi:type="predicates:RepositoryPredicate"
+              project="swt"/>
+        </predicate>
+      </workingSet>
+    </setupTask>
+    <stream
+        name="master"
+        label="Master"/>
+    <description>The SWT Website</description>
+  </project>
   <stream name="master"
       label="Master"/>
   <logicalProjectContainer

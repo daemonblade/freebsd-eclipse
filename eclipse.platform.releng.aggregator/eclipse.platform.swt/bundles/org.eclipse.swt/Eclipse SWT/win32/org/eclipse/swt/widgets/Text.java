@@ -76,6 +76,8 @@ public class Text extends Scrollable {
 	/* Custom icons defined in swt.rc */
 	static final int IDI_SEARCH = 101;
 	static final int IDI_CANCEL = 102;
+	static final int IDI_SEARCH_DARKTHEME = 103;
+	static final int IDI_CANCEL_DARKTHEME = 104;
 
 	/**
 	* The maximum number of characters that can be entered
@@ -337,10 +339,14 @@ void createHandle () {
 	if ((style & SWT.SEARCH) != 0) {
 		if (display.hIconSearch == 0) {
 			long [] phicon = new long [1];
-			int hresult = OS.LoadIconMetric (OS.GetLibraryHandle (), IDI_SEARCH, OS.LIM_SMALL, phicon);
+
+			int searchIconResource = display.textUseDarkthemeIcons ? IDI_SEARCH_DARKTHEME : IDI_SEARCH;
+			int hresult = OS.LoadIconMetric (OS.GetLibraryHandle (), searchIconResource, OS.LIM_SMALL, phicon);
 			if (hresult != OS.S_OK) error (SWT.ERROR_NO_HANDLES);
 			display.hIconSearch = phicon [0];
-			hresult = OS.LoadIconMetric (OS.GetLibraryHandle (), IDI_CANCEL, OS.LIM_SMALL, phicon);
+
+			int cancelIconResource = display.textUseDarkthemeIcons ? IDI_CANCEL_DARKTHEME : IDI_CANCEL;
+			hresult = OS.LoadIconMetric (OS.GetLibraryHandle (), cancelIconResource, OS.LIM_SMALL, phicon);
 			if (hresult != OS.S_OK) error (SWT.ERROR_NO_HANDLES);
 			display.hIconCancel = phicon [0];
 		}
@@ -2777,7 +2783,7 @@ LRESULT WM_DRAWITEM (long wParam, long lParam) {
 	drawBackground (struct.hDC, rect, -1, pt.x, pt.y);
 	if (struct.CtlID == SWT.ICON_CANCEL && struct.hwndItem == hwndActiveIcon && OS.IsAppThemed()) {
 		int state = OS.GetKeyState (OS.VK_LBUTTON) < 0 ? OS.PBS_PRESSED : OS.PBS_HOT;
-		OS.DrawThemeBackground (display.hButtonTheme (), struct.hDC, OS.BP_PUSHBUTTON, state, rect, null);
+		OS.DrawThemeBackground (display.hButtonThemeAuto (), struct.hDC, OS.BP_PUSHBUTTON, state, rect, null);
 	}
 	long hIcon = (struct.CtlID == SWT.ICON_SEARCH) ? display.hIconSearch : display.hIconCancel;
 	int y = (rect.bottom - rect.right) / 2;

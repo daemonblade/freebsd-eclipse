@@ -57,6 +57,8 @@ public abstract class Control extends Widget implements Drawable {
 	static final boolean DISABLE_EMOJI = Boolean.getBoolean("SWT_GTK_INPUT_HINT_NO_EMOJI");
 
 	long fixedHandle;
+	long firstFixedHandle = 0;
+	long keyController;
 	long redrawWindow, enableWindow, provider;
 	int drawCount, backgroundAlpha = 255;
 	long dragGesture, zoomGesture, rotateGesture, panGesture;
@@ -432,8 +434,9 @@ void hookEvents () {
 
 private void hookKeyboardAndFocusSignals(long focusHandle) {
 	if (GTK.GTK4) {
-		long keyController = GTK4.gtk_event_controller_key_new();
+		keyController = GTK4.gtk_event_controller_key_new();
 		GTK4.gtk_widget_add_controller(focusHandle, keyController);
+		GTK.gtk_event_controller_set_propagation_phase(keyController, GTK.GTK_PHASE_CAPTURE);
 		OS.g_signal_connect(keyController, OS.key_pressed, display.keyPressReleaseProc, KEY_PRESSED);
 		OS.g_signal_connect(keyController, OS.key_released, display.keyPressReleaseProc, KEY_RELEASED);
 
@@ -882,11 +885,7 @@ void forceResize () {
 	gtk_widget_get_preferred_size (topHandle, requisition);
 	GtkAllocation allocation = new GtkAllocation ();
 	GTK.gtk_widget_get_allocation(topHandle, allocation);
-	if (GTK.GTK4) {
-		GTK4.gtk_widget_size_allocate (topHandle, allocation, -1);
-	} else {
-		GTK3.gtk_widget_size_allocate (topHandle, allocation);
-	}
+	gtk_widget_size_allocate(topHandle, allocation, -1);
 }
 
 /**
@@ -1070,7 +1069,7 @@ Point resizeCalculationsGTK3 (long widget, int width, int height) {
 }
 
 int setBounds (int x, int y, int width, int height, boolean move, boolean resize) {
-	// bug in GTK2 crashes JVM, in GTK3 the new shell only. See bug 472743
+	// bug in GTK3 the crashes new shell only. See bug 472743
 	width = Math.min(width, (2 << 14) - 1);
 	height = Math.min(height, (2 << 14) - 1);
 
@@ -1153,11 +1152,7 @@ int setBounds (int x, int y, int width, int height, boolean move, boolean resize
 			Control focusControl = display.getFocusControl();
 			GTK.gtk_widget_show(topHandle);
 			gtk_widget_get_preferred_size (topHandle, requisition);
-			if (GTK.GTK4) {
-				GTK4.gtk_widget_size_allocate (topHandle, allocation, -1);
-			} else {
-				GTK3.gtk_widget_size_allocate (topHandle, allocation);
-			}
+			gtk_widget_size_allocate(topHandle, allocation, -1);
 			GTK.gtk_widget_hide(topHandle);
 			/* Bug 540002: Showing and hiding widget causes original focused control to loose focus,
 			 * Reset focus to original focused control after dealing with allocation.
@@ -3236,29 +3231,19 @@ public Menu getMenu () {
 public Monitor getMonitor () {
 	checkWidget ();
 	Monitor[] monitors = display.getMonitors ();
-	if (GTK.GTK_VERSION >= OS.VERSION(3, 22, 0)) {
-		long display = GDK.gdk_display_get_default ();
-		if (display != 0) {
-			long monitor;
-			if (GTK.GTK4) {
-				monitor = GDK.gdk_display_get_monitor_at_surface(display, paintSurface ());
-			} else {
-				monitor = GDK.gdk_display_get_monitor_at_window(display, paintWindow ());
-			}
-			long toCompare;
-			for (int i = 0; i < monitors.length; i++) {
-				toCompare = GDK.gdk_display_get_monitor(display, i);
-				if (toCompare == monitor) {
-					return monitors[i];
-				}
-			}
+	long displayHandle = GDK.gdk_display_get_default ();
+	if (displayHandle != 0) {
+		long monitor;
+		if (GTK.GTK4) {
+			monitor = GDK.gdk_display_get_monitor_at_surface(displayHandle, paintSurface ());
+		} else {
+			monitor = GDK.gdk_display_get_monitor_at_window(displayHandle, paintWindow ());
 		}
-	} else {
-		long screen = GDK.gdk_screen_get_default ();
-		if (screen != 0) {
-			int monitorNumber = GDK.gdk_screen_get_monitor_at_window (screen, paintWindow ());
-			if (monitorNumber >= 0 && monitorNumber < monitors.length) {
-				return monitors [monitorNumber];
+		long toCompare;
+		for (int i = 0; i < monitors.length; i++) {
+			toCompare = GDK.gdk_display_get_monitor(displayHandle, i);
+			if (toCompare == monitor) {
+				return monitors[i];
 			}
 		}
 	}
@@ -3930,6 +3915,25 @@ void gtk4_focus_enter_event(long controller, long event) {
 	super.gtk4_focus_enter_event(controller, event);
 
 	sendFocusEvent(SWT.FocusIn);
+}
+
+@Override
+void gtk4_focus_window_event(long handle, long event) {
+	super.gtk4_focus_window_event(handle, event);
+
+	if(firstFixedHandle == 0) {
+		long child = handle;
+		//3rd child of shell will be SWTFixed
+		for(int i = 0; i<3; i++) {
+			child = GTK4.gtk_widget_get_first_child(child);
+		}
+		firstFixedHandle = child != 0 ? child:0;
+	}
+
+	if(firstFixedHandle !=0 && GTK.gtk_widget_has_focus(firstFixedHandle)) {
+		if(event == SWT.FocusIn)sendFocusEvent(SWT.FocusIn);
+		else sendFocusEvent(SWT.FocusOut);
+	}
 }
 
 @Override
@@ -4831,7 +4835,13 @@ void destroyWidget() {
 	if (GTK.GTK4) {
 		// Remove widget from hierarchy  by removing it from parent container
 		if (parent != null) {
-			OS.swt_fixed_remove(parent.parentingHandle(), fixedHandle);
+			long currHandle = topHandle();
+			if(GTK.GTK_IS_WINDOW(currHandle)) {
+				GTK4.gtk_window_destroy(currHandle);
+			}
+			else {
+				OS.swt_fixed_remove(parent.parentingHandle(), fixedHandle);
+			}
 		}
 		releaseHandle();
 	} else {
@@ -5007,7 +5017,13 @@ boolean sendMouseEvent (int type, int button, int count, int detail, boolean sen
 				sendOrPost(SWT.MouseDown, mouseDownEvent);
 			}
 		}
-		return true;
+		/* This checks for Wayland, a previous MouseDown || MouseMove in the
+		 * dragDetectionQueue and it checks if the current event is MouseMove
+		 * This will prevent them from not being queued, which caused
+		 * Bug 576215 - [Wayland] Mouse events not received as on other platforms.
+		 * In x11 this will always return true as before.
+		 */
+		if( (OS.isX11() || (dragDetectionQueue == null) || (type != SWT.MouseMove)) ) return true;
 	}
 	Event event = new Event ();
 	event.time = time;
@@ -5039,7 +5055,6 @@ boolean sendMouseEvent (int type, int button, int count, int detail, boolean sen
 
 	/**
 	 * Bug 510446:
-	 * In the original gtk2 DnD architecture, Drag detection was done in mouseDown.
 	 * For Wayland support, Drag detection is now done in mouseMove (as does gtk internally).
 	 *
 	 * However, traditionally external widgets (e.g StyledText or non-SWT widgets) expect to
@@ -5052,7 +5067,7 @@ boolean sendMouseEvent (int type, int button, int count, int detail, boolean sen
 	 * - To ensure we follow 'send/post' contract as per parameter, we
 	 *   temporarily utilize event.data to hold send/post flag.
 	 *   There's also logic in place such that mouseDown/mouseMotion is always sent before mouseUp.
-	 * - On Gtk2, mouseMove is sent during DnD. On Gtk3x11 it's not due to hacky implementation of DnD.
+	 * - On Gtk3x11 it's not due to hacky implementation of DnD.
 	 *   On Wayland mouseMove is once again sent during DnD as per improved architecture.
 	 */
 	event.data = Boolean.valueOf(send);
@@ -5281,21 +5296,6 @@ public void setBackgroundImage (Image image) {
 }
 
 void setBackgroundSurface (Image image) {
-	if (GTK.GTK_VERSION >= OS.VERSION(3, 22, 0)) {
-		// gdk_window_set_background_pattern() deprecated in GTK3.22+
-		return;
-	}
-
-	long window = GTK3.gtk_widget_get_window (paintHandle ());
-	if (window != 0) {
-		if (image.surface != 0) {
-			long pattern = Cairo.cairo_pattern_create_for_surface(image.surface);
-			if (pattern == 0) SWT.error(SWT.ERROR_NO_HANDLES);
-			Cairo.cairo_pattern_set_extend(pattern, Cairo.CAIRO_EXTEND_REPEAT);
-			GDK.gdk_window_set_background_pattern(window, pattern);
-			Cairo.cairo_pattern_destroy(pattern);
-		}
-	}
 }
 
 /**
@@ -5875,11 +5875,7 @@ public boolean setParent (Composite parent) {
 	allocation.y = y;
 	allocation.width = width;
 	allocation.height = height;
-	if (GTK.GTK4) {
-		GTK4.gtk_widget_size_allocate (topHandle, allocation, -1);
-	} else {
-		GTK3.gtk_widget_size_allocate (topHandle, allocation);
-	}
+	gtk_widget_size_allocate(topHandle, allocation, -1);
 	this.parent = parent;
 	setZOrder (null, false, true);
 	reskin (SWT.ALL);
@@ -5955,10 +5951,6 @@ public void setRedraw (boolean redraw) {
 							GDK.GDK_BUTTON_MOTION_MASK | GDK.GDK_BUTTON1_MOTION_MASK |
 							GDK.GDK_BUTTON2_MOTION_MASK | GDK.GDK_BUTTON3_MOTION_MASK;
 						GDK.gdk_window_set_events (window, GDK.gdk_window_get_events (window) & ~mouseMask);
-						// No gdk_surface_set_background_pattern() on GTK4.
-						if (GTK.GTK_VERSION < OS.VERSION(3, 22, 0)) {
-							GDK.gdk_window_set_background_pattern(redrawWindow, 0);
-						}
 						GDK.gdk_window_show (redrawWindow);
 					}
 				}

@@ -398,7 +398,12 @@ void drag(Event dragDetectEvent) {
 
 void dragOutlineViewStart(Event dragDetectEvent) {
 	DNDEvent event = startDrag(dragDetectEvent);
-	if (event == null) return;
+	if (event == null) {
+		// This causes our 'outlineView:writeItems:toPasteboard:' listener
+		// to return NO to cancel drag.
+		dragDetectEvent.doit = false;
+		return;
+	}
 
 	// Save off the custom image, if any.
 	dragImageFromListener = event.image;
@@ -814,6 +819,11 @@ public void setTransfer(Transfer... transferAgents){
 	this.transferAgents = transferAgents;
 }
 
+boolean canBeginDrag() {
+	if (transferAgents == null || transferAgents.length == 0) return false;
+	return true;
+}
+
 DNDEvent startDrag(Event dragEvent) {
 	DNDEvent event = new DNDEvent();
 	event.widget = this;
@@ -822,7 +832,7 @@ DNDEvent startDrag(Event dragEvent) {
 	event.time = dragEvent.time;
 	event.doit = true;
 	notifyListeners(DND.DragStart, event);
-	if (!event.doit || transferAgents == null || transferAgents.length == 0) return null;
+	if (!event.doit || !canBeginDrag()) return null;
 
 	NSPasteboard dragBoard = NSPasteboard.pasteboardWithName(OS.NSDragPboard);
 	NSMutableArray nativeTypeArray = NSMutableArray.arrayWithCapacity(10);
