@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003, 2020 IBM Corporation and others.
+ * Copyright (c) 2003, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -20,7 +20,7 @@
  *     Jan Koehnlein - Fix for bug 60964 (454698)
  *     Terry Parker - Bug 457504, Publish a job group's final status to IJobChangeListeners
  *     Xored Software Inc - Fix for bug 550738
- *     Christoph Laeubrich - remove deprecated API
+ *     Christoph Laeubrich 	- Issue #40
  *******************************************************************************/
 package org.eclipse.core.internal.jobs;
 
@@ -100,7 +100,7 @@ public class JobManager implements IJobManager, DebugOptionsListener {
 	/**
 	 * Last time (relative to originTime) returned by {@link #now()}
 	 */
-	private AtomicLong currentTimeInMs;
+	private final AtomicLong currentTimeInMs;
 
 	/**
 	 * Scheduling rule used for validation of client-defined rules.
@@ -201,7 +201,7 @@ public class JobManager implements IJobManager, DebugOptionsListener {
 	 * Counter to record wait queue insertion order.
 	 * @GuardedBy("lock")
 	 */
-	Counter waitQueueCounter = new Counter();
+	private final AtomicLong waitQueueCounter = new AtomicLong();
 
 	/**
 	 * A set of progress monitors we must track cancellation requests for.
@@ -213,6 +213,10 @@ public class JobManager implements IJobManager, DebugOptionsListener {
 
 	public static void debug(String msg) {
 		DEBUG_TRACE.trace(null, msg);
+	}
+
+	long getNextWaitQueueStamp() {
+		return waitQueueCounter.getAndIncrement();
 	}
 
 	/**
@@ -598,7 +602,7 @@ public class JobManager implements IJobManager, DebugOptionsListener {
 					changeState(job, Job.SLEEPING);
 				} else {
 					job.setStartTime(now() + delayFor(job.getPriority()));
-					job.setWaitQueueStamp(waitQueueCounter.increment());
+					job.setWaitQueueStamp(getNextWaitQueueStamp());
 					changeState(job, Job.WAITING);
 				}
 			}
@@ -946,16 +950,12 @@ public class JobManager implements IJobManager, DebugOptionsListener {
 		IJobChangeListener listener = null;
 		final Set<InternalJob> jobs;
 		int jobCount;
-		Job blocking = null;
 		synchronized (lock) {
 			//don't join a waiting or sleeping job when suspended (deadlock risk)
 			int states = suspended ? Job.RUNNING : Job.RUNNING | Job.WAITING | Job.SLEEPING;
 			jobs = Collections.synchronizedSet(new HashSet<>(select(family, states)));
 			jobCount = jobs.size();
 			if (jobCount > 0) {
-				//if there is only one blocking job, use it in the blockage callback below
-				if (jobCount == 1)
-					blocking = (Job) jobs.iterator().next();
 				listener = new JobChangeAdapter() {
 					@Override
 					public void done(IJobChangeEvent event) {
@@ -1005,14 +1005,24 @@ public class JobManager implements IJobManager, DebugOptionsListener {
 			monitor.done();
 			return;
 		}
+		int blockReports = 0;
 		//spin until all jobs are completed
 		try {
 			monitor.beginTask(JobMessages.jobs_blocked0, jobCount);
 			monitor.subTask(getWaitMessage(jobCount));
-			reportBlocked(monitor, blocking);
 			int jobsLeft;
 			int reportedWorkDone = 0;
+			List<InternalJob> reportedBlockingJobs = List.of();
 			while ((jobsLeft = jobs.size()) > 0) {
+				List<InternalJob> blockingJobs;
+				synchronized (jobs) {
+					blockingJobs = new ArrayList<>(jobs);
+				}
+				if (!Objects.equals(reportedBlockingJobs, blockingJobs)) {
+					blockReports++; // see WorkbenchDialogBlockedHandler.nestingDepth
+					reportBlocked(monitor, blockingJobs);
+					reportedBlockingJobs = blockingJobs;
+				}
 				//don't let there be negative work done if new jobs have
 				//been added since the join began
 				int actualWorkDone = Math.max(0, jobCount - jobsLeft);
@@ -1036,7 +1046,9 @@ public class JobManager implements IJobManager, DebugOptionsListener {
 		} finally {
 			lockManager.aboutToRelease();
 			removeJobChangeListener(listener);
-			reportUnblocked(monitor);
+			for (int i = 0; i < blockReports; i++) {
+				reportUnblocked(monitor);
+			}
 			monitor.done();
 		}
 	}
@@ -1088,19 +1100,27 @@ public class JobManager implements IJobManager, DebugOptionsListener {
 	}
 
 	/**
-	 * Returns a non-null progress monitor instance.  If the monitor is null,
-	 * returns the default monitor supplied by the progress provider, or a
-	 * NullProgressMonitor if no default monitor is available.
+	 * Returns a non-null progress monitor instance. If a progress provider is set,
+	 * it is asked to provide a wrapped instance of the given <code>monitor</code>
+	 * parameter. If no progress provider is set and <code>monitor</code> is null, a
+	 * NullProgressMonitor is returned in all other cases the given
+	 * <code>monitor</code> instance.
+	 *
+	 * @param monitor the monitor instance (could be null) for further usage
+	 * @return a non-null progress monitor instance.
 	 */
 	private IProgressMonitor monitorFor(IProgressMonitor monitor) {
-		if (monitor == null || (monitor instanceof NullProgressMonitor)) {
-			if (progressProvider != null) {
-				try {
-					monitor = progressProvider.getDefaultMonitor();
-				} catch (Exception e) {
-					String msg = NLS.bind(JobMessages.meta_pluginProblems, JobManager.PI_JOBS);
-					RuntimeLog.log(new Status(IStatus.ERROR, JobManager.PI_JOBS, JobManager.PLUGIN_ERROR, msg, e));
+		if (progressProvider != null) {
+			try {
+				IProgressMonitor monitorFor = progressProvider.monitorFor(monitor);
+				if (monitorFor == null) {
+					throw new IllegalStateException("Internal error: " + //$NON-NLS-1$
+							progressProvider.getClass().getName() + "#monitorFor(" + monitor + ") returned null!"); //$NON-NLS-1$ //$NON-NLS-2$
 				}
+				return monitorFor;
+			} catch (Exception e) {
+				String msg = NLS.bind(JobMessages.meta_pluginProblems, JobManager.PI_JOBS);
+				RuntimeLog.log(new Status(IStatus.ERROR, JobManager.PI_JOBS, JobManager.PLUGIN_ERROR, msg, e));
 			}
 		}
 
@@ -1129,7 +1149,7 @@ public class JobManager implements IJobManager, DebugOptionsListener {
 			InternalJob job = sleeping.peek();
 			while (job != null && job.getStartTime() < now) {
 				job.setStartTime(now + delayFor(job.getPriority()));
-				job.setWaitQueueStamp(waitQueueCounter.increment());
+				job.setWaitQueueStamp(getNextWaitQueueStamp());
 				changeState(job, Job.WAITING);
 				job = sleeping.peek();
 			}
@@ -1212,16 +1232,19 @@ public class JobManager implements IJobManager, DebugOptionsListener {
 	}
 
 	/**
-	 * Report to the progress monitor that this thread is blocked, supplying
-	 * an information message, and if possible the job that is causing the blockage.
-	 * Important: An invocation of this method MUST be followed eventually be
-	 * an invocation of reportUnblocked.
-	 * @param monitor The monitor to report blocking to
-	 * @param blockingJob The job that is blocking this thread, or <code>null</code>
+	 * Report to the progress monitor that this thread is blocked, supplying an
+	 * information message, and if possible jobs that are causing the blockage.
+	 * Important: An invocation of this method MUST be followed eventually be an
+	 * invocation of reportUnblocked.
+	 *
+	 * @param monitor      The monitor to report blocking to
+	 * @param blockingJobs The jobs that are blocking this thread
 	 * @see #reportUnblocked
 	 */
-	final void reportBlocked(IProgressMonitor monitor, InternalJob blockingJob) {
+	final void reportBlocked(IProgressMonitor monitor, List<InternalJob> blockingJobs) {
 		IStatus reason;
+		InternalJob blockingJob = blockingJobs.stream().sorted(Comparator.comparing(InternalJob::isSystem)).findFirst()
+				.orElse(null);
 		if (blockingJob == null || blockingJob instanceof ThreadJob || blockingJob.isSystem()) {
 			reason = new Status(IStatus.INFO, JobManager.PI_JOBS, 1, JobMessages.jobs_blocked0, null);
 		} else {

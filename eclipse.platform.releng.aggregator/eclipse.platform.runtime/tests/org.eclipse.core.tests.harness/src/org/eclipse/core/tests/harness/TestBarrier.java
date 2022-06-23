@@ -21,7 +21,11 @@ import org.junit.Assert;
  * particular state in a reasonable amount of time. This prevents test suites
  * from hanging indefinitely if a concurrency bug is found that would normally
  * result in an indefinite hang.
+ *
+ * @deprecated use TestBarrier2 instead
+ * 
  */
+@Deprecated
 public class TestBarrier {
 
 	/**

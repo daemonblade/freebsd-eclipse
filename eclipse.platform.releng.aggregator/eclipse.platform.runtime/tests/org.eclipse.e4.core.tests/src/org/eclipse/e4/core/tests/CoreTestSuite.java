@@ -22,8 +22,10 @@ import org.eclipse.e4.core.internal.tests.contexts.ActivationTest;
 import org.eclipse.e4.core.internal.tests.contexts.ContextDynamicTest;
 import org.eclipse.e4.core.internal.tests.contexts.DependenciesLeakTest;
 import org.eclipse.e4.core.internal.tests.contexts.EclipseContextTest;
+import org.eclipse.e4.core.internal.tests.contexts.NeutralValueTest;
 import org.eclipse.e4.core.internal.tests.contexts.ReparentingTest;
 import org.eclipse.e4.core.internal.tests.contexts.RunAndTrackTest;
+import org.eclipse.e4.core.internal.tests.contexts.StrongIterableTest;
 import org.eclipse.e4.core.internal.tests.contexts.inject.ActivationInjectionTest;
 import org.eclipse.e4.core.internal.tests.contexts.inject.AnnotationsInjectionTest;
 import org.eclipse.e4.core.internal.tests.contexts.inject.Bug317183Test;
@@ -90,6 +92,7 @@ import junit.framework.Test;
 		AutoConstructWithCreatableTest.class,
 
 		// Contexts
+		StrongIterableTest.class,
 		EclipseContextTest.class,
 		ContextInjectionTest.class,
 		ContextInjectionDisposeTest.class,
@@ -102,6 +105,7 @@ import junit.framework.Test;
 		DisposeClassLinkTest.class,
 		InjectStaticContextTest.class,
 		ActivationTest.class,
+		NeutralValueTest.class,
 
 		// Contexts injection
 		AnnotationsInjectionTest.class,

@@ -19,20 +19,23 @@ import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.Stack;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import org.eclipse.e4.core.contexts.IContextFunction;
 import org.eclipse.e4.core.contexts.IEclipseContext;
 import org.eclipse.e4.core.contexts.RunAndTrack;
 import org.eclipse.e4.core.di.IInjector;
+import org.eclipse.e4.core.internal.contexts.ConcurrentNeutralValueMap.Value;
 import org.eclipse.e4.core.internal.contexts.osgi.ContextDebugHelper;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
@@ -89,15 +92,20 @@ public class EclipseContext implements IEclipseContext {
 	}
 
 	private WeakGroupedListenerList weakListeners = new WeakGroupedListenerList();
-	private Map<String, ValueComputation> localValueComputations = Collections.synchronizedMap(new HashMap<>());
+	private Map<String, ValueComputation> localValueComputations = new ConcurrentHashMap<>();
 
-	final protected Map<String, Object> localValues = Collections.synchronizedMap(new HashMap<>());
+	final protected ConcurrentNeutralValueMap<String, Object> localValues = // null values allowed
+			new ConcurrentNeutralValueMap<>();
 
 	private Set<String> modifiable;
 
 	private List<Computation> waiting; // list of Computations; null for all non-root entries
 
-	private Set<WeakReference<EclipseContext>> children = new HashSet<>();
+	/** Concurrent Collection of {@link #selfRef} */
+	private final Collection<WeakReference<EclipseContext>> children = new ConcurrentLinkedDeque<>();
+	/** The WeakReference in {@link #getParent()}'s {@link #children} */
+	private WeakReference<EclipseContext> selfRef;
+	private final StrongIterable<EclipseContext> childIterable = new StrongIterable<>(this.children);
 
 	private Set<IContextDisposalListener> notifyOnDisposal = new HashSet<>();
 
@@ -127,24 +135,8 @@ public class EclipseContext implements IEclipseContext {
 			debugAddOn.notify(this, IEclipseContextDebugger.EventType.CONSTRUCTED, null);
 	}
 
-	final static private Set<EclipseContext> noChildren = new HashSet<>(0);
-
-	public Set<EclipseContext> getChildren() {
-		Set<EclipseContext> result;
-		synchronized (children) {
-			if (children.isEmpty())
-				return noChildren;
-			result = new HashSet<>(children.size());
-			for (Iterator<WeakReference<EclipseContext>> i = children.iterator(); i.hasNext();) {
-				EclipseContext referredContext = i.next().get();
-				if (referredContext == null) {
-					i.remove();
-					continue;
-				}
-				result.add(referredContext);
-			}
-		}
-		return result;
+	public Iterable<EclipseContext> getChildren() {
+		return childIterable;
 	}
 
 	@Override
@@ -193,11 +185,10 @@ public class EclipseContext implements IEclipseContext {
 			}
 			notifyOnDisposal.clear();
 		}
-
-		for (ValueComputation computation : localValueComputations.values()) {
-			computation.dipose();
-		}
-		localValueComputations.clear();
+		localValueComputations.values().removeIf(computation -> {
+			computation.dispose();
+			return true;
+		});
 
 		// if this was the parent's active child, deactivate it
 		EclipseContext parent = getParent();
@@ -211,7 +202,7 @@ public class EclipseContext implements IEclipseContext {
 		localValues.clear();
 
 		if (parent != null) {
-			parent.removeChild(this);
+			selfRef.clear(); // remove from parent
 			if (rootContext != null) {
 				rootContext.cleanup();
 			}
@@ -256,8 +247,9 @@ public class EclipseContext implements IEclipseContext {
 
 		Object result = null;
 		// 1. try for local value
-		if (localValues.containsKey(name)) {
-			result = localValues.get(name);
+		Value<Object> value = localValues.getValue(name);
+		if (value.isPresent()) {
+			result = value.unwrapped();
 			if (result == null)
 				return null;
 		} else
@@ -290,39 +282,39 @@ public class EclipseContext implements IEclipseContext {
 	 * computations and listeners that depend on this name.
 	 */
 	public void invalidate(String name, int eventType, Object oldValue, Object newValue, Set<Scheduled> scheduled) {
-		ContextChangeEvent event = null;
-		ValueComputation computation = localValueComputations.get(name);
-		if (computation != null) {
-			event = new ContextChangeEvent(this, eventType, null, name, oldValue);
+		ContextChangeEvent event = new ContextChangeEvent(this, eventType, null, name, oldValue);
+
+		ValueComputation newComputation = localValueComputations.computeIfPresent(name, (k, computation) -> {
 			if (computation.shouldRemove(event)) {
-				localValueComputations.remove(name);
 				weakListeners.remove(computation);
+				return null; // remove
 			}
-			computation.handleInvalid(event, scheduled);
+			return computation; // keep
+		});
+		if (newComputation != null) {
+			newComputation.handleInvalid(event, scheduled);
 		}
 		Set<Computation> namedComputations = weakListeners.getListeners(name);
 		if (namedComputations != null && !namedComputations.isEmpty()) {
-			if (event == null) {
-				event = new ContextChangeEvent(this, eventType, null, name, oldValue);
-			}
 			for (Computation listener : namedComputations) {
 				listener.handleInvalid(event, scheduled);
 			}
 		}
-
+		boolean addedOrRemoved = eventType == ContextChangeEvent.ADDED || eventType == ContextChangeEvent.REMOVED;
 		// invalidate this name in child contexts
 		for (EclipseContext childContext : getChildren()) {
 			// unless it is already set in this context (and thus hides the change)
-			if ((eventType == ContextChangeEvent.ADDED || eventType == ContextChangeEvent.REMOVED) && childContext.isSetLocally(name))
-				continue;
-			childContext.invalidate(name, eventType, oldValue, newValue, scheduled);
+			if (!(addedOrRemoved && childContext.isSetLocally(name))) {
+				childContext.invalidate(name, eventType, oldValue, newValue, scheduled);
+			}
 		}
 	}
 
 	protected boolean isLocalEquals(String name, Object newValue) {
-		if (!localValues.containsKey(name))
+		Value<Object> value = localValues.getValue(name);
+		if (!value.isPresent())
 			return false;
-		return (localValues.get(name) == newValue);
+		return (value.unwrapped() == newValue);
 	}
 
 	private boolean isSetLocally(String name) {
@@ -371,8 +363,9 @@ public class EclipseContext implements IEclipseContext {
 			setParent((IEclipseContext) value);
 			return;
 		}
-		boolean containsKey = localValues.containsKey(name);
-		Object oldValue = localValues.put(name, value);
+		Value<Object> old = localValues.putAndGetOld(name, value);
+		boolean containsKey = old.isPresent();
+		Object oldValue = old.unwrapped();
 		if (!containsKey || oldValue != value) {
 			Set<Scheduled> scheduled = new LinkedHashSet<>();
 			invalidate(name, ContextChangeEvent.ADDED, oldValue, value, scheduled);
@@ -407,7 +400,7 @@ public class EclipseContext implements IEclipseContext {
 				String tmp = "Variable " + name + " is not modifiable in the context " + this; //$NON-NLS-1$ //$NON-NLS-2$
 				throw new IllegalArgumentException(tmp);
 			}
-			Object oldValue = localValues.put(name, value);
+			Object oldValue = localValues.putAndGetOld(name, value).unwrapped();
 			if (oldValue != value)
 				invalidate(name, ContextChangeEvent.ADDED, oldValue, value, scheduled);
 			return true;
@@ -430,12 +423,15 @@ public class EclipseContext implements IEclipseContext {
 		if (parent == parentContext)
 			return; // no-op
 		if (parentContext != null)
-			parentContext.removeChild(this);
+			selfRef.clear(); // remove from parent
 		Set<Scheduled> scheduled = new LinkedHashSet<>();
-		handleReparent((EclipseContext) parent, scheduled);
+		EclipseContext newParent = (EclipseContext) parent;
+		handleReparent(newParent, scheduled);
 		localValues.put(PARENT, parent);
-		if (parent != null)
-			((EclipseContext) parent).addChild(this);
+		if (parent != null) {
+			selfRef = new WeakReference<>(this);
+			newParent.addChild(selfRef);
+		}
 		processScheduled(scheduled);
 		return;
 	}
@@ -470,9 +466,7 @@ public class EclipseContext implements IEclipseContext {
 		if (modifiable == null)
 			modifiable = new HashSet<>(3);
 		modifiable.add(name);
-		if (localValues.containsKey(name))
-			return;
-		localValues.put(name, null);
+		localValues.putIfAbsent(name, null);
 	}
 
 	private boolean checkModifiable(String name) {
@@ -519,11 +513,11 @@ public class EclipseContext implements IEclipseContext {
 
 	protected void invalidateLocalComputations(Set<Scheduled> scheduled) {
 		ContextChangeEvent event = new ContextChangeEvent(this, ContextChangeEvent.ADDED, null, null, null);
-		for (Computation computation : localValueComputations.values()) {
+		localValueComputations.values().removeIf(computation -> {
 			weakListeners.remove(computation);
 			computation.handleInvalid(event, scheduled);
-		}
-		localValueComputations.clear();
+			return true;
+		});
 
 		// We need to cleanup computations recursively see bug 468048
 		for (EclipseContext c : getChildren()) {
@@ -581,26 +575,8 @@ public class EclipseContext implements IEclipseContext {
 		return root;
 	}
 
-	public void addChild(EclipseContext childContext) {
-		synchronized (children) {
-			children.add(new WeakReference<>(childContext));
-		}
-	}
-
-	public void removeChild(EclipseContext childContext) {
-		synchronized (children) {
-			for (Iterator<WeakReference<EclipseContext>> i = children.iterator(); i.hasNext();) {
-				EclipseContext referredContext = i.next().get();
-				if (referredContext == null) {
-					i.remove();
-					continue;
-				}
-				if (referredContext == childContext) {
-					i.remove();
-					return;
-				}
-			}
-		}
+	private void addChild(WeakReference<EclipseContext> ref) {
+		children.add(ref);
 	}
 
 	@Override
@@ -709,23 +685,22 @@ public class EclipseContext implements IEclipseContext {
 	// This method is for debug only, do not use externally
 	public Map<String, Object> localData() {
 		Map<String, Object> result = new HashMap<>(localValues.size());
-		for (Map.Entry<String, Object> entry : localValues.entrySet()) {
-			if (entry.getValue() instanceof IContextFunction) {
-				continue;
+		localValues.forEach((k, v) -> {
+			if (!(v instanceof IContextFunction)) {
+				result.put(k, v);
 			}
-			result.put(entry.getKey(), entry.getValue());
-		}
+		});
 		return result;
 	}
 
 	// This method is for debug only, do not use externally
 	public Map<String, Object> localContextFunction() {
 		Map<String, Object> result = new HashMap<>(localValues.size());
-		for (Map.Entry<String, Object> entry : localValues.entrySet()) {
-			if (entry.getValue() instanceof IContextFunction) {
-				result.put(entry.getKey(), entry.getValue());
+		localValues.forEach((k, v) -> {
+			if (v instanceof IContextFunction) {
+				result.put(k, v);
 			}
-		}
+		});
 		return result;
 	}
 
