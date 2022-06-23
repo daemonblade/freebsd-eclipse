@@ -1,4 +1,4 @@
-FROM ubuntu:21.04
+FROM ubuntu:22.04
 
 ### user name recognition at runtime w/ an arbitrary uid - for OpenShift deployments
 COPY scripts/uid_entrypoint /usr/local/bin/uid_entrypoint
@@ -13,6 +13,7 @@ RUN apt-get update && apt upgrade -y && apt dist-upgrade -y && apt-get install -
       libgtk-3-0 \
       tigervnc-standalone-server \
       tigervnc-common \
+      tigervnc-tools \
       metacity \
       x11-xserver-utils \
       libgl1-mesa-dri \
@@ -41,6 +42,7 @@ RUN mkdir -p ${HOME}/.vnc && chmod -R 775 ${HOME} \
 
 # Create a custom vnc xstartup file
 COPY scripts/xstartup_metacity.sh ${HOME}/.vnc/xstartup.sh
-RUN chmod 755 ${HOME}/.vnc/xstartup.sh
+# Make $HOME open to the 'root' group (so Jenkins/OpenShift user can write there)
+RUN chgrp -R 0 ${HOME} && chmod -R g=u ${HOME}
 
 USER 10001

@@ -56,7 +56,16 @@ then
 	fi
 fi
 
-git submodule foreach "if grep \"^\${name}:\" ../../../streams/repositories_$PATCH_OR_BRANCH_LABEL.txt > /dev/null; then git tag $BUILD_ID; git push --verbose origin $BUILD_ID; else echo Skipping \$name; fi || :"
+function toPushRepo() {
+	from="$1"
+	if ! [[ "$from" == http* ]]; then
+		echo $from
+	else
+		echo $(sed -e 's,http://git.eclipse.org/gitroot,ssh://genie.releng@git.eclipse.org:29418,' -e 's,https://git.eclipse.org/r,ssh://genie.releng@git.eclipse.org:29418,' -e 's,https://github.com/,git@github.com:,' <<< $from)
+	fi
+}
+export -f toPushRepo
+git submodule foreach 'if grep "^${name}:" ../../../streams/repositories_$PATCH_OR_BRANCH_LABEL.txt > /dev/null; then git tag $BUILD_ID; PUSH_URL="$(toPushRepo $(git config --get remote.origin.url))"; git push --verbose $PUSH_URL $BUILD_ID; else echo Skipping $name; fi || :'
 git tag $BUILD_ID
 git push --verbose origin $BUILD_ID
 
@@ -65,7 +74,7 @@ if [[ -n "$lastTag" ]]; then
   tmpGitLog=$CJE_ROOT/$TMP_DIR/gitLog.txt
   echo -e "<h2>Git log from $lastTag (previous) to $BUILD_ID (current)</h2>" > $gitLogFile
   echo -e "<h2>The tagging, and this report, were done at about $reportTimestamp</h2>" >> $gitLogFile
-  git log $lastTag..$BUILD_ID --date=short --format=format:"<tr><td class=\"datecell\">%cd</td><td class=\"commitcell\"><a href=\"https://git.eclipse.org/c/platform/eclipse.platform.releng.aggregator.git/commit/?id=%H\">%s</a></td><td class=\"authorcell\">%aN</td></tr>" > $tmpGitLog
+  git log $lastTag..$BUILD_ID --date=short --format=format:"<tr><td class=\"datecell\">%cd</td><td class=\"commitcell\"><a href=\"https://github.com/eclipse-platform/eclipse.platform.releng.aggregator/commit/%H\">%s</a></td><td class=\"authorcell\">%aN</td></tr>" > $tmpGitLog
   tmpFileSize=$(stat -c%s $tmpGitLog)
   if [ $tmpFileSize -ne 0 ]; then
     echo "<table><tbody> <tr><th class=\"cell\" colspan=\"3\">Repository: eclipse.platform.releng.aggregator</th></tr>" >> $gitLogFile
@@ -74,7 +83,7 @@ if [[ -n "$lastTag" ]]; then
     echo "</tbody></table><br><br>" >> $gitLogFile
     echo >> $gitLogFile
   fi
-  git submodule --quiet foreach "comp=\$(echo \$path|cut -d. -f2);git log $lastTag..$BUILD_ID --date=short --format=format:\"<tr><td class=\\\"datecell\\\">%cd</td><td class=\\\"commitcell\\\"><a href=\\\"https://git.eclipse.org/c/\$comp/\$path.git/commit/?id=%H\\\">%s</a></td><td class=\\\"authorcell\\\">%aN</td></tr>\">$tmpGitLog;FILESIZE=\$(stat -c%s $tmpGitLog);if [ \$FILESIZE -ne 0 ]; then echo \"<table><tbody> <tr><th class=\\\"cell\\\" colspan=\\\"3\\\">Repository: \$path</th></tr>\";echo \"<tr> <th class=\\\"datecell\\\">Date</th> <th class=\\\"commitcell\\\">Commit message</th> <th class=\\\"authorcell\\\">Author</th> </tr>\";cat $tmpGitLog;echo \"</tbody></table><br><br>\";echo;fi" >> $gitLogFile
+  git submodule --quiet foreach "gitUrl=\$(git config --get remote.origin.url|rev|cut -d. -f2-|rev);git log $lastTag..$BUILD_ID --date=short --format=format:\"<tr><td class=\\\"datecell\\\">%cd</td><td class=\\\"commitcell\\\"><a href=\\\"\$gitUrl/commit/%H\\\">%s</a></td><td class=\\\"authorcell\\\">%aN</td></tr>\">$tmpGitLog;FILESIZE=\$(stat -c%s $tmpGitLog);if [ \$FILESIZE -ne 0 ]; then echo \"<table><tbody> <tr><th class=\\\"cell\\\" colspan=\\\"3\\\">Repository: \$path</th></tr>\";echo \"<tr> <th class=\\\"datecell\\\">Date</th> <th class=\\\"commitcell\\\">Commit message</th> <th class=\\\"authorcell\\\">Author</th> </tr>\";cat $tmpGitLog;echo \"</tbody></table><br><br>\";echo;fi" >> $gitLogFile
 else
   echo -e "\n\tGit log not generated because a reasonable previous tag could not be found." > $gitLogFile
 fi

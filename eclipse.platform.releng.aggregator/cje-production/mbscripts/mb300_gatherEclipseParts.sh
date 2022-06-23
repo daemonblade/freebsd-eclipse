@@ -37,9 +37,11 @@ cp $CJE_ROOT/$AGG_DIR/eclipse-platform-parent/target/mavenproperties.properties 
 echo $PATCH_BUILD
 if [ -z $PATCH_BUILD ]; then
   REPO_DIR=$PLATFORM_REPO_DIR
+  REPO_ZIP=$PLATFORM_TARGET_DIR/eclipse.platform.repository-${STREAMMajor}.${STREAMMinor}.${STREAMService}-SNAPSHOT.zip
 else
-  PATCH_BUILD_GENERIC=java17patch
+  PATCH_BUILD_GENERIC=java18patch
   REPO_DIR=$ECLIPSE_BUILDER_DIR/$PATCH_BUILD/eclipse.releng.repository.$PATCH_BUILD_GENERIC/target/repository
+  REPO_ZIP=$ECLIPSE_BUILDER_DIR/$PATCH_BUILD/eclipse.releng.repository.$PATCH_BUILD_GENERIC/target/eclipse.releng.repository.$PATCH_BUILD_GENERIC-${STREAMMajor}.${STREAMMinor}.${STREAMService}-SNAPSHOT.zip
 fi
   
 if [ -d $REPO_DIR ]; then
@@ -47,6 +49,10 @@ if [ -d $REPO_DIR ]; then
   cp -r * $CJE_ROOT/$UPDATES_DIR/$BUILD_ID
   popd
 fi
+if [ -f $REPO_ZIP ]; then
+  cp $REPO_ZIP $CJE_ROOT/$DROP_DIR/$BUILD_ID/repository-$BUILD_ID.zip
+fi
+
 
 if [ -z $PATCH_BUILD ]; then
   # gather sdk
@@ -241,13 +247,6 @@ if [ -d $NOTARIZE_LOG_DIR ]; then
     cat $i
   done
 fi
-
-#import gpg keys
-gpg --batch --import "${KEYRING}"
-for fpr in $(gpg --list-keys --with-colons  | awk -F: '/fpr:/ {print $10}' | sort -u);
-do
-  echo -e "5\ny\n" |  gpg --batch --command-fd 0 --expert --edit-key "${fpr}" trust;
-done
 
 # publish Eclipse
 pushd $CJE_ROOT

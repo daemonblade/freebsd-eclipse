@@ -15,9 +15,7 @@
 
 set -e
 
-docker push eclipse/platformreleng-centos-gtk3-metacity:8
-docker push eclipse/platformreleng-centos-gtk3-metacity:7
-docker push eclipse/platformreleng-centos-swt-build:8
-docker push eclipse/platformreleng-ubuntu-gtk3-metacity:18.04
-docker push eclipse/platformreleng-ubuntu-gtk3-metacity:20.04
-docker push eclipse/platformreleng-ubuntu-gtk3-metacity:22.04
+pushd centos-gtk4-mutter/9-swtBuild
+echo "Building Centos 9 swt build image"
+docker build --pull -t eclipse/platformreleng-centos-swt-build:9 .
+popd

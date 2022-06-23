@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #*******************************************************************************
-# Copyright (c) 2020 IBM Corporation and others.
+# Copyright (c) 2022 IBM Corporation and others.
 #
 # This program and the accompanying materials
 # are made available under the terms of the Eclipse Public License 2.0
@@ -26,11 +26,11 @@ repoHttpAccess=https://download.eclipse.org
 repoAccess=${repoHttpAccess}
 # TODO: reduce this list soon
 repoList="\
-/eclipse/updates/4.20/ \
-/eclipse/updates/4.21/ \
-/eclipse/updates/4.21-I-builds/ \
-/eclipse/updates/4.21-Y-builds/ \
-/eclipse/updates/4.21-P-builds/ \
+/eclipse/updates/4.23/ \
+/eclipse/updates/4.24/ \
+/eclipse/updates/4.24-I-builds/ \
+/eclipse/updates/4.23-Y-builds/ \
+/eclipse/updates/4.23-P-builds/ \
 "
 
 

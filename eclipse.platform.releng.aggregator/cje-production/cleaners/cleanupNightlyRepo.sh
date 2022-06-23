@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #*******************************************************************************
-# Copyright (c) 2020 IBM Corporation and others.
+# Copyright (c) 2022 IBM Corporation and others.
 #
 # This program and the accompanying materials
 # are made available under the terms of the Eclipse Public License 2.0
@@ -85,7 +85,7 @@ function getReposToRemove ()
     # whereas ctime and mtime are all identical, in every directory?! Turns out, mine is that
     # say too. Apparently p2 "touches" every directory, for some reason. Perhaps only in the "atomic" case?
     # But, atime can vary from system to system, depending .. some systems do update, when accessed?
-    sortedallOldRepos=( $(find ${cDir} -maxdepth 1 -type d  -name "${buildType}*" -printf "%C@ %f\n" | sort -n | cut -d\  -f2 ) )
+    sortedallOldRepos=( $(find ${cDir} -maxdepth 1 -type d  -name "${buildType}*" -printf "%C@ %f\n" | sort | cut -d\  -f2 ) )
     #nOldRepos=${#sortedallOldRepos[@]}
     # all builds "find" command should match above, except for age related (and printf) arguments
     nbuilds=$( find ${cDir} -maxdepth 1 -type d -name "${buildType}*" | wc -l )
@@ -193,19 +193,19 @@ function cleanRepo ()
 workspace=$1
 remoteBase="/home/data/httpd/download.eclipse.org"
 
-eclipseIRepo="${remoteBase}/eclipse/updates/4.21-I-builds"
-eclipseYRepo="${remoteBase}/eclipse/updates/4.21-Y-builds"
-eclipsePRepo="${remoteBase}/eclipse/updates/4.21-P-builds"
+eclipseIRepo="${remoteBase}/eclipse/updates/4.24-I-builds"
+eclipseYRepo="${remoteBase}/eclipse/updates/4.23-Y-builds"
+eclipsePRepo="${remoteBase}/eclipse/updates/4.23-P-builds"
 eclipseBuildTools="${remoteBase}/eclipse/updates/buildtools"
 
 doDryrun=
 # global
 declare -a reposToRemove=()
 cleanRepo $eclipseIRepo I 4 $doDryrun
-declare -a reposToRemove=()
-cleanRepo $eclipseYRepo Y 2 $doDryrun
-declare -a reposToRemove=()
-cleanRepo $eclipsePRepo P 2 $doDryrun
+#declare -a reposToRemove=()
+#cleanRepo $eclipseYRepo Y 2 $doDryrun
+#declare -a reposToRemove=()
+#cleanRepo $eclipsePRepo P 2 $doDryrun
 declare -a reposToRemove=()
 cleanRepo $eclipseBuildTools I 4 $doDryrun
 

@@ -13,6 +13,16 @@
 #     Sravan Kumar Lakkimsetti - initial API and implementation
 #*******************************************************************************
 
+function toPushRepo() {
+	from="$1"
+	if ! [[ "$from" == http* ]]; then
+		echo $from
+	else
+		echo $(sed -e 's,http://git.eclipse.org/gitroot,ssh://genie.releng@git.eclipse.org:29418,' -e 's,https://git.eclipse.org/r,ssh://genie.releng@git.eclipse.org:29418,' -e 's,https://github.com/,git@github.com:,' <<< $from)
+	fi
+}
+
+export -f toPushRepo
 
 DROP_ID=$(echo $DROP_ID|tr -d ' ')
 
@@ -147,27 +157,28 @@ esac
 if [[ "${DL_TYPE}" != "R" ]]
 then 
   #Tag Source
+  echo "Tag source"
   TAG=${DL_TYPE}${BUILD_MAJOR}_${BUILD_MINOR}_${BUILD_SERVICE}_${CHECKPOINT}
 
   cd ${WORKSPACE}
   git config --global user.email "releng-bot@eclipse.org"
   git config --global user.name "Eclipse Releng Bot"
-  git clone --recursive ssh://genie.releng@git.eclipse.org:29418/platform/eclipse.platform.releng.aggregator.git
+  git clone --recurse-submodules git@github.com:eclipse-platform/eclipse.platform.releng.aggregator.git
 
   pushd eclipse.platform.releng.aggregator
   git checkout master
   git submodule foreach git checkout master
-  git submodule foreach git clean -f -d -x
+  git clean -f -d -x
   git submodule foreach git clean -f -d -x
   git reset --hard
   git submodule foreach git reset --hard
   git checkout master
   git submodule foreach git checkout master
-  git pull
-  git submodule foreach git pull
+  git pull --rebase
+  git submodule foreach git pull --rebase
 
-  git submodule foreach git tag -a -m "${DL_LABEL}" ${TAG} ${DROP_ID}
   git tag -a -m "${DL_LABEL}" ${TAG} ${DROP_ID}
+  git submodule foreach git tag -a -m "${DL_LABEL}" ${TAG} ${DROP_ID}
   RC=$?
   if [[ $RC != 0 ]]
   then
@@ -175,8 +186,9 @@ then
     popd
     exit $RC
   fi
-  git submodule foreach git push --verbose origin tag ${TAG}
-  git push origin tag ${TAG}
+  git submodule foreach git push --verbose $(toPushRepo $(git config --get remote.origin.url)) tag ${TAG}
+  git push --verbose $(toPushRepo $(git config --get remote.origin.url)) tag ${TAG}
+
   RC=$?
   if [[ $RC != 0 ]]
   then
@@ -206,7 +218,7 @@ else
   ssh genie.releng@projects-storage.eclipse.org tar -C ${workspace} -xzf ${epRelDir}/eclipse-platform-*-linux-gtk-x86_64.tar.gz
 
   #get requisite tools
-  ssh genie.releng@projects-storage.eclipse.org wget -O ${workspace}/addToComposite.xml https://git.eclipse.org/c/platform/eclipse.platform.releng.aggregator.git/plain/cje-production/scripts/addToComposite.xml
+  ssh genie.releng@projects-storage.eclipse.org wget -O ${workspace}/addToComposite.xml https://download.eclipse.org/eclipse/relengScripts/cje-production/scripts/addToComposite.xml
 
   #triggering ant runner
   baseBuilderDir=${workspace}/eclipse

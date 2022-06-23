@@ -1,5 +1,5 @@
 ARG FROM_TAG="8"
-FROM centos:${FROM_TAG}
+FROM quay.io/centos/centos:stream${FROM_TAG}
 
 ### user name recognition at runtime w/ an arbitrary uid - for OpenShift deployments
 COPY scripts/uid_entrypoint /usr/local/bin/uid_entrypoint
@@ -31,6 +31,7 @@ RUN yum -y update && yum -y install \
       dbus \
       webkitgtk4 \
       glibc-locale-source \
+      glibc-langpack-en \
     && yum clean all
 
 ENV HOME=/home/vnc
@@ -47,7 +48,9 @@ RUN mkdir -p var/lib/dbus && dbus-uuidgen > /var/lib/dbus/machine-id \
 
 # Create a custom vnc xstartup file
 COPY scripts/xstartup_metacity.sh ${HOME}/.vnc/xstartup.sh
-RUN chmod 755 ${HOME}/.vnc/xstartup.sh
+# Make $HOME open to the 'root' group (so Jenkins/OpenShift user can write there)
+RUN chgrp -R 0 ${HOME} && chmod -R g=u ${HOME}
+
 RUN localedef -i en_US -f UTF-8 en_US.UTF-8
 ENV LANG=en_US.UTF-8
 

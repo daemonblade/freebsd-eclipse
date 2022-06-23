@@ -15,9 +15,7 @@
 
 set -e
 
-docker push eclipse/platformreleng-centos-gtk3-metacity:8
-docker push eclipse/platformreleng-centos-gtk3-metacity:7
-docker push eclipse/platformreleng-centos-swt-build:8
-docker push eclipse/platformreleng-ubuntu-gtk3-metacity:18.04
-docker push eclipse/platformreleng-ubuntu-gtk3-metacity:20.04
-docker push eclipse/platformreleng-ubuntu-gtk3-metacity:22.04
+pushd ubuntu-gtk3-metacity/22.04-gtk3
+echo "Building Ubuntu 22.04 docker image"
+docker build --pull -t eclipse/platformreleng-ubuntu-gtk3-metacity:22.04 .
+popd
