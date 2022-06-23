@@ -41,20 +41,12 @@
 
     <condition
       property="extraIU"
-      value="org.eclipse.cvs.feature.group">
+      value="org.eclipse.test.feature.group">
       <equals
         arg1="${testPlugin}"
         arg2="org.eclipse.pde.build.tests" />
     </condition>
     	
-    <condition
-      property="extraIU"
-      value="org.eclipse.cvs.feature.group">
-      <equals
-        arg1="${testPlugin}"
-        arg2="org.eclipse.team.tests.core" />
-    </condition>
-
     <condition
       property="extraIU"
       value="org.eclipse.unittest.ui">
@@ -537,7 +529,7 @@
       <arg value="tooling" />
       <arg value="-installIUs" />
       <arg
-        value="${testPlugin},org.eclipse.test,org.eclipse.ant.optional.junit,org.eclipse.test.performance,org.eclipse.test.performance.win32,org.easymock" />
+        value="${testPlugin},org.eclipse.test,org.eclipse.ant.optional.junit,org.eclipse.test.performance,org.eclipse.test.performance.win32" />
       <arg value="-repository" />
       <arg value="file:${repoLocation}" />
     </java>

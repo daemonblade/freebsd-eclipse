@@ -6,7 +6,7 @@
   Such as, start with a wget fetch from CGit (where following $dash; is literally a '-',
   it is escaped here just for XML rules against two dashes in a comment);
 
-  wget -O getEBuilder.xml &dash;&dash;no-verbose https://git.eclipse.org/c/platform/eclipse.platform.releng.aggregator.git/plain/production/testScripts/hudsonBootstrap/getEBuilder.xml
+  wget -O getEBuilder.xml &dash;&dash;no-verbose https://download.eclipse.org/eclipse/relengScripts/production/testScripts/hudsonBootstrap/getEBuilder.xml
   2>&1
 
   Then use ant to invoke the functionality. Example:
@@ -161,8 +161,7 @@
 
   </target>
 
-  <!-- Will leave here for now, though doesn't add much. It used to have an additional
-    "fetch from cvs task" (That is, we had three choices: local, git, cvs).
+  <!-- Will leave here for now, though doesn't add much. We had two choices: local, git.
   -->
   <target
     name="fetchEBuilder"
