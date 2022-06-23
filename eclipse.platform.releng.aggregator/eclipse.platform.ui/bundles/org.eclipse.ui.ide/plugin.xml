@@ -618,6 +618,18 @@
          </keywordReference>
       </page>
       <page
+            name="%PreferencePages.LargeDocumentEditors"
+            category="org.eclipse.ui.preferencePages.Editors"
+            class="org.eclipse.ui.internal.ide.LargeFileAssociationsPreferencePage"
+            id="org.eclipse.ui.preferencePages.LargeFileAssociations">
+         <keywordReference id="org.eclipse.ui.ide.editing"/>
+         <keywordReference id="org.eclipse.ui.ide.editors"/>
+         <keywordReference id="org.eclipse.ui.ide.unassociated"/>
+         <keywordReference
+               id="org.eclipse.ui.ide.open">
+         </keywordReference>
+      </page>
+      <page
             name="%PreferencePages.Views"
             category="org.eclipse.ui.preferencePages.Workbench"
             class="org.eclipse.ui.ExtensionFactory:appearancePreferencePage"
@@ -1308,23 +1320,6 @@
           </mapping>
           <description>
              %PreferenceTransfer.TasksConfigurations.Description
-          </description>
-       </transfer>
-        <transfer
-              icon="$nl$/icons/full/eview16/bkmrk_nav.png"
-              id="org.eclipse.ui.ide.bookmarksFilters"
-              name="%PreferenceTransfer.BookmarksConfigurations">
-          <mapping
-                scope="instance">
-             <entry
-                   node="org.eclipse.ui.ide">
-                <key
-                      name="org.eclipse.ui.internal.views.markers.CachedMarkerBuilderorg.eclipse.ui.views.BookmarkView">
-                </key>
-             </entry>
-          </mapping>
-          <description>
-             %PreferenceTransfer.BookmarksConfigurations.Description
           </description>
        </transfer>
         <transfer
@@ -2713,6 +2708,18 @@
             name="%quickAccess.resources.name"
             requiresUIAccess="false">
       </computer>
+      <computer
+            class="org.eclipse.ui.internal.ide.dialogs.OpenFilesystemQuickAccessComputer"
+            name="%quickAccess.filesystemPath.name"
+            requiresUIAccess="false">
+      </computer>
+   </extension>
+   <extension
+         point="org.eclipse.ui.ide.markerResolution">
+      <markerResolutionGenerator
+            class="org.eclipse.ui.views.markers.internal.ProjectEncodingMarkerResolutionGenerator"
+            markerType="org.eclipse.core.resources.noExplicitEncoding">
+      </markerResolutionGenerator>
    </extension>
 
 </plugin>

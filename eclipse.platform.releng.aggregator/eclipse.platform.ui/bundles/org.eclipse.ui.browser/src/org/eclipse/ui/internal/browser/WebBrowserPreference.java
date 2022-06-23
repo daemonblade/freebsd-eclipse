@@ -105,23 +105,6 @@ public class WebBrowserPreference {
 		}
 	}
 
-	/**
-	 * Returns whether the internal browser is used by default
-	 *
-	 * @return true if the internal browser is used by default
-	 */
-	public static boolean isDefaultUseInternalBrowser() {
-		return WebBrowserUtil.canUseInternalWebBrowser();
-	}
-
-	/**
-	 * Returns whether the system browser is used by default
-	 *
-	 * @return true if the system browser is used by default
-	 */
-	public static boolean isDefaultUseSystemBrowser() {
-		return WebBrowserUtil.canUseSystemBrowser();
-	}
 
 	/**
 	 * Returns whether the internal or external browser is being used
@@ -130,10 +113,12 @@ public class WebBrowserPreference {
 	 */
 	public static int getBrowserChoice() {
 		int choice = getPreferenceStore().getInt(PREF_BROWSER_CHOICE);
-		if (choice == 2)
+		if (choice == EXTERNAL || choice == 2) { // 2 is kept for legacy reasons
 			return EXTERNAL;
-		if (choice == INTERNAL && !WebBrowserUtil.canUseInternalWebBrowser())
+		}
+		if (choice == INTERNAL && !WebBrowserUtil.canUseInternalWebBrowser()) {
 			return EXTERNAL;
+		}
 		return choice;
 	}
 

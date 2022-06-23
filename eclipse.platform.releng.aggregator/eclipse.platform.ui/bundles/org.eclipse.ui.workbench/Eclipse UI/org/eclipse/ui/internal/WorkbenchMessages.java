@@ -37,8 +37,6 @@ public class WorkbenchMessages extends NLS {
 
 	public static String ThemeChangeWarningText;
 
-	public static String ThemeChangeWarningHyperlinkedText;
-
 	public static String ThemeChangeWarningTitle;
 
 	public static String BundleSigningTray_Cant_Find_Service;
@@ -49,6 +47,8 @@ public class WorkbenchMessages extends NLS {
 
 	public static String BundleSigningTray_Signing_Date;
 
+	public static String BundleSigningTray_SigningType;
+
 	public static String BundleSigningTray_Unget_Signing_Service;
 
 	public static String BundleSigningTray_Unknown;
@@ -56,6 +56,8 @@ public class WorkbenchMessages extends NLS {
 	public static String BundleSigningTray_Unsigned;
 
 	public static String BundleSigningTray_Working;
+
+	public static String BundleSigningTray_X509Certificate;
 
 	public static String NewWorkingSet;
 
@@ -446,7 +448,6 @@ public class WorkbenchMessages extends NLS {
 	public static String PreferenceExportWarning_applyAndContinue;
 
 	// --- Workbench ---
-	public static String WorkbenchPreference_showMultipleEditorTabsButton;
 	public static String WorkbenchPreference_allowInplaceEditingButton;
 	public static String WorkbenchPreference_useIPersistableEditorButton;
 	public static String WorkbenchPreference_promptWhenStillOpenButton;
@@ -621,6 +622,10 @@ public class WorkbenchMessages extends NLS {
 	public static String EditorManager_wrong_createElement_result;
 	public static String EditorManager_backgroundSaveJobName;
 	public static String EditorManager_largeDocumentWarning;
+
+	public static String LargeFileAssociation_Dialog_chooseEditorTitle;
+	public static String LargeFileAssociation_Dialog_rememberSelectedEditor;
+	public static String LargeFileAssociation_Dialog_configureFileAssociationsLink;
 
 	public static String ExternalEditor_errorMessage;
 	public static String Save;
@@ -995,6 +1000,7 @@ public class WorkbenchMessages extends NLS {
 	// Zoom change messages
 	public static String Workbench_zoomChangedTitle;
 	public static String Workbench_zoomChangedMessage;
-	public static String Workbench_zoomChangedRestart;
+	public static String Workbench_RestartButton;
+	public static String Workbench_DontRestartButton;
 
 }

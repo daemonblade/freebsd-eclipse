@@ -29,14 +29,15 @@ import org.eclipse.core.databinding.observable.IObservableCollection;
 import org.eclipse.core.databinding.observable.ObservableTracker;
 import org.eclipse.core.databinding.observable.Realm;
 import org.eclipse.core.databinding.observable.list.ComputedList;
+import org.eclipse.core.databinding.observable.list.IObservableList;
+import org.eclipse.core.databinding.observable.list.WritableList;
 import org.eclipse.jface.databinding.conformance.ObservableListContractTest;
 import org.eclipse.jface.databinding.conformance.delegate.AbstractObservableCollectionContractDelegate;
+import org.eclipse.jface.databinding.conformance.util.TestCollection;
 import org.eclipse.jface.databinding.conformance.util.ListChangeEventTracker;
 import org.eclipse.jface.tests.databinding.AbstractDefaultRealmTestCase;
 import org.junit.Before;
 import org.junit.Test;
-
-import junit.framework.TestSuite;
 
 public class ComputedListTest extends AbstractDefaultRealmTestCase {
 	ComputedListStub<Object> list;
@@ -98,6 +99,16 @@ public class ComputedListTest extends AbstractDefaultRealmTestCase {
 				2, tracker.count);
 	}
 
+	@Test
+	public void testCreate() throws Exception {
+		WritableList<Integer> writeList = new WritableList<>();
+		writeList.add(44);
+		IObservableList<Integer> compList = ComputedList.create(() -> new ArrayList<>(writeList));
+		assertEquals(writeList, compList);
+		writeList.add(55);
+		assertEquals(writeList, compList);
+	}
+
 	static class ComputedListStub<E> extends ComputedList<E> {
 		List<E> nextComputation = new ArrayList<E>();
 		ObservableStub dependency;
@@ -142,8 +153,8 @@ public class ComputedListTest extends AbstractDefaultRealmTestCase {
 		}
 	}
 
-	public static void addConformanceTest(TestSuite suite) {
-		suite.addTest(ObservableListContractTest.suite(new Delegate()));
+	public static void addConformanceTest(TestCollection suite) {
+		suite.addTest(ObservableListContractTest.class, new Delegate());
 	}
 
 	static class Delegate extends AbstractObservableCollectionContractDelegate<Object> {

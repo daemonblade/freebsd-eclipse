@@ -2,11 +2,13 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %pluginName
 Bundle-SymbolicName: org.eclipse.core.databinding
-Bundle-Version: 1.10.100.qualifier
+Bundle-Version: 1.11.0.qualifier
 Bundle-ClassPath: .
 Bundle-Vendor: %providerName
 Bundle-Localization: plugin
 Export-Package: org.eclipse.core.databinding,
+ org.eclipse.core.databinding.bind,
+ org.eclipse.core.databinding.bind.steps,
  org.eclipse.core.databinding.conversion;x-internal:=false,
  org.eclipse.core.databinding.conversion.text;x-internal:=false,
  org.eclipse.core.databinding.validation;x-internal:=false,
@@ -21,7 +23,7 @@ Import-Package: com.ibm.icu.math;resolution:=optional,
  org.osgi.framework;version="[1.4.0,2.0.0)";resolution:=optional,
  org.osgi.util.tracker;version="[1.3.3,2.0.0)";resolution:=optional,
  org.eclipse.osgi.framework.log;version="[1.0.0,2.0.0)";resolution:=optional
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-11
 Bundle-Activator: org.eclipse.core.internal.databinding.Activator
 Bundle-ActivationPolicy: lazy
 Automatic-Module-Name: org.eclipse.core.databinding

@@ -21,15 +21,21 @@ import org.eclipse.core.commands.operations.IOperationHistoryListener;
 import org.eclipse.core.commands.operations.IUndoContext;
 import org.eclipse.core.commands.operations.IUndoableOperation;
 import org.eclipse.core.commands.operations.OperationHistoryEvent;
+import org.eclipse.core.commands.operations.TriggeredOperations;
 import org.eclipse.core.runtime.Adapters;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.core.runtime.jobs.IJobManager;
+import org.eclipse.core.runtime.jobs.ISchedulableOperation;
+import org.eclipse.core.runtime.jobs.ISchedulingRule;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.LegacyActionTools;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.osgi.util.NLS;
+import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IPartListener;
@@ -295,10 +301,41 @@ public abstract class OperationHistoryActionHandler extends Action
 		};
 		try {
 			boolean runInBackground = false;
-			if (getOperation() instanceof IAdvancedUndoableOperation2) {
-				runInBackground = ((IAdvancedUndoableOperation2) getOperation()).runInBackground();
+			IUndoableOperation operation = getOperation();
+			if (operation instanceof IAdvancedUndoableOperation2) {
+				runInBackground = ((IAdvancedUndoableOperation2) operation).runInBackground();
 			}
-			progressDialog.run(runInBackground, true, runnable);
+			if (runInBackground) {
+				progressDialog.run(runInBackground, true, runnable);
+			} else {
+				Object schedulableOperation = operation;
+				while (!(schedulableOperation instanceof ISchedulableOperation)
+						&& schedulableOperation instanceof TriggeredOperations) {
+					schedulableOperation = ((TriggeredOperations) schedulableOperation).getTriggeringOperation();
+				}
+				final ISchedulingRule rule = (schedulableOperation instanceof ISchedulableOperation)
+						? ((ISchedulableOperation) schedulableOperation).getSchedulingRule()
+						: null;
+				if (rule == null) {
+					progressDialog.run(runInBackground, true, runnable);
+				} else {
+					final IJobManager manager = Job.getJobManager();
+					// prevent UI freeze during AutoBuild as in
+					// org.eclipse.jdt.internal.ui.refactoring.RefactoringExecutionHelper#perform
+					try {
+						try {
+							// interrupt autobuild or show Wait/Cancel Dialog:
+							Runnable r = () -> manager.beginRule(rule, null);
+							BusyIndicator.showWhile(parent.getDisplay(), r);
+						} catch (OperationCanceledException e) {
+							throw new InterruptedException(e.getMessage());
+						}
+						progressDialog.run(runInBackground, true, runnable); // <-- actual work
+					} finally {
+						manager.endRule(rule);
+					}
+				}
+			}
 		} catch (InvocationTargetException e) {
 			Throwable t = e.getTargetException();
 			if (t == null) {

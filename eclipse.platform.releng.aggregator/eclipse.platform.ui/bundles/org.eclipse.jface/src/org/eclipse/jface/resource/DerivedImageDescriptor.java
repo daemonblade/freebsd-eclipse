@@ -40,6 +40,7 @@ final class DerivedImageDescriptor extends ImageDescriptor {
 	 * @see SWT#IMAGE_GRAY
 	 */
 	public DerivedImageDescriptor(ImageDescriptor original, int swtFlags) {
+		super(original.shouldBeCached());
 		this.original = original;
 		flags = swtFlags;
 	}

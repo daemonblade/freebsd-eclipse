@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2018, 2019 SAP SE and others.
+* Copyright (c) 2018, 2021 SAP SE and others.
 * All rights reserved. This program and the accompanying materials
 * are made available under the terms of the Eclipse Public License v1.0
 * which accompanies this distribution, and is available at
@@ -220,28 +220,6 @@ public class UriSchemeHandlerPreferencePage extends PreferencePage implements IW
 		handlerComposite.setVisible(false); // set visible on table selection
 	}
 
-	/**
-	 * Schemes which are part of extension points for URI Schemes and are registered
-	 * to operating system are consolidated here
-	 *
-	 * @return the supported and registered URI schemes of this instance of eclipse
-	 * @throws Exception
-	 */
-	private Collection<UiSchemeInformation> retrieveSchemeInformationList() {
-		Collection<UiSchemeInformation> returnList = new ArrayList<>();
-		Collection<IScheme> schemes = extensionReader.getSchemes();
-		try {
-			for (ISchemeInformation info : operatingSystemRegistration.getSchemesInformation(schemes)) {
-				returnList.add(new UiSchemeInformation(info.isHandled(), info));
-			}
-		} catch (Exception e) {
-			IStatus status = new Status(IStatus.ERROR, IDEWorkbenchPlugin.IDE_WORKBENCH, 1,
-					UrlHandlerPreferencePage_Error_Reading_Scheme, e);
-			statusManagerWrapper.handle(status, StatusManager.BLOCK | StatusManager.LOG);
-		}
-		return returnList;
-	}
-
 	private Collection<UiSchemeInformation> getLoadingSchemeInformationList() {
 		Collection<UiSchemeInformation> returnList = new ArrayList<>();
 		Collection<IScheme> schemes = extensionReader.getSchemes();
@@ -295,7 +273,7 @@ public class UriSchemeHandlerPreferencePage extends PreferencePage implements IW
 		private void handleSelection() {
 			IStructuredSelection selection = tableViewer.getStructuredSelection();
 			Object firstElement = selection != null ? selection.getFirstElement() : null;
-			if (firstElement != null && firstElement instanceof UiSchemeInformation) {
+			if (firstElement instanceof UiSchemeInformation) {
 				setSchemeDetails((UiSchemeInformation) firstElement);
 				handlerComposite.setVisible(true);
 			}
@@ -325,7 +303,7 @@ public class UriSchemeHandlerPreferencePage extends PreferencePage implements IW
 							NLS.bind(UriHandlerPreferencePage_Warning_OtherApp_Confirmation_Description,
 									schemeInformation.information.getHandlerInstanceLocation(),
 									schemeInformation.information.getName()));
-					if (answer == false) {
+					if (!answer) {
 						schemeInformation.checked = false;
 						tableViewer.setChecked(schemeInformation, schemeInformation.checked);
 						return;
@@ -390,8 +368,8 @@ public class UriSchemeHandlerPreferencePage extends PreferencePage implements IW
 	}
 
 	static class UiSchemeInformation {
-		public boolean checked;
-		public ISchemeInformation information;
+		private boolean checked;
+		private ISchemeInformation information;
 
 		public UiSchemeInformation(boolean checked, ISchemeInformation information) {
 			this.checked = checked;
@@ -415,7 +393,7 @@ public class UriSchemeHandlerPreferencePage extends PreferencePage implements IW
 		}
 	}
 
-	final static class LoadingSchemeInformation extends UiSchemeInformation {
+	static final class LoadingSchemeInformation extends UiSchemeInformation {
 
 		private IScheme scheme;
 
@@ -461,10 +439,7 @@ public class UriSchemeHandlerPreferencePage extends PreferencePage implements IW
 			MessageDialog dlg = new MessageDialog(parent, title, null, message, MessageDialog.CONFIRM, 0,
 					UriHandlerPreferencePage_Confirm_Handle, IDialogConstants.CANCEL_LABEL);
 			dlg.open();
-			if (dlg.getReturnCode() != IDialogConstants.OK_ID) {
-				return false;
-			}
-			return true;
+			return dlg.getReturnCode() == IDialogConstants.OK_ID;
 		}
 	}
 
@@ -489,6 +464,28 @@ public class UriSchemeHandlerPreferencePage extends PreferencePage implements IW
 				UriSchemeHandlerPreferencePage.this.isLoading = false;
 			}
 			return Status.OK_STATUS;
+		}
+
+		/**
+		 * Schemes which are part of extension points for URI Schemes and are registered
+		 * to operating system are consolidated here
+		 *
+		 * @return the supported and registered URI schemes of this instance of eclipse
+		 * @throws Exception
+		 */
+		private Collection<UiSchemeInformation> retrieveSchemeInformationList() {
+			Collection<UiSchemeInformation> returnList = new ArrayList<>();
+			Collection<IScheme> schemes = extensionReader.getSchemes();
+			try {
+				for (ISchemeInformation info : operatingSystemRegistration.getSchemesInformation(schemes)) {
+					returnList.add(new UiSchemeInformation(info.isHandled(), info));
+				}
+			} catch (Exception e) {
+				IStatus status = new Status(IStatus.ERROR, IDEWorkbenchPlugin.IDE_WORKBENCH, 1,
+						UrlHandlerPreferencePage_Error_Reading_Scheme, e);
+				statusManagerWrapper.handle(status, StatusManager.BLOCK | StatusManager.LOG);
+			}
+			return returnList;
 		}
 	}
 

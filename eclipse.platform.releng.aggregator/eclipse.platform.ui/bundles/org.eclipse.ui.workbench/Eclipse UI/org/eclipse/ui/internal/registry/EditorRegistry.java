@@ -44,6 +44,7 @@ import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtension;
 import org.eclipse.core.runtime.IExtensionPoint;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.core.runtime.content.IContentType;
@@ -77,6 +78,7 @@ import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.internal.editorsupport.ComponentSupport;
 import org.eclipse.ui.internal.misc.ExternalProgramImageDescriptor;
 import org.eclipse.ui.internal.misc.ProgramImageDescriptor;
+import org.eclipse.ui.internal.misc.StatusUtil;
 
 /**
  * Provides access to the collection of defined editors for resource types.
@@ -145,8 +147,14 @@ public class EditorRegistry extends EventManager implements IEditorRegistry, IEx
 	 */
 	private List<IEditorDescriptor> sortedEditorsFromPlugins = new ArrayList<>();
 
+	/** cache of OS editors **/
+	private IEditorDescriptor[] sortedEditorsFromOS;
+	final Object sortedEditorsFromOSSynchronizer = new Object();
+
 	// Map of EditorDescriptor - map editor id to editor.
-	private Map<String, IEditorDescriptor> mapIDtoEditor = initialIdToEditorMap(10);
+	private Map<String, IEditorDescriptor> mapIDtoInternalEditor = initialIdToEditorMap(10);
+	// Map of EditorDescriptor - map editor id to OS editor.
+	private Map<String, IEditorDescriptor> mapIDtoOSEditors;
 
 	// Map of FileEditorMapping (extension to FileEditorMapping)
 	private EditorMap typeEditorMappings;
@@ -266,7 +274,7 @@ public class EditorRegistry extends EventManager implements IEditorRegistry, IEx
 		}
 
 		// Update editor map.
-		mapIDtoEditor.put(editor.getId(), editor);
+		mapIDtoInternalEditor.put(editor.getId(), editor);
 	}
 
 	public void addContentTypeBindingFromPlugin(IContentType contentType, IEditorDescriptor editor, boolean bDefault) {
@@ -295,13 +303,42 @@ public class EditorRegistry extends EventManager implements IEditorRegistry, IEx
 		for (FileEditorMapping map : typeEditorMappings.allMappings()) {
 			IEditorDescriptor[] descArray = map.getEditors();
 			for (IEditorDescriptor desc : descArray) {
-				mapIDtoEditor.put(desc.getId(), desc);
+				mapIDtoInternalEditor.put(desc.getId(), desc);
 			}
 		}
-		// Add external editors from OS
-		for (IEditorDescriptor desc : getSortedEditorsFromOS()) {
-			mapIDtoEditor.put(desc.getId(), desc);
+
+		// reset external editors from OS
+		synchronized (this) {
+			mapIDtoOSEditors = null;
 		}
+	}
+
+	private synchronized IEditorDescriptor getOSEditor(String id) {
+		if (id == null || id.isEmpty()) {
+			// can not find external editor anyway.
+			// for example @see org.eclipse.ui.part.MultiPageEditorSite#getId
+			return null;
+		}
+		if (IEditorRegistry.SYSTEM_INPLACE_EDITOR_ID.equals(id)) {
+			// on systems which have ComponentSupport.inPlaceEditorSupported()==false
+			// @see #addSystemEditors
+			return null;
+		}
+
+		if (mapIDtoOSEditors == null) {
+			mapIDtoOSEditors = new HashMap<>();
+			IEditorDescriptor[] sortedEditorsFromOS = getSortedEditorsFromOS();
+			for (IEditorDescriptor desc : sortedEditorsFromOS) {
+				mapIDtoOSEditors.put(desc.getId(), desc); // ignore duplicates
+			}
+			IEditorDescriptor editor = mapIDtoOSEditors.get(id);
+			if (editor == null && WorkbenchPlugin.getDefault().isDebugging()) {
+				WorkbenchPlugin.getDefault().getLog()
+						.log(StatusUtil.newStatus(IStatus.WARNING, "Editor descriptor for id '" + id + "' not found.", //$NON-NLS-1$ //$NON-NLS-2$
+								new Exception("IEditorRegistry.findEditor(String) called for unknown id"))); //$NON-NLS-1$
+			}
+		}
+		return mapIDtoOSEditors.get(id);
 	}
 
 	@Override
@@ -311,7 +348,10 @@ public class EditorRegistry extends EventManager implements IEditorRegistry, IEx
 
 	@Override
 	public IEditorDescriptor findEditor(String id) {
-		IEditorDescriptor desc = mapIDtoEditor.get(id);
+		IEditorDescriptor desc = mapIDtoInternalEditor.get(id);
+		if (desc == null) {
+			desc = getOSEditor(id);
+		}
 		if (WorkbenchActivityHelper.restrictUseOf(desc)) {
 			return null;
 		}
@@ -458,7 +498,29 @@ public class EditorRegistry extends EventManager implements IEditorRegistry, IEx
 	 * @return the editor descriptors
 	 */
 	public IEditorDescriptor[] getSortedEditorsFromOS() {
+		synchronized (sortedEditorsFromOSSynchronizer) {
+			if (sortedEditorsFromOS == null) {
+				loadEditorsFromOS();
+			}
+			return sortedEditorsFromOS;
+		}
+	}
+
+	/**
+	 * refreshes cache.
+	 *
+	 * @see #getSortedEditorsFromOS
+	 */
+	// public just in case someone wants to reload
+	public void loadEditorsFromOS() {
+		synchronized (sortedEditorsFromOSSynchronizer) {
+			sortedEditorsFromOS = getStaticSortedEditorsFromOS();
+		}
+	}
+
+	private static IEditorDescriptor[] getStaticSortedEditorsFromOS() {
 		List<IEditorDescriptor> externalEditors = new ArrayList<>();
+
 		for (Program program : Program.getPrograms()) {
 			// 1FPLRL2: ITPUI:WINNT - NOTEPAD editor cannot be launched
 			// Some entries start with %SystemRoot%
@@ -720,7 +782,7 @@ public class EditorRegistry extends EventManager implements IEditorRegistry, IEx
 	}
 
 	private void lookupEditorFromTable(Map<String, IEditorDescriptor> editorTable, EditorDescriptor editor) {
-		IEditorDescriptor validEditorDescritor = mapIDtoEditor.get(editor.getId());
+		IEditorDescriptor validEditorDescritor = mapIDtoInternalEditor.get(editor.getId());
 		if (validEditorDescritor != null) {
 			editorTable.put(validEditorDescritor.getId(), validEditorDescritor);
 		}
@@ -742,8 +804,8 @@ public class EditorRegistry extends EventManager implements IEditorRegistry, IEx
 			List<IEditorDescriptor> editors = getEditorDescriptors(
 					childMemento.getChildren(IWorkbenchConstants.TAG_EDITOR), editorTable);
 			editors.forEach(editor -> {
-				if (!mapIDtoEditor.containsKey(editor.getId())) {
-					mapIDtoEditor.put(editor.getId(), editor);
+				if (!mapIDtoInternalEditor.containsKey(editor.getId())) {
+					mapIDtoInternalEditor.put(editor.getId(), editor);
 				}
 			});
 			String contentTypeId = childMemento.getString(IWorkbenchConstants.TAG_CONTENT_TYPE);
@@ -922,11 +984,11 @@ public class EditorRegistry extends EventManager implements IEditorRegistry, IEx
 	 */
 	private void rebuildInternalEditorMap() {
 		// Allocate a new map.
-		mapIDtoEditor = initialIdToEditorMap(mapIDtoEditor.size());
+		mapIDtoInternalEditor = initialIdToEditorMap(mapIDtoInternalEditor.size());
 
 		// Add plugin editors.
 		for (IEditorDescriptor desc : sortedEditorsFromPlugins) {
-			mapIDtoEditor.put(desc.getId(), desc);
+			mapIDtoInternalEditor.put(desc.getId(), desc);
 		}
 	}
 
@@ -1061,7 +1123,7 @@ public class EditorRegistry extends EventManager implements IEditorRegistry, IEx
 	 *
 	 * @see #comparer
 	 */
-	private IEditorDescriptor[] sortEditors(List<IEditorDescriptor> unsortedList) {
+	private static IEditorDescriptor[] sortEditors(List<IEditorDescriptor> unsortedList) {
 		IEditorDescriptor[] array = new IEditorDescriptor[unsortedList.size()];
 		unsortedList.toArray(array);
 
@@ -1219,7 +1281,7 @@ public class EditorRegistry extends EventManager implements IEditorRegistry, IEx
 				IEditorDescriptor desc = (IEditorDescriptor) object;
 
 				sortedEditorsFromPlugins.remove(desc);
-				mapIDtoEditor.values().remove(desc);
+				mapIDtoInternalEditor.values().remove(desc);
 				removeEditorFromMapping(typeEditorMappings.defaultMap, desc);
 				removeEditorFromMapping(typeEditorMappings.map, desc);
 				removeEditorFromContentTypeMappings(contentTypeToEditorMappingsFromPlugins, desc);
@@ -1599,8 +1661,8 @@ public class EditorRegistry extends EventManager implements IEditorRegistry, IEx
 		if (!this.contentTypeToEditorMappingsFromUser.containsKey(contentType)) {
 			this.contentTypeToEditorMappingsFromUser.put(contentType, new LinkedHashSet<>());
 		}
-		if (!mapIDtoEditor.containsKey(selectedEditor.getId())) {
-			mapIDtoEditor.put(selectedEditor.getId(), selectedEditor);
+		if (!mapIDtoInternalEditor.containsKey(selectedEditor.getId())) {
+			mapIDtoInternalEditor.put(selectedEditor.getId(), selectedEditor);
 		}
 		this.contentTypeToEditorMappingsFromUser.get(contentType).add(selectedEditor);
 		saveAssociations();

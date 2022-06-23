@@ -216,6 +216,7 @@ public class PartRenderingEngine implements IPresentationEngine {
 					Control ctrl = (Control) changedElement.getWidget();
 					ctrl.setParent(realComp);
 					fixZOrder(changedElement);
+					ctrl.requestLayout();
 				}
 
 				if (parent instanceof MElementContainer<?>) {
@@ -1024,7 +1025,11 @@ public class PartRenderingEngine implements IPresentationEngine {
 	}
 
 	protected AbstractPartRenderer getRendererFor(MUIElement element) {
-		return (AbstractPartRenderer) element.getRenderer();
+		Object renderer = element.getRenderer();
+		if (renderer instanceof AbstractPartRenderer) {
+			return (AbstractPartRenderer) renderer;
+		}
+		return null; // renderer may be HeadlessContextPresentationEngine
 	}
 
 	@Override

@@ -29,14 +29,15 @@ import org.eclipse.core.databinding.observable.IObservableCollection;
 import org.eclipse.core.databinding.observable.ObservableTracker;
 import org.eclipse.core.databinding.observable.Realm;
 import org.eclipse.core.databinding.observable.set.ComputedSet;
+import org.eclipse.core.databinding.observable.set.IObservableSet;
+import org.eclipse.core.databinding.observable.set.WritableSet;
 import org.eclipse.jface.databinding.conformance.ObservableCollectionContractTest;
 import org.eclipse.jface.databinding.conformance.delegate.AbstractObservableCollectionContractDelegate;
+import org.eclipse.jface.databinding.conformance.util.TestCollection;
 import org.eclipse.jface.databinding.conformance.util.SetChangeEventTracker;
 import org.eclipse.jface.tests.databinding.AbstractDefaultRealmTestCase;
 import org.junit.Before;
 import org.junit.Test;
-
-import junit.framework.TestSuite;
 
 public class ComputedSetTest extends AbstractDefaultRealmTestCase {
 	ComputedSetStub set;
@@ -96,6 +97,16 @@ public class ComputedSetTest extends AbstractDefaultRealmTestCase {
 				2, tracker.count);
 	}
 
+	@Test
+	public void testCreate() throws Exception {
+		WritableSet<Integer> writeSet = new WritableSet<>();
+		writeSet.add(44);
+		IObservableSet<Integer> compSet = ComputedSet.create(() -> new HashSet<>(writeSet));
+		assertEquals(writeSet, compSet);
+		writeSet.add(55);
+		assertEquals(writeSet, compSet);
+	}
+
 	static class ComputedSetStub extends ComputedSet<Object> {
 		Set<Object> nextComputation = new HashSet<>();
 		ObservableStub dependency;
@@ -140,8 +151,8 @@ public class ComputedSetTest extends AbstractDefaultRealmTestCase {
 		}
 	}
 
-	public static void addConformanceTest(TestSuite suite) {
-		suite.addTest(ObservableCollectionContractTest.suite(new Delegate()));
+	public static void addConformanceTest(TestCollection suite) {
+		suite.addTest(ObservableCollectionContractTest.class, new Delegate());
 	}
 
 	static class Delegate extends AbstractObservableCollectionContractDelegate<Object> {

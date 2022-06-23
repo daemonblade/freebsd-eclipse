@@ -67,7 +67,8 @@ public abstract class SWTPartRenderer extends AbstractPartRenderer {
 			// this is *not* the correct place for this
 			// hope that the ADD event will pick up the new part.
 			IPresentationEngine renderer = context.get(IPresentationEngine.class);
-			for (MUIElement childME : parts) {
+			for (int i = 0; i < parts.size(); i++) {
+				MUIElement childME = parts.get(i);
 				renderer.createGui(childME);
 			}
 		}
@@ -85,8 +86,17 @@ public abstract class SWTPartRenderer extends AbstractPartRenderer {
 
 	public void setCSSInfo(MUIElement me, Object widget) {
 		// No SWT widget, nothing to style...
-		if (widget == null)
+		if (widget == null) {
 			return;
+		}
+
+		//
+		if (widget instanceof Widget) {
+			Widget swtWidget = (Widget) widget;
+			if (swtWidget.isDisposed()) {
+				return;
+			}
+		}
 
 		// Set up the CSS Styling parameters; id & class
 		IEclipseContext ctxt = getContext(me);

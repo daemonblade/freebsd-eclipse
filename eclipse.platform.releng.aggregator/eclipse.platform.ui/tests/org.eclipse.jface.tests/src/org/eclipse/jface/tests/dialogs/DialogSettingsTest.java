@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -15,6 +15,13 @@
  *******************************************************************************/
 package org.eclipse.jface.tests.dialogs;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -22,10 +29,9 @@ import java.io.Writer;
 
 import org.eclipse.jface.dialogs.DialogSettings;
 import org.eclipse.jface.dialogs.IDialogSettings;
+import org.junit.Test;
 
-import junit.framework.TestCase;
-
-public class DialogSettingsTest extends TestCase {
+public class DialogSettingsTest {
 
 	private static final float DELTA = 0.0000001f;
 
@@ -34,6 +40,7 @@ public class DialogSettingsTest extends TestCase {
 			"value\"with\"quote", "value#with#hash", "", "\nvalue\nwith\nnewlines\n", "\tvalue\twith\ttab\t",
 			"\rvalue\rwith\rreturn\r", };
 
+	@Test
 	public void testDialogSettings() throws IOException {
 		for (String testString : TEST_STRINGS) {
 			final String name = testString;
@@ -51,6 +58,7 @@ public class DialogSettingsTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testAddNewSection() throws IOException {
 		for (String testString : TEST_STRINGS) {
 			final String name = testString;
@@ -103,7 +111,7 @@ public class DialogSettingsTest extends TestCase {
 	 *
 	 */
 	protected void check(IDialogSettings dialogSettings) {
-		assertEquals(true, dialogSettings.getBoolean("booleanKey"));
+		assertTrue(dialogSettings.getBoolean("booleanKey"));
 		assertEquals(0.4f, dialogSettings.getFloat("floatKey"), 0.4f);
 		assertEquals(0.4f, dialogSettings.getDouble("doubleKey"), 0.5);
 		assertEquals(324765, dialogSettings.getInt("integerKey"));
@@ -119,6 +127,7 @@ public class DialogSettingsTest extends TestCase {
 		assertNotNull(section.getSection("child3"));
 	}
 
+	@Test
 	public void testAddSection() throws IOException {
 		testPutAndGet(new DialogSettingsChecker() {
 
@@ -141,6 +150,7 @@ public class DialogSettingsTest extends TestCase {
 		});
 	}
 
+	@Test
 	public void testRemoveSection() {
 		DialogSettings dialogSettings = new DialogSettings(null);
 		IDialogSettings section = dialogSettings.addNewSection("new-section");
@@ -151,6 +161,7 @@ public class DialogSettingsTest extends TestCase {
 		assertEquals(0, dialogSettings.getSections().length);
 	}
 
+	@Test
 	public void testRemoveSectionByName() {
 		DialogSettings dialogSettings = new DialogSettings(null);
 		IDialogSettings section = dialogSettings.addNewSection("new-section");
@@ -162,6 +173,7 @@ public class DialogSettingsTest extends TestCase {
 		assertEquals(section, removedSection);
 	}
 
+	@Test
 	public void testRemoveNonExistingSection() {
 		DialogSettings dialogSettings = new DialogSettings(null);
 		dialogSettings.addNewSection("new-section");
@@ -173,6 +185,7 @@ public class DialogSettingsTest extends TestCase {
 		assertEquals(1, dialogSettings.getSections().length);
 	}
 
+	@Test
 	public void testRemoveOtherSection() {
 		DialogSettings dialogSettings = new DialogSettings(null);
 		dialogSettings.addNewSection("new-section");
@@ -184,6 +197,7 @@ public class DialogSettingsTest extends TestCase {
 		assertEquals(1, dialogSettings.getSections().length);
 	}
 
+	@Test
 	public void testRemoveSectionWithNullArgument() {
 		DialogSettings dialogSettings = new DialogSettings(null);
 
@@ -193,6 +207,7 @@ public class DialogSettingsTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testKeys() throws IOException {
 		for (String testString : TEST_STRINGS) {
 			final String key = testString;
@@ -212,6 +227,7 @@ public class DialogSettingsTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testGet() throws IOException {
 		for (String testString : TEST_STRINGS) {
 			final String value = testString;
@@ -231,6 +247,7 @@ public class DialogSettingsTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testGetArray() throws IOException {
 		for (String testString : TEST_STRINGS) {
 			final String value1 = testString;
@@ -286,6 +303,7 @@ public class DialogSettingsTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testGetBoolean() throws IOException {
 		testPutAndGet(new DialogSettingsChecker() {
 
@@ -293,18 +311,19 @@ public class DialogSettingsTest extends TestCase {
 			public void prepareAndCheckBeforeSerialization(IDialogSettings dialogSettingsToSerialize) {
 				dialogSettingsToSerialize.put("true", true);
 				dialogSettingsToSerialize.put("false", false);
-				assertEquals(true, dialogSettingsToSerialize.getBoolean("true"));
-				assertEquals(false, dialogSettingsToSerialize.getBoolean("false"));
+				assertTrue(dialogSettingsToSerialize.getBoolean("true"));
+				assertFalse(dialogSettingsToSerialize.getBoolean("false"));
 			}
 
 			@Override
 			public void checkAfterDeserialization(IDialogSettings deserializedDialogSettings) {
-				assertEquals(true, deserializedDialogSettings.getBoolean("true"));
-				assertEquals(false, deserializedDialogSettings.getBoolean("false"));
+				assertTrue(deserializedDialogSettings.getBoolean("true"));
+				assertFalse(deserializedDialogSettings.getBoolean("false"));
 			}
 		});
 	}
 
+	@Test
 	public void testGetDouble() throws IOException {
 		final double[] values = new double[] { -3.1415, 1, 0, 4554.45235, Double.MAX_VALUE, Double.MIN_VALUE,
 				Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY };
@@ -336,6 +355,7 @@ public class DialogSettingsTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testGetFloat() throws IOException {
 		final float[] values = new float[] { -3.1415f, 1, 0, 4554.45235f, Float.MAX_VALUE, Float.MIN_VALUE, Float.NaN,
 				Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY };
@@ -367,6 +387,7 @@ public class DialogSettingsTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testGetInt() throws IOException {
 		int[] values = new int[] { 36254, 0, 1, -36254, Integer.MAX_VALUE, Integer.MIN_VALUE };
 
@@ -388,6 +409,7 @@ public class DialogSettingsTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testGetLong() throws IOException {
 		long[] values = new long[] { 36254L, 0L, 1L, -36254L, Long.MAX_VALUE, Long.MIN_VALUE };
 
@@ -408,12 +430,6 @@ public class DialogSettingsTest extends TestCase {
 			});
 		}
 
-	}
-
-	public void testGetSection() {
-	}
-
-	public void testGetSections() {
 	}
 
 	private interface DialogSettingsChecker {
@@ -443,6 +459,7 @@ public class DialogSettingsTest extends TestCase {
 
 	}
 
+	@Test
 	@SuppressWarnings("resource")
 	public void testSaveWithIOException() {
 		final DialogSettings settings = new DialogSettings("test");
