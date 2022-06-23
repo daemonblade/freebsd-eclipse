@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020, 2021 Paul Pazderski and others.
+ * Copyright (c) 2020, 2022 Paul Pazderski and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -14,24 +14,28 @@
  *******************************************************************************/
 package org.eclipse.debug.tests.console;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
+import java.io.InputStream;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.debug.core.DebugEvent;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.DebugPlugin;
+import org.eclipse.debug.core.model.IProcess;
 import org.eclipse.debug.core.model.RuntimeProcess;
 import org.eclipse.debug.internal.core.DebugCoreMessages;
 import org.eclipse.debug.tests.AbstractDebugTest;
 import org.eclipse.debug.tests.TestUtil;
+import org.eclipse.debug.tests.sourcelookup.TestLaunch;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class RuntimeProcessTests extends AbstractDebugTest {
@@ -185,7 +189,7 @@ public class RuntimeProcessTests extends AbstractDebugTest {
 		RuntimeProcess runtimeProcess = mockProcess.toRuntimeProcess();
 
 		DebugException timeoutException = assertThrows(DebugException.class, runtimeProcess::terminate);
-		assertThat(timeoutException.getMessage(), is(DebugCoreMessages.RuntimeProcess_terminate_failed));
+		assertEquals(DebugCoreMessages.RuntimeProcess_terminate_failed, timeoutException.getMessage());
 	}
 
 	/**
@@ -204,6 +208,36 @@ public class RuntimeProcessTests extends AbstractDebugTest {
 		RuntimeProcess runtimeProcess = mockProcess.toRuntimeProcess();
 
 		DebugException timeoutException = assertThrows(DebugException.class, runtimeProcess::terminate);
-		assertThat(timeoutException.getMessage(), is(DebugCoreMessages.RuntimeProcess_terminate_failed));
+		assertEquals(DebugCoreMessages.RuntimeProcess_terminate_failed, timeoutException.getMessage());
 	}
+
+	/**
+	 * See comment in MockProcess.MockProcess().new InputStream() {...}.read()
+	 * for why this test fails
+	 */
+	@Test
+	@Ignore("See https://bugs.eclipse.org/bugs/show_bug.cgi?id=577189")
+	public void testOutputAfterDestroy() throws Exception {
+		MockProcess proc = new MockProcess();
+
+		IProcess iProc = new RuntimeProcess(new TestLaunch(), proc, "foo", Collections.emptyMap());
+		iProc.terminate();
+
+		String str = iProc.getStreamsProxy().getOutputStreamMonitor().getContents();
+		TestUtil.log(IStatus.INFO, name.getMethodName(), "Stream result: ");
+		for (int i = 0; i < str.length(); i += 100) {
+			TestUtil.log(IStatus.INFO, name.getMethodName(), str.substring(i, Math.min(i + 100, str.length())));
+		}
+		TestUtil.log(IStatus.INFO, name.getMethodName(), "Stream done.");
+		// Make sure that the inputstream (process's stdout) has been fully read
+		// and is at EOF
+		@SuppressWarnings("resource")
+		InputStream inputStream = proc.getInputStream();
+		assertEquals(-1, inputStream.read());
+		// Make sure that the last character in the stream makes it through to
+		// the monitor
+		assertTrue(str.endsWith(String.valueOf((char) MockProcess.ProcessState.LASTREAD.getCode())));
+	}
+
+
 }

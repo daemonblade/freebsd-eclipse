@@ -59,6 +59,7 @@ public class DebugPreferencesMessages extends NLS {
 	public static String DebugPreferencePage_25;
 	public static String DebugPreferencePage_26;
 	public static String DebugPreferencePage_27;
+	public static String DebugPreferencePage_showValuesInline;
 
 	public static String DefaultLaunchConfigurationsPropertiesPage_0;
 
@@ -189,6 +190,8 @@ public class DebugPreferencesMessages extends NLS {
 
 	public static String ProcessPropertyPage_10;
 
+	public static String ProcessPropertyPage_11;
+
 	public static String ProcessPropertyPage_1;
 
 	public static String ProcessPropertyPage_2;
@@ -212,5 +215,6 @@ public class DebugPreferencesMessages extends NLS {
 	public static String DebugPreferencePage_5;
 
 	public static String RunDebugPropertiesPage_0;
+
 
 }

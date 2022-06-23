@@ -71,6 +71,12 @@
             modes="run"
             name="%launchConfigurationType.name.0">
       </launchConfigurationType>
+      <launchConfigurationType
+            delegate="org.eclipse.debug.tests.launching.ThrowingLaunchDelegate"
+            id="throwing.type"
+            modes="run"
+            name="%launchConfigurationType.name.1">
+      </launchConfigurationType>
    </extension>
    <extension
         id="debugFS"
@@ -141,5 +147,20 @@
             id="org.eclipse.debug.tests.logicalStructureType1"
             modelIdentifier="org.eclipse.debug.tests">
       </logicalStructureType>
+   </extension>
+   <extension
+       point="org.eclipse.debug.ui.variableValueEditors">
+     <variableValueEditor
+         modelId="testModel"
+         priority="x"
+         class="org.eclipse.debug.tests.ui.TestVariableValueEditor1"/>
+     <variableValueEditor
+         modelId="testModel"
+         priority="10"
+         class="org.eclipse.debug.tests.ui.TestVariableValueEditor2"/>
+     <variableValueEditor
+         modelId="testModel"
+         priority="-1"
+         class="org.eclipse.debug.tests.ui.TestVariableValueEditor3"/>
    </extension>
 </plugin>

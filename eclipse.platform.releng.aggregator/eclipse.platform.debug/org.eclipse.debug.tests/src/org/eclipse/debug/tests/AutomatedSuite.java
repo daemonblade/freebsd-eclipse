@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2020 IBM Corporation and others.
+ * Copyright (c) 2009, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -44,7 +44,9 @@ import org.eclipse.debug.tests.logicalstructure.LogicalStructureCacheTest;
 import org.eclipse.debug.tests.sourcelookup.SourceLookupFacilityTests;
 import org.eclipse.debug.tests.statushandlers.StatusHandlerTests;
 import org.eclipse.debug.tests.stepfilters.StepFiltersTests;
+import org.eclipse.debug.tests.ui.VariableValueEditorManagerTests;
 import org.eclipse.debug.tests.view.memory.MemoryRenderingTests;
+import org.eclipse.debug.tests.view.memory.TableRenderingTests;
 import org.eclipse.debug.tests.viewer.model.ChildrenUpdateTests;
 import org.eclipse.debug.tests.viewer.model.FilterTransformTests;
 import org.eclipse.debug.tests.viewer.model.PresentationContextTests;
@@ -88,9 +90,11 @@ import org.junit.runners.Suite;
 		FilterTransformTests.class,
 		ChildrenUpdateTests.class,
 		PresentationContextTests.class,
+		VariableValueEditorManagerTests.class,
 
 		// Memory view
 		MemoryRenderingTests.class,
+		TableRenderingTests.class,
 
 		// Launch framework
 		LaunchConfigurationTests.class,

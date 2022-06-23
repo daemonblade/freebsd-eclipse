@@ -15,7 +15,7 @@
   <parent>
     <groupId>org.eclipse</groupId>
     <artifactId>eclipse-platform-parent</artifactId>
-    <version>4.21.0-SNAPSHOT</version>
+    <version>4.24.0-SNAPSHOT</version>
     <relativePath>../eclipse-platform-parent</relativePath>
   </parent>
 
@@ -24,7 +24,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <tycho.scmUrl>scm:git:https://git.eclipse.org/r/platform/eclipse.platform.debug.git</tycho.scmUrl>
+    <tycho.scmUrl>scm:git:https://github.com/eclipse-platform/eclipse.platform.debug.git</tycho.scmUrl>
   </properties>
 
   <!-- 
@@ -60,6 +60,8 @@
     <module>org.eclipse.debug.examples.ui</module>
     <module>org.eclipse.debug.tests</module>
     <module>org.eclipse.debug.ui</module>
+    <module>org.eclipse.debug.ui.launchview</module>
+    <module>org.eclipse.debug.ui.launchview.tests</module>
     <module>org.eclipse.ui.console</module>
     <module>org.eclipse.ui.externaltools</module>
     <module>org.eclipse.unittest.ui</module>

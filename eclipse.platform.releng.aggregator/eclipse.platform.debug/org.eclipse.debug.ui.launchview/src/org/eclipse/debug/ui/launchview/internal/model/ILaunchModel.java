@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Andreas Loth and others.
+ * Copyright (c) 2017, 2019 SSI Schaefer IT Solutions GmbH and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -9,22 +9,19 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors:
- *     Andreas Loth - initial API and implementation
+ *     SSI Schaefer IT Solutions GmbH
  *******************************************************************************/
-
-package org.eclipse.ui.internal.console;
-
-import java.nio.charset.Charset;
-
+package org.eclipse.debug.ui.launchview.internal.model;
 
 /**
- * @deprecated class was moved to
- *             {@link org.eclipse.debug.internal.core.StreamDecoder}
+ * Service which controls the lifecycle of the model which the view is based on.
  */
-@Deprecated
-public class StreamDecoder extends org.eclipse.debug.internal.core.StreamDecoder {
+public interface ILaunchModel {
 
-	public StreamDecoder(Charset charset) {
-		super(charset);
-	}
+	/**
+	 * @return the current model. Never <code>null</code>. Always created from
+	 *         the current state.
+	 */
+	public LaunchObjectContainerModel getModel();
+
 }
