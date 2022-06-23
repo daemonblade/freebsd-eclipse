@@ -31,10 +31,15 @@ mv ${AGGR_MODULE}-${ECLIPSE_TAG} ${AGGR_MODULE}
 
 for M in ${ECLIPSE_MODULES}
 do
-	MODULE=$(basename $M | cut -f1 -d:)
+	MODULE=$(basename $M | cut -f1 -d: | cut -f1 -d@)
+	TAG=$(basename $M | cut -f1 -d: | cut -f2 -d@)
+	if [ ${TAG} = ${MODULE} ]
+	then
+		TAG="${ECLIPSE_TAG}"
+	fi
 	DEST=$(basename $M | cut -f2 -d:)
 
-	SNAP="${MODULE}-${ECLIPSE_TAG}"
+	SNAP="${MODULE}-${TAG}"
 	SUBDIR="${AGGR_MODULE}/${DEST}"
 	ARCHIVE="distfiles/${SNAP}.tar.gz"
 
