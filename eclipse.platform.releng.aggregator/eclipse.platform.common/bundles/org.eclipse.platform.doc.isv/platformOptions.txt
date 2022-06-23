@@ -158,17 +158,18 @@
 ;${dependency.dir}/org.eclipse.emf.common_*.jar
 ;${dependency.dir}/org.eclipse.emf.ecore.xmi_*.jar
 ;${dependency.dir}/org.eclipse.emf.ecore_*.jar
-;${dependency.dir}/org.eclipse.jetty.continuation_*.jar
-;${dependency.dir}/org.eclipse.jetty.http_*.jar
-;${dependency.dir}/org.eclipse.jetty.io_*.jar
-;${dependency.dir}/org.eclipse.jetty.security_*.jar
-;${dependency.dir}/org.eclipse.jetty.server_*.jar
-;${dependency.dir}/org.eclipse.jetty.servlet_*.jar
-;${dependency.dir}/org.eclipse.jetty.util_*.jar
+;${dependency.dir}/org.osgi.service.prefs_*.jar
+;${dependency.dir}/jetty-http_*.jar
+;${dependency.dir}/jetty-io_*.jar
+;${dependency.dir}/jetty-security_*.jar
+;${dependency.dir}/jetty-server_*.jar
+;${dependency.dir}/jetty-servlet_*.jar
+;${dependency.dir}/jetty-util_*.jar
 ;${dependency.dir}/org.sat4j.core_*.jar
 ;${dependency.dir}/org.sat4j.pb_*.jar
 ;${dependency.dir}/org.w3c.css.sac_*.jar
 ;${dependency.dir}/org.bouncycastle.bcpg_*.jar
+;${dependency.dir}/org.bouncycastle.bcprov_*.jar
 ;${eclipse.equinox.supplement}/${dot.classes}
 ;${eclipse.platform.ua}/org.eclipse.help.appserver/${dot.classes}
 ;${eclipse.platform.ui.bundles}/org.eclipse.e4.ui.workbench.addons.swt/${dot.classes}
@@ -181,16 +182,17 @@
 ;${rt.equinox.p2.bundles}/org.eclipse.equinox.p2.metadata.repository/${dot.classes}
 ;${rt.equinox.p2.bundles}/org.eclipse.equinox.p2.publisher/${dot.classes}
 ;${rt.equinox.p2.bundles}/org.eclipse.equinox.simpleconfigurator/${dot.classes}
+;${eclipse.pde}/apitools/org.eclipse.pde.api.tools.annotations/${dot.classes}
 -breakiterator
 -use
 -splitIndex
 -windowtitle "Eclipse Platform API Specification"
 -doctitle "Eclipse Platform API Specification"
--header "<span style='font-size:small'><b>Eclipse Platform</b><br>2021-09 (4.21)</span>"
--bottom "<br><span style='font-size:small;float:right'>Copyright (c) 2000, 2021 Eclipse Contributors and others. All rights reserved.</span><span style='font-size:small'><a href='{@docRoot}/../misc/api-usage-rules.html'>Guidelines for using Eclipse APIs.</a></span>"
--link https://docs.oracle.com/en/java/javase/11/docs/api
+-header "<span style='font-size:small'><b>Eclipse Platform</b><br>2022-06 (4.24)</span>"
+-bottom "<br><span style='font-size:small;float:right'>Copyright (c) 2000, 2022 Eclipse Contributors and others. All rights reserved.</span><span style='font-size:small'><a href='{@docRoot}/../misc/api-usage-rules.html'>Guidelines for using Eclipse APIs.</a></span>"
+-link https://docs.oracle.com/en/java/javase/17/docs/api
 -link https://docs.osgi.org/javadoc/osgi.core/8.0.0/
--link https://docs.osgi.org/javadoc/osgi.cmpn/7.0.0/
+-link https://docs.osgi.org/javadoc/osgi.cmpn/8.0.0/
 -link https://docs.osgi.org/javadoc/osgi.enterprise/7.0.0/
 -tag 'noimplement:a:Restriction:'
 -tag 'noextend:a:Restriction:'
@@ -509,7 +511,6 @@ org.eclipse.ui.texteditor.spelling
 org.eclipse.ui.texteditor.templates
 org.eclipse.ui.themes
 org.eclipse.ui.views
-org.eclipse.ui.views.bookmarkexplorer
 org.eclipse.ui.views.contentoutline
 org.eclipse.ui.views.framelist
 org.eclipse.ui.views.markers

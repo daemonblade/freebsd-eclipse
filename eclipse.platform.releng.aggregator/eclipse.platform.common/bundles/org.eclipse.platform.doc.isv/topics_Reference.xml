@@ -283,7 +283,6 @@
       <topic label="org.eclipse.ui.texteditor.spelling" href="reference/api/org/eclipse/ui/texteditor/spelling/package-summary.html"/>
       <topic label="org.eclipse.ui.texteditor.templates" href="reference/api/org/eclipse/ui/texteditor/templates/package-summary.html"/>
       <topic label="org.eclipse.ui.views" href="reference/api/org/eclipse/ui/views/package-summary.html"/>
-      <topic label="org.eclipse.ui.views.bookmarkexplorer" href="reference/api/org/eclipse/ui/views/bookmarkexplorer/package-summary.html"/>
       <topic label="org.eclipse.ui.views.contentoutline" href="reference/api/org/eclipse/ui/views/contentoutline/package-summary.html"/>
       <topic label="org.eclipse.ui.views.framelist" href="reference/api/org/eclipse/ui/views/framelist/package-summary.html"/>
       <topic label="org.eclipse.ui.views.markers" href="reference/api/org/eclipse/ui/views/markers/package-summary.html"/>
@@ -379,6 +378,7 @@
        <topic label="org.eclipse.equinox.p2.artifact.repository.artifactComparators" href="reference/extension-points/org_eclipse_equinox_p2_artifact_repository_artifactComparators.html"/>
        <topic label="org.eclipse.equinox.p2.artifact.repository.artifactRepositories" href="reference/extension-points/org_eclipse_equinox_p2_artifact_repository_artifactRepositories.html"/>
        <topic label="org.eclipse.equinox.p2.artifact.repository.processingSteps" href="reference/extension-points/org_eclipse_equinox_p2_artifact_repository_processingSteps.html"/>
+       <topic label="org.eclipse.equinox.p2.engine.pgp" href="reference/extension-points/org_eclipse_equinox_p2_engine_pgp.html"/>
        <topic label="org.eclipse.equinox.preferences.preferences" href="reference/extension-points/org_eclipse_equinox_preferences_preferences.html"/>
        <topic label="org.eclipse.equinox.security.loginConfigurationProvider" href="reference/extension-points/org_eclipse_equinox_security_loginConfigurationProvider.html"/>
        <topic label="org.eclipse.equinox.security.loginModule" href="reference/extension-points/org_eclipse_equinox_security_loginModule.html"/>
@@ -517,6 +517,7 @@
        <topic label="org.eclipse.ui.views.properties.tabbed.propertyContributor" href="reference/extension-points/org_eclipse_ui_views_properties_tabbed_propertyContributor.html"/>
        <topic label="org.eclipse.ui.views.properties.tabbed.propertySections" href="reference/extension-points/org_eclipse_ui_views_properties_tabbed_propertySections.html"/>
        <topic label="org.eclipse.ui.views.properties.tabbed.propertyTabs" href="reference/extension-points/org_eclipse_ui_views_properties_tabbed_propertyTabs.html"/>
+       <topic label="org.eclipse.ui.workbench.texteditor.codeMiningProviders" href="reference/extension-points/org_eclipse_ui_workbench_texteditor_codeMiningProviders.html"/>
        <topic label="org.eclipse.ui.workbench.texteditor.hyperlinkDetectors" href="reference/extension-points/org_eclipse_ui_workbench_texteditor_hyperlinkDetectors.html"/>
        <topic label="org.eclipse.ui.workbench.texteditor.hyperlinkDetectorTargets" href="reference/extension-points/org_eclipse_ui_workbench_texteditor_hyperlinkDetectorTargets.html"/>
        <topic label="org.eclipse.ui.workbench.texteditor.quickDiffReferenceProvider" href="reference/extension-points/org_eclipse_ui_workbench_texteditor_quickDiffReferenceProvider.html"/>

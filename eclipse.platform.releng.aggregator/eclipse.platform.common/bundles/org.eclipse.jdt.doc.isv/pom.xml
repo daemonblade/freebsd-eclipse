@@ -14,12 +14,12 @@
   <parent>
     <artifactId>eclipse.platform.common</artifactId>
     <groupId>eclipse.platform.common</groupId>
-    <version>4.21.0-SNAPSHOT</version>
+    <version>4.24.0-SNAPSHOT</version>
     <relativePath>../../</relativePath>
   </parent>
   <groupId>org.eclipse.jdt</groupId>
   <artifactId>org.eclipse.jdt.doc.isv</artifactId>
-  <version>3.14.1300-SNAPSHOT</version>
+  <version>3.14.1600-SNAPSHOT</version>
   <packaging>eclipse-plugin</packaging>
   <profiles>
     <profile>
@@ -92,7 +92,19 @@
                 <configuration>
                   <skip>false</skip>
                   <!-- call buildDoc.xml -->
-                  <appArgLine>-consolelog -debug -data target/workspace -application org.eclipse.ant.core.antRunner -quiet -buildfile buildDoc.xml -Dbasedir.properties=cbi_basedirs.properties -Declipse.javadoc=${eclipse.javadoc}</appArgLine>
+                  <applicationsArgs>
+	                  <args>-consolelog</args>
+	                  <args>-debug</args>
+	                  <args>-data</args>
+	                  <args>target/workspace</args>
+	                  <args>-application</args>
+	                  <args>org.eclipse.ant.core.antRunner</args>
+	                  <args>-quiet</args>
+	                  <args>-buildfile</args>
+	                  <args>buildDoc.xml</args>
+	                  <args>-Dbasedir.properties=cbi_basedirs.properties</args>
+	                  <args>-Declipse.javadoc=${eclipse.javadoc}</args>
+                  </applicationsArgs>
                   <dependencies>
                     <!-- list of bundles that we need -->
                     <dependency>

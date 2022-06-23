@@ -17,20 +17,20 @@ table.news tr td.title {vertical-align: top; font-weight: bold;}
 table.news tr td.content {vertical-align: top;}
 ul {padding-left: 13px;}
 </style>
-<title>What's New in Eclipse 4.21 (JDT)</title>
+<title>What's New in Eclipse 4.24 (JDT)</title>
 </head>
 
 <body>
-<h2>What's New in Eclipse 4.21 (JDT)</h2>
+<h2>What's New in Eclipse 4.24 (JDT)</h2>
 <p>Here are descriptions of some of the more interesting or significant changes made to the Java development tools (JDT)
-for the 4.21 release of Eclipse.
+for the 4.24 release of Eclipse.
 They are grouped into:</p>
 <ul> <!-- NOTE: Sync ../topics_WhatsNew.xml with this! -->
-  	<!--<li><a href="#Java16">Java&trade; 16 Support</a></li>-->
+  	<li><a href="#Java18">Java&trade; 18 Support</a></li>
   	<li><a href="#JUnit">JUnit</a></li>
 	<li><a href="#JavaEditor">Java Editor</a></li>
-	<li><a href="#JavaCompiler">Java Compiler</a></li>
-	<!--<li><a href="#JavaViewsAndDialogs">Java Views and Dialogs</a></li>-->
+	<!--<li><a href="#JavaCompiler">Java Compiler</a></li>-->
+	<!--li><a href="#JavaViewsAndDialogs">Java Views and Dialogs</a></li-->
 	<!--li><a href="#JavaFormatter">Java Formatter</a></li-->
 	<li><a href="#Debug">Debug</a></li>
 	<!--li><a href="#JDTDev">JDT Developers</a></li-->
@@ -48,16 +48,32 @@ document for changes in the Platform.</p>
   <col />
 </colgroup>
 <tbody>
-
-  <!-- ******************* Java XX Support ************************************* -->
-  <!--
+<!-- ******************* Java 18 Support ************************************* -->
   <tr>
-    <td id="JavaXX" class="section" colspan="2">
-    <h2>Java&trade; XX Support </h2>
-    </td>
+    <td id="Java18" class="section" colspan="2">
+    <h2>Java&trade; 18 Support </h2></td>
   </tr>
-  -->
-  <!-- ******************* End of Java XX Support ************************************* -->
+   <tr id="Java_18"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=570733 -->
+      <td class="title"><a href="#Java_18">Java 18</a></td>
+      <td class="content">
+          <a href="https://jdk.java.net/18/" target="_blank">Java 18</a> is out and Eclipse JDT supports Java 18 in 4.24. 
+          <p></p>
+          <p>
+          The release notably includes the following Java 18 features:
+           <br/>
+           <a href="https://openjdk.java.net/jeps/420" target="_blank"> JEP 420: Pattern Matching for switch (Second Preview)</a>.
+           <br/>
+           <a href="https://openjdk.java.net/jeps/413" target="_blank"> JEP 413: Code Snippets in Java API Documentation</a>.
+           </p>
+           <p>
+           Please note that preview option should be on for <a href="https://openjdk.java.net/projects/jdk/18/" target="_blank">preview language features</a>.
+           For an informal introduction of the support, 
+           please refer to <a href="https://wiki.eclipse.org/Java18/Examples" target="_blank">Java 18 Examples wiki</a>. 
+           </p>
+      </td>
+  </tr>
+  <!-- ******************* End of Java 18 Support ************************************* -->
+
 
   <!-- ******************* JUnit ************************************* -->
   <tr>
@@ -65,16 +81,19 @@ document for changes in the Platform.</p>
     <h2>JUnit</h2>
     </td>
   </tr>
-  
-  <tr id="mockitomatchers"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=575246 -->
-    <td class="title"><a href="#mockitomatchers">mockito ArgumentMatchers.* added to favorites in Java tooling</a></td>
+  <tr id="junit5-rerun-failures-first"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=578747 -->
+    <td class="title"><a href="#junit5-rerun-failures-first">JUnit 5 'Rerun failures first' support</a></td>
     <td class="content">
-      Mockito based tests frequently use <code>org.mockito.ArgumentMatchers.*</code>.  
-      This has been added to the Java favorites in the preferences under <b>Java &gt; Editor &gt; Content Assist &gt; Favorites</b>.
-	  This way the organize imports action in the IDE will automatically add static imports for these classes if you use them in your tests.
+      Support for rerunning a test with failures first from the <b>JUnit View</b> is now supported for JUnit 5 tests.  This support already existed for JUnit4 tests but was previously disabled for JUnit5 testing.
+      <p>
+        To run, click on the <b>Rerun Test - Failures First</b> button in the JUnit view.</p>
+      <p><img src="images/run-failures-first-before.png" alt="Before"/></p>
+      <p>
+        After pressing the button:
+      </p>
+      <p><img src="images/run-failures-first-after.png" alt="After"/></p>
     </td>
   </tr>
-
   <!-- ******************* End of JUnit ************************************* -->
 
   <!-- ******************* Java Editor ************************************* -->
@@ -83,177 +102,79 @@ document for changes in the Platform.</p>
     <h2>Java Editor </h2>
     </td>
   </tr>
+  
+  <tr id="strconcat-to-textblock"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=561484 -->
+    <td class="title"><a href="#strconcat-to-textblock">Remove unused private method parameters</a></td>
+    <td class="content">
+      A new <b>cleanup</b> and <b>quick-assist</b> has been added to remove unused parameters of private methods. If removing parameters might
+      lead to a conflict with an another method, the private method is renamed to be unique. The cleanup is not available if there 
+      is a method reference to the method, as in <code>stream.filter(MyClass::foo)</code>
+      <p>
+        To apply the cleanup, select the <b>Remove unused private method parameters</b> checkbox on the <b>Unnecessary Code</b> tab in your cleanup profile:</p>
+      <p><img src="images/remove_param_1.png" alt="Preference"/></p>
+      <p>
+        With the cleanup, the following code:
+      </p>
+      <p><img src="images/remove_param_2.png" alt="Before"/></p>
+      <p>
+        changes to:
+      </p>
+      <p><img src="images/remove_param_3.png" alt="After"/></p>
+      <p>To remove a single parameter, a quick-assist has been added that can be activated with <b>CTRL+1</b> with the cursor located anywhere on the parameter.
+      </p>
+    </td>
+    </tr>
 
-  <tr id="stringbuffer-to-stringbuilder"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=569835 -->
-    <td class="title"><a href="#stringbuffer-to-stringbuilder">Use StringBuilder instead of StringBuffer clean up</a></td>
-    <td class="content">
-      A new clean up has been added that converts code to use <code>StringBuilder</code> (added in Java 1.5) rather than <code>StringBuffer</code> which has synchronized methods and is slower than using <code>StringBuilder</code>.
-      <p>
-        There is a sub-option where changes will only occur to local variables which is on by default.  When this sub-option is on, changes will only occur to <code>StringBuffer</code> variables that are local to a method.  When a method calls other methods with such variables or assigns to/from fields/parameters, the method contents will not be converted.  It is permitted to append <code>StringBuffer</code> fields or parameters to local <code>StringBuffer</code> variables which can then still be converted to <code>StringBuilder</code>.
-      </p>
-      <p>
-      When the option is selected and the sub-option for local variables is off,all usage of <code>StringBuffer</code> in the selected files are changed to <code>StringBuilder</code> regardless of usage.  It should be noted that in this case, the clean up will not track down non-selected classes and methods that are referenced and might require changes to compile successfully.
-      </p>
-      <p>
-        To apply the clean up, select the <b>Use StringBuilder instead of StringBuffer</b> check box on the <b>Performance</b> tab in your clean up profile.  To specify just for local variables, select the <b>Only for local variables</b> check box found just below.
-      </p>
-      <p><img src="images/stringbuffer-to-stringbuilder-prefs.png" alt="Preferences" width="800"/></p>
-      <p>
-        For the given code:
-      </p>
-      <p><img src="images/stringbuffer-to-stringbuilder-before.png" alt="Before"/></p>
-      <p>
-        One gets:
-      </p>
-      <p><img src="images/stringbuffer-to-stringbuilder-after.png" alt="After"/></p>
-    </td>
-  </tr>
+    <tr id="extend_interface_assist"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=567666 -->
+        <td class="title"><a href="#extend_interface_assist">Extend Interface</a></td>
+        <td class="content">
+            A new <b>quick-assist</b> has been added to extend an Interface. When selected, the new Interface wizard opens up.
+        <p><img src="images/extend_interface_assist.png" alt="Before" /></p>
+        </td>
+    </tr>
+    
+    <tr id="create_sub_type_for_sealed_type"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=577317 -->
+        <td class="title"><a href="#create_sub_type_for_sealed_type">Create sub type for sealed super type</a></td>
+        <td class="content">
+            A new set of <b>quick-fixes</b> has been added to create sub-type for a sealed type which does not have any permitted types. When selected, the appropriate new <b>Class/Record/Interface wizard</b> opens up.
+            <p>These quick fixes have been added to fix the error : 
+            <code>Sealed class or interface lacks the permits clause and no class or interface from the same compilation unit declares Cls1 as its direct superclass or superinterface</code></p>
+        <p>As shown below, two new quick fixes have been added to create sub-type for a sealed super class.</p>
+        <p><img src="images/permitted_sub_class.png" alt="Before" /></p>
+        <p>As shown below, six new quick fixes have been added to create sub-type for a sealed super interface.</p>
+        <p><img src="images/permitted_sub_type.png" alt="Before" /></p>
+        </td>
+    </tr>
+<!-- ******************* End of Java Editor ************************************* -->
 
-  <tr id="while-to-do-while"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=572574 -->
-    <td class="title"><a href="#while-to-do-while">Convert while to do/while</a></td>
-    <td class="content">
-      A new quick-assist has been added to convert appropriate <b>while</b> loops into <b>do/while</b> loops.  Appropriate <b>while</b> loops require the first evaluation of the while expression is guaranteed to be true and that the evaluation is passive.
-      <p>
-        For the following loop:
-      </p>
-      <p><img src="images/while-to-do-while-before.png" alt="Before"/></p>
-      <p>
-        One is offered:
-      </p>
-      <p><img src="images/while-to-do-while-after.png" alt="After"/></p>
-    </td>
-  </tr>
-
-  <tr id="extract-superclass-enhancement"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=573884 -->
-    <td class="title"><a href="#extract-superclass-enhancement">Extract Superclass Enhancement</a></td>
-    <td class="content">
-      The <b>Extract Superclass</b> refactoring has been enhanced to support movement of uninitialized non-static final fields.  In the past, a warning was issued for extracting uninitialized non-static final fields as the resultant code would be in error.  The refactoring has been enhanced to add additional parameters to the moved constructors and to pass initialization values from the original class constructors.
-      <p>
-        For the following class:
-      </p>
-      <p><img src="images/extract-superclass-original-before.png" alt="Before"/></p>
-      <p>
-        Extracting to Superclass and choosing all fields, one gets:
-      </p>
-      <p><img src="images/extract-superclass-original-after.png" alt="After"/></p>
-      <p>
-	and
-      </p>
-      <p><img src="images/extract-superclass-superclass-after.png" alt="After"/></p>
-    </td>
-  </tr>
-
-  <tr id="raw-paste"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=5222184 -->
-    <td class="title"><a href="#raw-paste">Raw Paste</a></td>
-    <td class="content">
-      A new menu item has been added for doing a raw paste when editing Java files.  The menu item <b>Raw Paste</b> can be found in the <b>Edit</b> pull-down menu and by right-clicking in the edit window to bring up the context-menu.  The menu item performs a paste action but toggles off the smart insert feature, if required, and restores it, if necessary, after the paste.  For end-users in smart insert mode, this is the same as doing a <b>Shift+Ctrl+Insert</b> followed by <b>Ctrl+V</b>, followed by <b>Shift+Ctrl+Insert</b> to retoggle into smart insert mode again.
-    </td>
-  </tr>
-
-  <tr id="default-type-filters"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=571758 -->
-    <td class="title"><a href="#default-type-filters">Default Type Filters</a></td>
-    <td class="content">
-      Default values have been added to the <b>Java &gt; Appearance &gt; Type Filters</b> preferences. Types matching these filters will be excluded 
-      from appearing in the Open Type dialog, content assist, quick fix, and organize imports. These filter patterns do not affect the Package Explorer and Type Hierarchy views.   
-      <p><img src="images/default-type-filters.png" alt=""/></p>
-      <p>
-      </p>
-    </td>
-  </tr> 
-  <tr id="change-compliance-jre-multi-constant-labels"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=574707 -->
-    <td class="title"><a href="#change-compliance-jre-multi-constant-labels">Change project compliance and JRE on using multi-constant case labels</a></td>
-    <td class="content">
-      A new quick fix (<b>Ctrl+1</b>) has been added to change the project compliance and JRE when multi-constant case labels 
-      are used in a project below Java 14: 
-      <p><img src="images/change-compliance-jre-multi-constant-labels.png" alt=""/></p>
-      <p>
-      </p>
-    </td>
-  </tr>
-  <tr id="declare-as-super-interface"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=573980 -->
-    <td class="title"><a href="#declare-sealed-interface-as-super-interface">Quick fix to declare sealed interface as super interface</a></td>
-    <td class="content">
-      You can use the following quick fix (<b>Ctrl+1</b>) to declare a sealed interface as super interface of its permitted types:
-      <p><img src="images/declare-sealed-interface-as-super-interface.png" alt=""/></p>
-      <p>
-      </p>
-    </td>
-  </tr> 
-  <tr id="declare-as-super-class"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=574860 -->
-    <td class="title"><a href="#declare-sealed-class-as-super-class">Quick fix to declare sealed class as super class</a></td>
-    <td class="content">
-      You can use the following quick fix (<b>Ctrl+1</b>) to declare a sealed class as super class of its permitted classes:
-      <p><img src="images/declare-sealed-class-as-super-class.png" alt=""/></p>
-      <p>
-      </p>
-    </td>
-  </tr>  
-
-  <tr id="add-to-permitted-types"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=574526 -->
-    <td class="title"><a href="#add-sub -type-as-permitted -type-of-sealed-type">Quick fix to add the sub type to permitted types of sealed super type</a></td>
-    <td class="content">
-      You can use the following quick fix (<b>Ctrl+1</b>) to add a sub type to permitted types of a sealed super type:
-      <p><img src="images/add-subtype-to-permitted-types-of-supertype.png" alt=""/></p>
-      <p>
-      </p>
-    </td>
-  </tr>
-
-  <!--******************* End of Java Editor ************************************* -->
-
- <!-- ******************* Java Views and Dialogs ************************************* -->
-   <!--  <tr>
+  <!-- ******************* Java Views and Dialogs ************************************* -->
+  <!--
+  <tr>
     <td id="JavaViewsAndDialogs" class="section" colspan="2">
     <h2>Java Views and Dialogs</h2>
     </td>
-  </tr>-->
-  <!-- ******************* End of Java Views and Dialogs ************************************* --> 
+  </tr>
+  -->
+  <!-- ******************* End of Java Views and Dialogs ************************************* -->
 
   <!-- ******************* Java Compiler ************************************* -->
+  <!--
   <tr>
     <td id="JavaCompiler" class="section" colspan="2">
     <h2>Java Compiler</h2>
     </td>
   </tr>
-    <tr id="external_annotations_all_locations"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=574603 -->
-    <td class="title"><a href="#external_annotations_all_locations">Find external annotations anywhere</a></td>
-    <td class="content">
-      External annotations, which are used for annotation based null analysis, can now be associated 
-      to unannotated classes more freely.
-      <p>Previously, all external annotations where declared per build path entry. I.e., whenever a project of yours
-      uses a library for which external annotations exist, you would need to explicitly declare where
-      the corresponding external annotations for this particular library can be found.</p>
-      <p>A new compiler preference has been added by which you can instruct the compiler to search
-      for external annotations in all build path locations of the current project.</p>
-      <p><img src="images/external_annotations_all_locations.png" alt=""/></p>
-      <p>
-      When enabled, this strategy will be applied to all class files encountered during compilation.</p>
-      <p>Some examples, where this option is useful:</p>
-      <ul><li>A project A contains generated sources (in a separate source folder), which are decorated using
-      external annotations in the same project. When project A ships a jar containing also the external annotations,
-      any client of A will immediately see the generated classes with their external annotations applied.</li>
-      <li>When dedicated jars have been created, each containing external annotations for a set of libraries,
-      you only have to add these annotation jars to your build path and enable the new option, without worrying
-      which annotation jar corresponds to which individual dependency (dependencies).
-      The compiler will match external annotations to class files with no further help.
-      </li>
-      </ul>
-      <p>For batch compilation a corresponding option already exists. To match the above strategy in CI-builds,
-      just add the following to the compiler command line (verbatim):
-      <br/>
-      	<code>-annotationpath CLASSPATH</code>
-      </p>
-    </td>
-  </tr> 
-
+  -->
   <!-- ******************* End of Java Compiler ************************************* -->
 
-<!-- ******************* Java Formatter ************************************* -->
-   <!--  <tr>
+  <!-- ******************* Java Formatter ************************************* -->
+  <!--
+  <tr>
     <td id="JavaFormatter" class="section" colspan="2">
     <h2>Java Formatter </h2>
     </td>
-  </tr>  -->
+  </tr>
+  -->
   <!-- ******************* End of Java Formatter ************************************* -->
   
   <!-- *********************** Debug ******************************** -->
@@ -262,27 +183,32 @@ document for changes in the Platform.</p>
     <h2>Debug</h2>
     </td>
   </tr>
-  <tr id="debug-intrim-eval"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=574395 -->
-    <td class="title"><a href="#debug-intrim-eval">Evaluate variables in current execution stack</a></td>
+  
+  <tr id="debug-stack"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=547041 -->
+    <td class="title"><a href="#debug-stack">Console support for stack from Debug view</a></td>
     <td class="content">
-        In debug mode, regardless of the selected stack frame now you can evaluate variables which are
-        in the scope of the current execution stack frame and stack frames below it which are defined in 
-        the current focused java class. 
-        <p>
-          <img src="images/debug_eval_intrim_stack.png" alt="screenshot showing evaluation result" />
-        </p>
+      Surprisingly enough, <b>Java Stack Trace Console</b> never supported navigation to
+      Java types for Java stack traces copied from <b>Debug</b> view via <b>Copy Stack</b> action.
+      <p>
+       Now, the console will underline type names and line numbers and clicking on
+       links will jump to the corresponding source code. If the type name is not unique,
+       default <b>Select type</b> dialog will appear to allow selection of the right type.
+      </p>
+      <p><img src="images/java_stack_console.png" alt="Console shows links to Java types"/></p>
     </td>
   </tr>
- 
   <!--************************ End of Debug ******************************** -->
 
- <!-- *********************** JDT Developers ******************************** -->
-<!--   <tr>
+  <!-- *********************** JDT Developers ******************************** -->
+  <!--
+  <tr>
     <td id="JDTDev" class="section" colspan="2">
     <h2>JDT Developers</h2>
     </td>
-  </tr> -->
+  </tr>
+  -->
   <!-- *********************** End of JDT Developers ******************************** -->
+  <tr><td colspan="2"/></tr>
 </tbody>
 </table>
 <!-- ****************** END OF N&N TABLE ****************** -->
