@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -107,17 +107,18 @@ public class EvaluationSourceGenerator {
 		}
 		StringBuilder wordBuffer = new StringBuilder();
 		// if semicolon missing at the end
-		if (lastSemilcolonIndex != chars.length-1)
+		if (lastSemilcolonIndex != chars.length-1) {
 			semicolonIndex = lastSemilcolonIndex;
+		}
 		int i ;
 		for (i=0; i < chars.length; i++) {
 			// copy everything before the last statement or if whitespace
-			if (i<= semicolonIndex || Character.isWhitespace(chars[i]) || chars[i] == '}' 
+			if (i<= semicolonIndex || Character.isWhitespace(chars[i]) || chars[i] == '}'
 					|| (i > 0 && (chars[i - 1] == '}' && (chars[i] == ')' || chars[i] == ',')))) {
 				wordBuffer.append(codeSnippet.charAt(i));
-			}
-			else
+			} else {
 				break;
+			}
 		}
 		String lastSentence  = codeSnippet.substring(i);
 		// don't add return if it there in some condition
@@ -133,33 +134,38 @@ public class EvaluationSourceGenerator {
 		}
 		else if (index > i){
 			if (!Character.isWhitespace(chars[index-1]) || !(Character.isWhitespace(chars[index+6]) || chars[index+6] == '}')){
-				if (needsReturn(lastSentence))
+				if (needsReturn(lastSentence)) {
 					wordBuffer.append(returnString);
+				}
 			}
 		} else if (chars[chars.length -1] !='}' && ( (i+7 > chars.length && lastSentence.length() > 1) || (i + 7 <= chars.length && !codeSnippet.substring(i, i+7).equals(returnString)))){
 			// add return if last statement does not have return
-			if (needsReturn(lastSentence))
+			if (needsReturn(lastSentence)) {
 				wordBuffer.append(returnString);
+			}
 		}
 		for (; i < chars.length; i++) {
 			// copy the last statement
 			wordBuffer.append(codeSnippet.charAt(i));
 		}
 		// add semicolon at the end if missing
-		if (chars[chars.length -1] !=';' && chars[chars.length -1] !='}')
-			wordBuffer.append(';');
-		else if (chars[chars.length -1] !=';' && chars[chars.length -1] =='}'){
-			int j = lastSentence.lastIndexOf('=') ;
-			int k = lastSentence.lastIndexOf("==") ; //$NON-NLS-1$
-			if (j != -1 && (j != k))
+		if (chars.length > 0) {
+			if (chars[chars.length - 1] != ';' && chars[chars.length - 1] != '}') {
 				wordBuffer.append(';');
+			} else if (chars[chars.length - 1] != ';' && chars[chars.length - 1] == '}') {
+				int j = lastSentence.lastIndexOf('=');
+				int k = lastSentence.lastIndexOf("=="); //$NON-NLS-1$
+				if (j != -1 && (j != k)) {
+					wordBuffer.append(';');
+				}
+			}
 		}
-		
+
 		// make sure last char is not at end of a block before treating this as a statement
 		if (lastSentence.length() <= 1 && needsReturn(wordBuffer.toString())) {
 			wordBuffer.insert(0, returnString).append(' ');
 		}
-		
+
 		return wordBuffer.toString();
 	}
 
@@ -178,6 +184,9 @@ public class EvaluationSourceGenerator {
 		int token;
 		try {
 			token = scanner.getNextToken();
+			if (token == ITerminalSymbols.TokenNameEOF) {
+				return false;
+			}
 			int count = 0;
 			while (token != ITerminalSymbols.TokenNameEOF) {
 				if (count == 0 && (token == ITerminalSymbols.TokenNameIdentifier || token == ITerminalSymbols.TokenNameint || token == ITerminalSymbols.TokenNamefloat ||
@@ -233,9 +242,9 @@ public class EvaluationSourceGenerator {
 					}
 					count = 3;
 				}
-				else if (count == 2)
+				else if (count == 2) {
 					token = scanner.getNextToken();
-				else if ( (count == 3 || count == 1 ) && token == ITerminalSymbols.TokenNameIdentifier ){
+				} else if ( (count == 3 || count == 1 ) && token == ITerminalSymbols.TokenNameIdentifier ){
 					 return false;
 				}
 				else if (count == 0 && token == ITerminalSymbols.TokenNamereturn) {
@@ -298,7 +307,7 @@ public class EvaluationSourceGenerator {
 	private void createEvaluationSourceFromSource(String source, IType type,
 			int line, boolean createInAStaticMethod, IJavaProject project)
 			throws DebugException {
-		ASTParser parser = ASTParser.newParser(AST.JLS4);
+		ASTParser parser = ASTParser.newParser(AST.getJLSLatest());
 		parser.setSource(source.toCharArray());
 		Map<String, String> options = getCompilerOptions(project);
 		String sourceLevel = project.getOption(JavaCore.COMPILER_SOURCE, true);

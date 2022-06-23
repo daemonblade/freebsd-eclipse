@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018 IBM Corporation and others.
+ * Copyright (c) 2018, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,11 +13,13 @@
  *******************************************************************************/
 package org.eclipse.jdt.internal.debug.core.model;
 
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.IStackFrame;
@@ -29,18 +31,20 @@ import org.eclipse.jdt.debug.core.IJavaStackFrame;
 import org.eclipse.jdt.internal.debug.core.logicalstructures.JDILambdaVariable;
 import org.eclipse.jdt.internal.debug.eval.ast.engine.IRuntimeContext;
 
+import com.sun.jdi.AbsentInformationException;
+import com.sun.jdi.Location;
+import com.sun.jdi.Method;
+
 /**
  * Utility class for Lambda Expressions and Stack frames Place holder for all Lambda operation encapsulation.
  */
 public class LambdaUtils {
 
+	private static final String LAMBDA_METHOD_PREFIX = "lambda$"; //$NON-NLS-1$
+
 	/**
 	 * Inspects the top stack frame of the context; if that frame is a lambda frame, looks for a variable with the specified name in that frame and
-	 * two frames below that frame.
-	 *
-	 * Inside a lambda expression, variable names are mangled by the compiler. Its therefore necessary to check the outer frame when at a lambda
-	 * frame, in order to find a variable with its name. The lambda expression itself is called by a synthetic static method, which is the first frame
-	 * below the lambda frame. So in total we check 3 stack frames for the variable with the specified name.
+	 * outer frames visible from that frame.
 	 *
 	 * @param context
 	 *            The context in which to check.
@@ -65,12 +69,11 @@ public class LambdaUtils {
 	}
 
 	/**
-	 * Collects variables visible from a lambda stack frame. I.e. inspects the specified stack frame; if that frame is a lambda frame, collects all
-	 * variables in that frame and two frames below that frame.
+	 * Collects variables visible from a lambda stack frame.
 	 *
-	 * Inside a lambda expression, variable names are mangled by the compiler. Its therefore necessary to check the outer frame when at a lambda
-	 * frame, in order to find a variable with its name. The lambda expression itself is called by a synthetic static method, which is the first frame
-	 * below the lambda frame. So in total we collect variables from 3 stack frames.
+	 * If the debugging class generates all debugging info in its classfile (e.g. line number and source file name), we can use these info to find all
+	 * enclosing frames of the paused line number and collect their variables. Otherwise, collect variables from that lambda frame and two more frames
+	 * below it.
 	 *
 	 * @param frame
 	 *            The lambda frame at which to check.
@@ -80,18 +83,90 @@ public class LambdaUtils {
 	 *             If accessing the top stack frame or the local variables on stack frames fails, due to failure to communicate with the debug target.
 	 */
 	public static List<IVariable> getLambdaFrameVariables(IStackFrame frame) throws DebugException {
-		List<IVariable> variables = new ArrayList<>();
 		if (LambdaUtils.isLambdaFrame(frame)) {
-			IThread thread = frame.getThread();
-			IStackFrame[] stackFrames = thread.getStackFrames();
-			for (int i = 0; i < Math.min(3, stackFrames.length); ++i) {
-				IStackFrame stackFrame = stackFrames[i];
-				IVariable[] stackFrameVariables = stackFrame.getVariables();
-				variables.addAll(Arrays.asList(stackFrameVariables));
-				for (IVariable frameVariable : stackFrameVariables) {
-					if (isLambdaObjectVariable(frameVariable)) {
-						variables.addAll(extractVariablesFromLambda(frameVariable));
-					}
+			int lineNumber = frame.getLineNumber();
+			String sourceName = ((IJavaStackFrame) frame).getSourceName();
+			if (lineNumber == -1 || sourceName == null) {
+				return collectVariablesFromLambdaFrame(frame);
+			}
+			return collectVariablesFromEnclosingFrames(frame);
+		}
+		return Collections.emptyList();
+	}
+
+	/**
+	 * Collects variables visible from a lambda stack frame and two frames below that frame.
+	 *
+	 * Inside a lambda expression, variable names are mangled by the compiler. Its therefore necessary to check the outer frame when at a lambda
+	 * frame, in order to find a variable with its name. The lambda expression itself is called by a synthetic static method, which is the first frame
+	 * below the lambda frame. So in total we collect variables from 3 stack frames.
+	 *
+	 * @param frame
+	 *            The lambda frame at which to check.
+	 * @return The variables visible from the stack frame. The variables are ordered top-down, i.e. if shadowing occurs, the more local variable will
+	 *         be first in the resulting list.
+	 * @throws DebugException
+	 *             If accessing the top stack frame or the local variables on stack frames fails, due to failure to communicate with the debug target.
+	 */
+	private static List<IVariable> collectVariablesFromLambdaFrame(IStackFrame frame) throws DebugException {
+		List<IVariable> variables = new ArrayList<>();
+		IThread thread = frame.getThread();
+		// look for two frames below the frame which is provided instead starting from first frame.
+		List<IStackFrame> stackFrames = Stream.of(thread.getStackFrames()).dropWhile(f -> f != frame)
+				.limit(3).collect(Collectors.toUnmodifiableList());
+		for (IStackFrame stackFrame : stackFrames) {
+			IVariable[] stackFrameVariables = stackFrame.getVariables();
+			variables.addAll(Arrays.asList(stackFrameVariables));
+			for (IVariable frameVariable : stackFrameVariables) {
+				if (isLambdaObjectVariable(frameVariable)) {
+					variables.addAll(extractVariablesFromLambda(frameVariable));
+				}
+			}
+		}
+		return Collections.unmodifiableList(variables);
+	}
+
+	/**
+	 * Collect variables from all enclosing frames starting from the provided frame.
+	 */
+	private static List<IVariable> collectVariablesFromEnclosingFrames(IStackFrame frame) throws DebugException {
+		List<IVariable> variables = new ArrayList<>();
+		IThread thread = frame.getThread();
+		List<IStackFrame> stackFrames = Stream.of(thread.getStackFrames()).dropWhile(f -> f != frame)
+				.collect(Collectors.toUnmodifiableList());
+		int pausedLineNumber = frame.getLineNumber();
+		String pausedSourceName = ((IJavaStackFrame) frame).getSourceName();
+		String pausedSourcePath = ((IJavaStackFrame) frame).getSourcePath();
+		boolean isFocusFrame = true;
+		for (IStackFrame stackFrame : stackFrames) {
+			JDIStackFrame jdiFrame = (JDIStackFrame) stackFrame;
+			if (isFocusFrame) {
+				isFocusFrame = false;
+			} else {
+				if (!Objects.equals(pausedSourceName, jdiFrame.getSourceName())
+						|| !Objects.equals(pausedSourcePath, jdiFrame.getSourcePath())) {
+					continue;
+				}
+				List<Location> locations;
+				try {
+					locations = jdiFrame.getUnderlyingMethod().allLineLocations();
+				} catch (AbsentInformationException e) {
+					continue;
+				}
+				if (locations.isEmpty()) {
+					continue;
+				}
+				int methodStartLine = locations.get(0).lineNumber();
+				int methodEndLine = locations.get(locations.size() - 1).lineNumber();
+				if (methodStartLine > pausedLineNumber || methodEndLine < pausedLineNumber) {
+					continue;
+				}
+			}
+			IVariable[] stackFrameVariables = jdiFrame.getVariables();
+			variables.addAll(Arrays.asList(stackFrameVariables));
+			for (IVariable frameVariable : stackFrameVariables) {
+				if (isLambdaObjectVariable(frameVariable)) {
+					variables.addAll(extractVariablesFromLambda(frameVariable));
 				}
 			}
 		}
@@ -118,7 +193,7 @@ public class LambdaUtils {
 	 * @since 3.8
 	 */
 	public static boolean isLambdaFrame(IJavaStackFrame frame) throws DebugException {
-		return frame.isSynthetic() && frame.getName().startsWith("lambda$"); //$NON-NLS-1$
+		return frame.isSynthetic() && frame.getName().startsWith(LAMBDA_METHOD_PREFIX);
 	}
 
 	/**
@@ -131,6 +206,18 @@ public class LambdaUtils {
 	 */
 	public static boolean isLambdaField(IVariable variable) throws DebugException {
 		return (variable instanceof IJavaFieldVariable) && ((IJavaFieldVariable) variable).getDeclaringType().getName().contains("$Lambda$"); //$NON-NLS-1$
+	}
+
+	/**
+	 * Returns if the method is a lambda method.
+	 *
+	 * @param method
+	 *            the method for which to check
+	 * @return <code>True</code> if the method is a lambda method else return <code>False</code>
+	 * @since 3.20
+	 */
+	public static boolean isLambdaMethod(Method method) {
+		return method.name().startsWith(LAMBDA_METHOD_PREFIX);
 	}
 
 	private static boolean isLambdaObjectVariable(IVariable variable) {

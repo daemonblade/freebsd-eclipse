@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -76,6 +76,9 @@ public class ActionMessages extends NLS {
 	public static String AddProjectAction_Project_Selection_2;
 	public static String ProjectSelectionDialog_Add_exported_entries_of_selected_projects__1;
 	public static String ProjectSelectionDialog_Add_required_projects_of_selected_projects__2;
+
+	public static String SetObjectLabel_title;
+	public static String SetObjectLabel_message;
 
 	public static String AddJarAction_Add__JARs_1;
 
@@ -164,6 +167,8 @@ public class ActionMessages extends NLS {
 	public static String StringValueInputDialog_4;
 
 	public static String TracepointToggleAction_Unavailable;
+
+	public static String LambdaEntryBreakpointToggleAction_Unavailable;
 
 	public static String Override_Dependencies_title;
 	public static String Override_Dependencies_button;

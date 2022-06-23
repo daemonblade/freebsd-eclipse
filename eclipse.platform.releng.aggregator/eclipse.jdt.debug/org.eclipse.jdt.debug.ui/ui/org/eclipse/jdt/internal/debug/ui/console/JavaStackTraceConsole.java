@@ -16,22 +16,17 @@
  *******************************************************************************/
 package org.eclipse.jdt.internal.debug.ui.console;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.IJobManager;
-import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.jdt.internal.debug.ui.IJavaDebugHelpContextIds;
 import org.eclipse.jdt.internal.debug.ui.JDIDebugUIPlugin;
@@ -127,19 +122,9 @@ public class JavaStackTraceConsole extends TextConsole {
 	public void initializeDocument() {
         File file = new File(FILE_NAME);
         if (file.exists()) {
-			try (InputStream fin = new BufferedInputStream(new FileInputStream(file))) {
-                int fileLength = (int) file.length();
-                byte[] fileContent = new byte[fileLength];
-                int bufIndex = 0;
-				int read = 0;
-				while (bufIndex < fileContent.length) {
-					read = fin.read(fileContent, bufIndex, fileContent.length - bufIndex);
-					if (read < 0) {
-						break;
-					}
-					bufIndex += read;
-                }
-				getDocument().set(new String(fileContent, 0, bufIndex));
+			try {
+				byte[] fileContent = Files.readAllBytes(file.toPath());
+				getDocument().set(new String(fileContent));
             } catch (IOException e) {
 				getDocument().set(NLS.bind(ConsoleMessages.JavaStackTraceConsole_2, e.getMessage()));
             }
@@ -219,19 +204,11 @@ public class JavaStackTraceConsole extends TextConsole {
     	WorkbenchJob job = new WorkbenchJob(ConsoleMessages.JavaStackTraceConsole_1) {
 			@Override
 			public IStatus runInUIThread(IProgressMonitor monitor) {
-	            IJobManager jobManager = Job.getJobManager();
-	            try {
-	                jobManager.join(this, monitor);
-	            } catch (OperationCanceledException e1) {
-	                return Status.CANCEL_STATUS;
-	            } catch (InterruptedException e1) {
-	                return Status.CANCEL_STATUS;
-	            }
 	            IDocument document = getDocument();
 	            String orig = document.get();
 	            if (orig != null && orig.length() > 0) {
 	                document.set(format(orig));
-	            }
+				}
 
 				return Status.OK_STATUS;
 			}

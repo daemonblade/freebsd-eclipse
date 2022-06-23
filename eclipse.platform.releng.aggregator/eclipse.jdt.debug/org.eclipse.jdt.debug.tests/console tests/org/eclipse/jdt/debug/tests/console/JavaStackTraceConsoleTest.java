@@ -19,124 +19,24 @@ package org.eclipse.jdt.debug.tests.console;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertNotEquals;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.jdt.debug.tests.AbstractDebugTest;
-import org.eclipse.jdt.debug.tests.TestUtil;
-import org.eclipse.jdt.debug.ui.console.JavaStackTraceConsoleFactory;
-import org.eclipse.jdt.internal.debug.ui.console.ConsoleMessages;
 import org.eclipse.jdt.internal.debug.ui.console.JavaStackTraceConsole;
-import org.eclipse.jdt.internal.debug.ui.console.JavaStackTraceConsolePage;
-import org.eclipse.jface.text.BadLocationException;
-import org.eclipse.jface.text.BadPositionCategoryException;
 import org.eclipse.jface.text.IDocument;
-import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.Position;
-import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ST;
-import org.eclipse.swt.custom.StyledText;
-import org.eclipse.swt.widgets.Event;
-import org.eclipse.ui.IViewPart;
-import org.eclipse.ui.IViewReference;
-import org.eclipse.ui.IWorkbenchPage;
-import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.console.ConsolePlugin;
-import org.eclipse.ui.console.IConsole;
-import org.eclipse.ui.console.IConsoleManager;
 import org.eclipse.ui.console.TextConsoleViewer;
-import org.eclipse.ui.internal.console.ConsoleHyperlinkPosition;
-import org.eclipse.ui.internal.console.ConsoleView;
 
 /**
  * Tests {@link JavaStackTraceConsole}
  */
-public class JavaStackTraceConsoleTest extends AbstractDebugTest {
-
-	private final static Pattern LEFT_INDENT = Pattern.compile("^[ \\t]*");
-	private final static Pattern RIGHT_INDENT = Pattern.compile("\\s+$");
-
-	private final JavaStackTraceConsoleFactory fConsoleFactory = new JavaStackTraceConsoleFactory();
-	private JavaStackTraceConsole fConsole;
+public class JavaStackTraceConsoleTest extends AbstractJavaStackTraceConsoleTest {
 
 	public JavaStackTraceConsoleTest(String name) {
 		super(name);
-	}
-
-	@Override
-	public void setUp() throws Exception {
-		super.setUp();
-		initConsole(true);
-	}
-
-	@Override
-	protected void tearDown() throws Exception {
-		removeConsole(false);
-		super.tearDown();
-	}
-
-	/**
-	 * Create and register a {@link JavaStackTraceConsole}.
-	 *
-	 * @param assertDefaultContent
-	 *            If <code>true</code> assert console is initialized with its default content.
-	 * @see #removeConsole(boolean)
-	 */
-	private void initConsole(boolean assertDefaultContent) {
-		fConsoleFactory.openConsole();
-		IConsoleManager consoleManager = ConsolePlugin.getDefault().getConsoleManager();
-		IConsole[] consoles = consoleManager.getConsoles();
-		fConsole = null;
-		for (IConsole console : consoles) {
-			if (console instanceof JavaStackTraceConsole) {
-				fConsole = (JavaStackTraceConsole) console;
-				// do not end loop. There should be only one JavaStackTraceConsole but if there are more
-				// the last one is most likely the one we opened
-			}
-		}
-		assertNotNull("Failed to open a JavaStackTraceConsole", fConsole);
-		if (assertDefaultContent) {
-			assertInitialContent();
-		}
-	}
-
-	/**
-	 * Remove the previous created console.
-	 *
-	 * @param preserveContent
-	 *            If <code>true</code> the remove does not prevent the current console content from being loaded by next
-	 *            {@link JavaStackTraceConsole}.
-	 * @see #initConsole(boolean)
-	 */
-	private void removeConsole(boolean preserveContent) {
-		if (!preserveContent) {
-			fConsole.clearConsole();
-		}
-		final int contentLength = fConsole.getDocument().getLength();
-
-		IConsoleManager consoleManager = ConsolePlugin.getDefault().getConsoleManager();
-		consoleManager.removeConsoles(new IConsole[] { fConsole });
-
-		final Path stackTraceFile = Paths.get(JavaStackTraceConsole.FILE_NAME);
-		if (!preserveContent) {
-			assertTrue("Leaked content of JavaStackTraceConsole", Files.notExists(stackTraceFile));
-		} else {
-			assertTrue("JavaStackTraceConsole content was not persisted", Files.exists(stackTraceFile));
-			try {
-				assertTrue("Persisted content seems incomplete", Files.size(stackTraceFile) >= contentLength);
-			} catch (IOException e) {
-				fail("Persisted content seems incomplete");
-			}
-		}
 	}
 
 	public void testHyperlinkMatchSignatureSimple() throws Exception {
@@ -169,7 +69,7 @@ public class JavaStackTraceConsoleTest extends AbstractDebugTest {
 	}
 
 	public void testHyperlinkNoMatch() throws Exception {
-		consoleDocumentWithText("at foo.bar.Type.method1(foo.bar.Type.java:42)");
+		consoleDocumentWithText("at foo.bar.Type.method1(foo.bar#.Type.java:42)");
 
 		Position[] positions = allLinkPositions();
 		assertArrayEquals("Expected no hyperlinks for invalid type name", new Position[0], positions);
@@ -193,13 +93,13 @@ public class JavaStackTraceConsoleTest extends AbstractDebugTest {
 		IDocument initialDocument = fConsole.getDocument();
 		String storedContent = "at foo.bar.Type.method1(Type.java:fff)";
 		consoleDocumentWithText(storedContent);
-		removeConsole(true);
+		sync(() -> removeConsole(true));
 
 		Path file = Paths.get(JavaStackTraceConsole.FILE_NAME);
 		assertTrue("Content was not stored.", Files.exists(file));
 		assertTrue("Content was not stored.", Files.size(file) > 0);
 
-		initConsole(false);
+		sync(() -> initConsole(false));
 		assertNotSame("Failed to create new console.", initialDocument, fConsole.getDocument());
 		assertEquals("Failed to restore previous content.", storedContent, fConsole.getDocument().get());
 	}
@@ -289,7 +189,7 @@ public class JavaStackTraceConsoleTest extends AbstractDebugTest {
 	}
 
 	/** Test formatting of a plain simple stack trace. */
-	public void testFormatSimple() {
+	public void testFormatSimple() throws Exception {
 		IDocument doc = consoleDocumentFormatted("java.lang.AssertionError: expected:5 but was:7\n\n"
 				+ "at org.junit.Ass\nert.fail(Assert.java:88) \n" + "at\norg.junit.   \nAssert.failNotEquals(Assert.java:834)\n"
 				+ "at org.junit.Assert.assertEquals(Assert.java:118)\n" + "at \norg.junit.Assert.assertEquals\n(Assert.java:144)");
@@ -302,7 +202,7 @@ public class JavaStackTraceConsoleTest extends AbstractDebugTest {
 	}
 
 	/** Test formatting of a stack trace including thread name. */
-	public void testFormatThreadName() {
+	public void testFormatThreadName() throws Exception {
 		IDocument doc = consoleDocumentFormatted("Exception in thread \"ma\nin\" java.lang.NullPointerException\n"
 				+ "at \nStacktrace.main(Stacktrace.java:4)");
 		assertEquals("Exception in thread \"main\" java.lang.NullPointerException", getLine(doc, 0));
@@ -311,7 +211,7 @@ public class JavaStackTraceConsoleTest extends AbstractDebugTest {
 	}
 
 	/** Test formatting with some less common method names. */
-	public void testFormatUncommonMethods() {
+	public void testFormatUncommonMethods() throws Exception {
 		IDocument doc = consoleDocumentFormatted("Stack Trace\n" + "  at org.eclipse.core.runtime.SafeRunner.run\n(SafeRunner.java:43)\n"
 				+ "      at org.eclipse.ui.internal.JFaceUtil.lambda$0(JFaceUtil.java:47)\n"
 				+ "    at org.eclipse.ui.internal.JFaceUtil$$Lambda$107/0x00000   \n008013c5c40.run(Unknown Source)\n"
@@ -329,7 +229,7 @@ public class JavaStackTraceConsoleTest extends AbstractDebugTest {
 	}
 
 	/** Test formatting with a 'locked' entry. */
-	public void testFormatLocked() {
+	public void testFormatLocked() throws Exception {
 		IDocument doc = consoleDocumentFormatted("java.lang.Thread.State: RUNNABLE\n"
 				+ " at java.net.PlainSocketImpl.socketAccept(Native Method)\n\n\n"
 				+ "at java.net.PlainSocketImpl\n.accept(PlainSocketImpl.java:408)\n" + "\t - locked <0x911d3c30>   (a java.net.SocksSocketImpl)\n"
@@ -344,7 +244,7 @@ public class JavaStackTraceConsoleTest extends AbstractDebugTest {
 	}
 
 	/** Test formatting with a ... more entry. */
-	public void testFormatMore() {
+	public void testFormatMore() throws Exception {
 		// additional this one is missing the 'header' line and starting with an 'at' line
 		IDocument doc = consoleDocumentFormatted(" at org.springframework.orm.jpa.persistenceunit.DefaultPersistenceUnitManager.preparePersistenceUnitInfos(DefaultPersistenceUnitManager.java:470)\n"
 				+ "    at org.springframework.orm.jpa.persistenceunit.DefaultPersistenceUnitManager.afterPropertiesSet(DefaultPersistenceUnitManager.java:424)\n"
@@ -364,7 +264,7 @@ public class JavaStackTraceConsoleTest extends AbstractDebugTest {
 	}
 
 	/** Test formatting stack trace with cause. */
-	public void testFormatCause() {
+	public void testFormatCause() throws Exception {
 		IDocument doc = consoleDocumentFormatted("HighLevelException:\n LowLevelException\n" + "\tat Junk.a(Junk.java:13)\n"
 				+ "         at Junk.main(Junk.java:4)\n" + "     Caused by: LowLevelException\n" + " at Junk.e(Junk.java:30)\n"
 				+ "    at Junk.d\n(Junk.java:27)\n" + "at Junk.c(Junk.java:21)");
@@ -399,7 +299,7 @@ public class JavaStackTraceConsoleTest extends AbstractDebugTest {
 	}
 
 	/** Test formatting stack trace with suppressed exceptions. */
-	public void testFormatSuppressed() {
+	public void testFormatSuppressed() throws Exception {
 		IDocument doc = consoleDocumentFormatted("Exception in thread \"main\" java.lang.Exception: Something happened\n" + "at Foo.bar(Native)\n"
 				+ "  at Foo.main(Foo.java:5)\n" + "  Suppressed: Resource$CloseFailException: Resource ID = 0\n"
 				+ "    at Resource.close(Resource\n.java:26)\n" + "      at Foo.bar(Foo.java)\n" + "         ... 1 more\n" + "");
@@ -429,7 +329,7 @@ public class JavaStackTraceConsoleTest extends AbstractDebugTest {
 	}
 
 	/** Test formatting stack trace with mixture of cause and suppressed. */
-	public void testFormatSuppressedWithCause() {
+	public void testFormatSuppressedWithCause() throws Exception {
 		// exception with suppressed and cause
 		IDocument doc = consoleDocumentFormatted("Exception in thread \"main\" java.lang.Exception: Main block\n" + "  at Foo3.main(Foo3.java:7)\n"
 				+ "  Suppressed: Resource$CloseFailException: Resource ID = 1\n" + "          at Resource.close(Resource.java:26)\n"
@@ -473,7 +373,7 @@ public class JavaStackTraceConsoleTest extends AbstractDebugTest {
 	}
 
 	/** Test formatting the rare [CIRCULAR REFERENCE:...] entry. */
-	public void testFormatCircular() {
+	public void testFormatCircular() throws Exception {
 		IDocument doc = consoleDocumentFormatted("Exception in thread \"main\" Stacktrace$BadException\n"
 				+ "at Stacktrace.main\n(Stacktrace.java:4)\n" + " Caused by: Stacktrace$BadExceptionCompanion: Stacktrace$BadException\n"
 				+ "   at Stacktrace$BadException.<init>(Stacktrace.java:10)\n" + "    ... 1 more\n"
@@ -488,7 +388,7 @@ public class JavaStackTraceConsoleTest extends AbstractDebugTest {
 	}
 
 	/** Test formatting stack trace from an ant execution. (output mixed with ant prefixes) */
-	public void testFormatAnt() {
+	public void testFormatAnt() throws Exception {
 		IDocument doc = consoleDocumentFormatted("[java] !ENTRY org.eclipse.debug.core 4 120 2005-01-11 03:02:30.321\n"
 				+ "     [java] !MESSAGE An exception occurred while dispatching debug events.\n" + "     [java] !STACK 0\n"
 				+ "     [java] java.lang.NullPointerException\n" + "     [java] 	at \n"
@@ -505,181 +405,10 @@ public class JavaStackTraceConsoleTest extends AbstractDebugTest {
 		checkIndentationConsistency(doc, 3);
 	}
 
-	private IDocument consoleDocumentWithText(String text) throws InterruptedException {
-		IDocument document = fConsole.getDocument();
-		document.set(text);
-		// wait for document being parsed and hyperlinks created
-		Job.getJobManager().join(fConsole, null);
-		return document;
-	}
+	public void testHyperlinkMatchWithModule() throws Exception {
+		consoleDocumentWithText("at java.nio.charset.Charset.checkName(java.base/Charset.java:296)");
 
-	private String getLine(IDocument doc, int line) {
-		IRegion lineInfo;
-		try {
-			lineInfo = doc.getLineInformation(line);
-			return doc.get(lineInfo.getOffset(), lineInfo.getLength());
-		} catch (BadLocationException ex) {
-			return null;
-		}
-	}
-
-	/**
-	 * Do some tests on the stack trace indentation. No hardcoded valued just some general assumptions.
-	 *
-	 * @param doc
-	 *            document to test
-	 * @param startLine
-	 *            first line to check
-	 */
-	private void checkIndentationConsistency(IDocument doc, int startLine) {
-		boolean firstSuppress = true;
-		int lastIndent = -1;
-		// Remember how the next line's indentation can differ from the previous.
-		// -1 -> less indented
-		// 0 -> equal
-		// 1 -> more indented
-		int allowedIndentChange = 1;
-		for (int i = startLine, lineCount = doc.getNumberOfLines(); i < lineCount; i++) {
-			String line = getLine(doc, i);
-			line = line.replaceFirst("^\\[[^\\s\\]]+\\] ", ""); // remove and prefix if any
-			if (i != 0) { // first line can be empty
-				assertNotEquals("Empty line " + i, "", line);
-			}
-			assertFalse("Trailing whitespace in line " + i, RIGHT_INDENT.matcher(line).find());
-
-			boolean causedBy = line.trim().startsWith("Caused by: ");
-			boolean suppressed = line.trim().startsWith("Suppressed: ");
-			if (causedBy || (suppressed && !firstSuppress)) {
-				allowedIndentChange = -1;
-			}
-
-			int lineIndent = getLineIndentation(line);
-			if (allowedIndentChange < 0) {
-				assertTrue("Wrong indented line " + i + ": " + lastIndent + " > " + lineIndent, lastIndent > lineIndent);
-			} else if (allowedIndentChange == 0) {
-				assertEquals("Mixed indentation in line " + i, lastIndent, lineIndent);
-			} else if (allowedIndentChange > 0) {
-				assertTrue("Wrong indented line " + i + ": " + lastIndent + " < " + lineIndent, lastIndent < lineIndent);
-			}
-			lastIndent = lineIndent;
-			allowedIndentChange = 0;
-			if (causedBy || suppressed || i == startLine) {
-				allowedIndentChange = 1;
-			}
-			firstSuppress &= !suppressed;
-		}
-	}
-
-	private int getLineIndentation(String line) {
-		int tabSize = 4;
-		String indent = "";
-		Matcher m = LEFT_INDENT.matcher(line);
-		if (m.find()) {
-			indent = m.group();
-		}
-		int tabCount = indent.length() - indent.replace("\t", "").length();
-		return indent.length() + (tabSize - 1) * tabCount;
-	}
-
-	/**
-	 * Set given text, invoke formatting and wait until finished.
-	 *
-	 * @param text
-	 *            new console text
-	 * @return the consoles document
-	 */
-	private IDocument consoleDocumentFormatted(String text) {
-		IDocument document = fConsole.getDocument();
-		document.set(text);
-		fConsole.format();
-		// wait for document being formatted
-		TestUtil.waitForJobs(getName(), 30, 1000);
-		return document;
-	}
-
-	private String[] linkTextsAtPositions(int... offsets) throws BadLocationException {
-		IDocument document = fConsole.getDocument();
-
-		List<String> texts = new ArrayList<>(offsets.length);
-		List<Position> positions = linkPositions(offsets);
-		for (Position pos : positions) {
-			String matchText = document.get(pos.getOffset(), pos.getLength());
-			texts.add(matchText);
-		}
-		return texts.toArray(new String[texts.size()]);
-	}
-
-	private List<Position> linkPositions(int... offsets) {
-		List<Position> filteredPositions = new ArrayList<>(offsets.length);
-		for (Position position : allLinkPositions()) {
-			for (int offset : offsets) {
-				if (offset >= position.getOffset() && offset <= (position.getOffset() + position.getLength())) {
-					filteredPositions.add(position);
-					break;
-				}
-			}
-		}
-		return filteredPositions;
-	}
-
-	private Position[] allLinkPositions() {
-		try {
-			return fConsole.getDocument().getPositions(ConsoleHyperlinkPosition.HYPER_LINK_CATEGORY);
-		} catch (BadPositionCategoryException ex) {
-			// no hyperlinks
-		}
-		return new Position[0];
-	}
-
-	private String allLinks() {
-		return Arrays.toString(allLinkPositions());
-	}
-
-	/**
-	 * Check if initial content is shown.
-	 */
-	public void assertInitialContent() {
-		assertEquals("Console not loaded with initial content.", ConsoleMessages.JavaStackTraceConsole_0, fConsole.getDocument().get());
-	}
-
-	/**
-	 * Tries to get the viewer of the currently tested console.
-	 *
-	 * @return the consoles viewer
-	 */
-	private TextConsoleViewer getConsolesViewer() {
-		TestUtil.waitForJobs(getName(), 100, DEFAULT_TIMEOUT);
-		IWorkbenchWindow workbenchWindow = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-		assertNotNull(workbenchWindow);
-		IWorkbenchPage activePage = workbenchWindow.getActivePage();
-		assertNotNull(activePage);
-		JavaStackTraceConsolePage page = null;
-		for (IViewReference vref : activePage.getViewReferences()) {
-			IViewPart view = vref.getView(false);
-			if (view instanceof ConsoleView) {
-				ConsoleView consoleView = (ConsoleView) view;
-				if (consoleView.getConsole() == fConsole && consoleView.getCurrentPage() instanceof JavaStackTraceConsolePage) {
-					page = (JavaStackTraceConsolePage) consoleView.getCurrentPage();
-					break;
-				}
-			}
-		}
-		assertNotNull(page);
-		return page.getViewer();
-	}
-
-	/**
-	 * Simulate user pressing a key.
-	 *
-	 * @param widget
-	 *            widget to type in
-	 * @param c
-	 *            character to type
-	 */
-	private void doKeyStroke(StyledText widget, char c) {
-		final Event e = new Event();
-		e.character = c;
-		widget.notifyListeners(SWT.KeyDown, e);
-		widget.notifyListeners(SWT.KeyUp, e);
+		String[] matchTexts = linkTextsAtPositions(38);
+		assertArrayEquals(allLinks(), new String[] { "java.base/Charset.java:296" }, matchTexts);
 	}
 }

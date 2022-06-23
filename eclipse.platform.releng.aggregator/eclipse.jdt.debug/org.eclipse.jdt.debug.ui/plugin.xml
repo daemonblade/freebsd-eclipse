@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.0"?>
 <!--
-     Copyright (c) 2005, 2019 IBM Corporation and others.
+     Copyright (c) 2005, 2022 IBM Corporation and others.
 
      This program and the accompanying materials
      are made available under the terms of the Eclipse Public License 2.0
@@ -158,6 +158,16 @@
                class="org.eclipse.jdt.internal.debug.ui.actions.RetargetToggleTracepointAction"
                menubarPath="org.eclipse.ui.run/lineBreakpointBeforeGroup"
                id="org.eclipse.jdt.debug.ui.actions.ToggleTracepoint">
+         </action>
+         <action
+               definitionId="org.eclipse.jdt.debug.ui.commands.ToggleLambdaEntryBreakpoint"
+               label="%ToggleLambdaEntryBreakpointAction.label"
+               icon="icons/full/obj16/brkp_obj.png"
+               disabledIcon="icons/full/obj16/brkpd_obj.png"
+               helpContextId="toggle_tracepoint_action_context"
+               class="org.eclipse.jdt.internal.debug.ui.actions.RetargetToggleLambdaEntryBreakpointAction"
+               menubarPath="org.eclipse.ui.run/lineBreakpointBeforeGroup"
+               id="org.eclipse.jdt.debug.ui.actions.ToggleLambdaEntryBreakpoint">
          </action>
          <action
 	           definitionId="org.eclipse.jdt.debug.ui.commands.AddClassPrepareBreakpoint"
@@ -646,6 +656,22 @@
             objectClass="org.eclipse.jdt.debug.core.IJavaVariable"
             id="org.eclipse.jdt.debug.ui.FilteredJavaVariableActions">
          <filter
+               name="JavaVariableFilter"
+               value="isFieldVariable">
+         </filter>
+         <action
+               label="%openFieldDeclaration.label"
+               tooltip="%openFieldDeclaration.tooltip"
+               class="org.eclipse.jdt.internal.debug.ui.actions.OpenVariableDeclarationAction"
+               menubarPath="emptyNavigationGroup"
+               enablesFor="1"
+               id="org.eclipse.jdt.debug.ui.actions.OpenVariableDeclarationAction">
+         </action>
+      </objectContribution>
+      <objectContribution
+            objectClass="org.eclipse.jdt.debug.core.IJavaVariable"
+            id="org.eclipse.jdt.debug.ui.FilteredJavaVariableActions">
+         <filter
                name="PrimitiveVariableActionFilter"
                value="isPrimitive">
          </filter>
@@ -910,6 +936,25 @@
             </not>
          </visibility>
       </objectContribution>
+      <objectContribution
+            objectClass="org.eclipse.jdt.debug.core.IJavaVariable"
+            id="org.eclipse.jdt.debug.ui.JavaVariableActions">
+         <visibility>
+           <objectState
+                 name="JavaVariableFilter"
+                 value="isNonNullObjectValue">
+           </objectState>
+         </visibility>
+         <action
+               class="org.eclipse.jdt.internal.debug.ui.actions.SetObjectLabelAction"
+               enablesFor="1"
+               helpContextId="set_object_label_action_context"
+               id="org.eclipse.jdt.debug.ui.actions.SetObjectLabel"
+               label="%setObjectLabel.label"
+               menubarPath="emptyNavigationGroup"
+               tooltip="%setObjectLabel.tooltip">
+         </action>
+      </objectContribution>
       <viewerContribution
             targetID="#JavaSnippetEditorContext"
             id="org.eclipse.jdt.debug.ui.JavaSnippetPopupActions">
@@ -981,6 +1026,15 @@
                menubarPath="debug">
          </action>
          <action
+               class="org.eclipse.jdt.internal.debug.ui.actions.RulerToggleLambdaEntryBreakpointActionDelegate"
+               helpContextId="manage_breakpoint_action_context"
+               icon="icons/full/obj16/brkp_obj.png"
+               id="org.eclipse.jdt.debug.ui.actions.RulerToggleLambdaEntryBreakpointAction"
+               definitionId="org.eclipse.jdt.debug.ui.commands.ToggleLambdaEntryBreakpoint"
+               label="%AddLambdaEntryBreakpoint.label"
+               menubarPath="debug">
+         </action>
+         <action
                label="%EnableBreakpoint.label"
                helpContextId="enable_disable_breakpoint_action_context"
                class="org.eclipse.debug.ui.actions.RulerEnableDisableBreakpointActionDelegate"
@@ -1022,6 +1076,15 @@
                id="org.eclipse.jdt.debug.ui.actions.RulerToggleTracepointAction"
                definitionId="org.eclipse.jdt.debug.ui.commands.ToggleTracepoint"
                label="%AddTracepoint.label"
+               menubarPath="debug">
+         </action>
+         <action
+               class="org.eclipse.jdt.internal.debug.ui.actions.RulerToggleLambdaEntryBreakpointActionDelegate"
+               helpContextId="manage_breakpoint_action_context"
+               icon="icons/full/obj16/brkp_obj.png"
+               id="org.eclipse.jdt.debug.ui.actions.RulerToggleLambdaEntryBreakpointAction"
+               definitionId="org.eclipse.jdt.debug.ui.commands.ToggleLambdaEntryBreakpoint"
+               label="%AddLambdaEntryBreakpoint.label"
                menubarPath="debug">
          </action>
          <action
@@ -2663,6 +2726,12 @@ M4 = Platform-specific fourth key
             id="org.eclipse.jdt.debug.ui.commands.ToggleTracepoint">
       </command>
       <command
+            name="%ToggleLambdaEntryBreakpointCommand.label"
+            description="%ToggleLambdaEntryBreakpointCommand.description"
+            categoryId="org.eclipse.debug.ui.category.run"
+            id="org.eclipse.jdt.debug.ui.commands.ToggleLambdaEntryBreakpoint">
+      </command>
+      <command
             name="%ActionDefinition.addException.name"
             description="%ActionDefinition.addException.description"
             categoryId="org.eclipse.debug.ui.category.run"
@@ -3143,6 +3212,21 @@ M4 = Platform-specific fourth key
            </with>
          </enablement>
       </renameParticipant>
+      <renameParticipant
+            class="org.eclipse.jdt.internal.debug.core.refactoring.LaunchConfigurationIModuleDescriptionRenameParticipant"
+            name="%LaunchConfigurationIModuleDescriptionRenameParticipant.name"
+            id="org.eclipse.jdt.debug.refactoring.launchConfiguration.IModuleDescriptionRename">
+         <enablement>
+           <with variable="affectedNatures">
+             <iterate operator="or">
+               <equals value="org.eclipse.jdt.core.javanature"/>
+             </iterate>
+           </with>
+           <with variable="element">
+   	         <instanceof value="org.eclipse.jdt.core.IModuleDescription"/>
+           </with>
+         </enablement>
+      </renameParticipant>
    </extension>
    <extension point="org.eclipse.ltk.core.refactoring.moveParticipants">
       <moveParticipant
@@ -3419,7 +3503,7 @@ M4 = Platform-specific fourth key
          point="org.eclipse.ui.console.consolePatternMatchListeners">
       <consolePatternMatchListener
             class="org.eclipse.jdt.internal.debug.ui.console.JavaConsoleTracker"
-            regex="\(\w*${java_extensions_regex}\S*\)"
+            regex="\([\w\.\\/]*${java_extensions_regex}\S*\)"
             qualifier="${java_extensions_regex}"
             flags="UNICODE_CHARACTER_CLASS"
             id="org.eclipse.jdt.debug.ui.JavaConsoleTracker">
@@ -3458,6 +3542,26 @@ M4 = Platform-specific fourth key
             </or>
          </enablement>
       </consolePatternMatchListener>
+      <!-- Add hyperlinks to stack traces copied from the Debug view, e.g.:
+
+              SomeClass.someMethod(String[]) line: 6
+              SomeClass.someMethod(SomeType1<?>, SomeType2<?>) line: 12
+              SomeClass<SomeType>.someMethod() line: 504
+
+           Triangle brackets for generics are specified as "&lt;" and "&gt;",
+           as characters "<" and ">" are not allowed within the pattern definition (due to xml).
+      -->
+      <consolePatternMatchListener
+            class="org.eclipse.jdt.internal.debug.ui.console.JavaDebugStackTraceConsoleTracker"
+            regex="[$\w\(\)\.&lt;&gt;,]+\.[$\w]+\([$\s\w\[\]\.,?&lt;&gt;]*\) line: [\d]+"
+            qualifier="line: [\d]+"
+            id="org.eclipse.jdt.debug.ui.JavaDebugStackTraceConsoleTracker">
+         <enablement>
+            <or>
+               <test property="org.eclipse.ui.console.consoleTypeTest" value="javaStackTraceConsole"/>
+            </or>
+         </enablement>
+      </consolePatternMatchListener>
    </extension>
    <extension
          point="org.eclipse.ui.console.consolePageParticipants">
@@ -3482,6 +3586,14 @@ M4 = Platform-specific fourth key
           label="%InDeadlockColorDefinition.label"
           value="COLOR_RED">
        <description>%InDeadlockColorDefinition.description</description>
+    </colorDefinition>
+    <colorDefinition
+          categoryId="org.eclipse.debug.ui.presentation"
+          id="org.eclipse.jdt.debug.ui.LabeledObject"
+          isEditable="true"
+          label="%LabeledObjectColorDefinition.label"
+          value="COLOR_RED">
+       <description>%LabeledObjectColorDefinition.description</description>
     </colorDefinition>
  </extension>
  <extension

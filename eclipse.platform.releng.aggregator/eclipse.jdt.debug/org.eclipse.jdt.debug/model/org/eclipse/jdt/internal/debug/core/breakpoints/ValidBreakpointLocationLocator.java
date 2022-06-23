@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003, 2019 IBM Corporation and others.
+ * Copyright (c) 2003, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -54,6 +54,7 @@ import org.eclipse.jdt.core.dom.FieldAccess;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.ForStatement;
 import org.eclipse.jdt.core.dom.IBinding;
+import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.IfStatement;
@@ -63,6 +64,7 @@ import org.eclipse.jdt.core.dom.Initializer;
 import org.eclipse.jdt.core.dom.InstanceofExpression;
 import org.eclipse.jdt.core.dom.Javadoc;
 import org.eclipse.jdt.core.dom.LabeledStatement;
+import org.eclipse.jdt.core.dom.LambdaExpression;
 import org.eclipse.jdt.core.dom.LineComment;
 import org.eclipse.jdt.core.dom.MarkerAnnotation;
 import org.eclipse.jdt.core.dom.MemberRef;
@@ -125,6 +127,8 @@ public class ValidBreakpointLocationLocator extends ASTVisitor {
 	public static final int LOCATION_LINE = 1;
 	public static final int LOCATION_METHOD = 2;
 	public static final int LOCATION_FIELD = 3;
+	public static final int LOCATION_LAMBDA_METHOD = 4;
+
 
 	private CompilationUnit fCompilationUnit;
 	private int fLineNumber;
@@ -134,10 +138,16 @@ public class ValidBreakpointLocationLocator extends ASTVisitor {
 
 	private int fLocationType;
 	private boolean fLocationFound;
+	private boolean fLambdaVisited;
+	private String fLambdaMethodName;
+	private String fLambdaMethodSignature;
 	private String fTypeName;
 	private int fLineLocation;
 	private int fMemberOffset;
+	private int fNodeLength;
 	private List<String> fLabels;
+	private int fInputOffset;
+	private int fInputLength;
 
 	/**
 	 * @param compilationUnit
@@ -156,6 +166,30 @@ public class ValidBreakpointLocationLocator extends ASTVisitor {
 		fBindingsResolved = bindingsResolved;
 		fBestMatch = bestMatch;
 		fLocationFound = false;
+		fInputOffset = -1;
+		fInputLength = -1;
+	}
+
+	/**
+	 * @param compilationUnit
+	 *            the JDOM CompilationUnit of the source code.
+	 * @param lineNumber
+	 *            the line number in the source code where to put the breakpoint.
+	 * @param bestMatch
+	 *            if <code>true</code> look for the best match, otherwise look only for a valid line
+	 * @param offset
+	 *            selection offset on which breakpoints should be toggled
+	 * @param end
+	 *            selection end on which breakpoints should be toggled
+	 */
+	public ValidBreakpointLocationLocator(CompilationUnit compilationUnit, int lineNumber, boolean bindingsResolved, boolean bestMatch, int offset, int end) {
+		fCompilationUnit = compilationUnit;
+		fLineNumber = lineNumber;
+		fBindingsResolved = bindingsResolved;
+		fBestMatch = bestMatch;
+		fLocationFound = false;
+		fInputOffset = offset;
+		fInputLength = end;
 	}
 
 	/**
@@ -189,6 +223,22 @@ public class ValidBreakpointLocationLocator extends ASTVisitor {
 	}
 
 	/**
+	 * Return of the name of the lambda method where the valid location is.
+	 */
+	public String getLambdaMethodName() {
+		return fLambdaMethodName;
+	}
+
+	/**
+	 * Return of the signature of the lambda method where the valid location is.
+	 * The signature is computed to be compatible with the final lambda method with
+	 * method arguments and outer local variables.
+	 */
+	public String getfLambdaMethodSignature() {
+		return fLambdaMethodSignature;
+	}
+
+	/**
 	 * Return the line number of the computed valid location
 	 */
 	public int getLineLocation() {
@@ -206,6 +256,13 @@ public class ValidBreakpointLocationLocator extends ASTVisitor {
 		return fMemberOffset;
 	}
 
+	public int getNodeLength() {
+		return fNodeLength;
+	}
+
+	public CompilationUnit getCompilationUnit() {
+		return fCompilationUnit;
+	}
 	/**
 	 * Compute the name of the type which contains this node. <br>
 	 * <br>
@@ -281,13 +338,17 @@ public class ValidBreakpointLocationLocator extends ASTVisitor {
 	 *            lines.
 	 */
 	private boolean visit(ASTNode node, boolean isCode) {
+		int startPosition = node.getStartPosition();
+		int startLine = lineNumber(startPosition);
+		int endLine = lineNumber(startPosition + node.getLength() - 1);
+
 		// if we already found a correct location
-		// no need to check the element inside.
-		if (fLocationFound) {
+		// no need to check the element inside if the line number doesn't match.
+		// if line numbers match we still need to visit the whole expression in this line
+		// to make sure we have any lambda's we were looking for which we didn't visited yet.
+		if (fLambdaVisited || (fLocationFound && fLineNumber != startLine)) {
 			return false;
 		}
-		int startPosition = node.getStartPosition();
-		int endLine = lineNumber(startPosition + node.getLength() - 1);
 		// if the position is not in this part of the code
 		// no need to check the element inside.
 		if (endLine < fLineNumber) {
@@ -298,7 +359,6 @@ public class ValidBreakpointLocationLocator extends ASTVisitor {
 		// breakpoint is requested on this line or on a previous line, this is a
 		// valid
 		// location
-		int startLine = lineNumber(startPosition);
 		if (isCode && (fLineNumber <= startLine)) {
 			fLineLocation = startLine;
 			fLocationFound = true;
@@ -595,6 +655,15 @@ public class ValidBreakpointLocationLocator extends ASTVisitor {
 	 */
 	@Override
 	public boolean visit(ClassInstanceCreation node) {
+		if (visit(node, false)) {
+			List<? extends ASTNode> arguments = node.arguments();
+			for (ASTNode astNode : arguments) {
+				if (astNode instanceof LambdaExpression) {
+					astNode.accept(this);
+					return false;
+				}
+			}
+		}
 		return visit(node, true);
 	}
 
@@ -708,7 +777,16 @@ public class ValidBreakpointLocationLocator extends ASTVisitor {
 	 */
 	@Override
 	public boolean visit(ExpressionStatement node) {
-		return visit(node, false);
+		if (fLocationFound && fLambdaVisited) {
+			return false;
+		}
+		if (visit(node, false)) {
+			if (node.getExpression() instanceof MethodInvocation) {
+				node.getExpression().accept(this);
+				return false;
+			}
+		}
+		return visit(node, true);
 	}
 
 	/**
@@ -948,6 +1026,56 @@ public class ValidBreakpointLocationLocator extends ASTVisitor {
 		fLabels.remove(fLabels.size() - 1);
 	}
 
+	@Override
+	public boolean visit(LambdaExpression node) {
+		fMemberOffset = node.getStartPosition();
+		fNodeLength = node.getLength();
+		if (fInputOffset != -1 && fInputLength > 0 && fInputOffset >= fMemberOffset && fInputOffset + fInputLength <= fMemberOffset + fNodeLength) {
+			IMethodBinding methodBinding = node.resolveMethodBinding();
+			if (methodBinding != null) {
+				fLambdaVisited = true;
+				fLocationType = LOCATION_LAMBDA_METHOD;
+				fLambdaMethodName = LambdaLocationLocatorHelper.toMethodName(methodBinding);
+				fLambdaMethodSignature = LambdaLocationLocatorHelper.toMethodSignature(methodBinding);
+				fLocationFound = true;
+				return false;
+			}
+		} else if (fLocationType != LOCATION_LAMBDA_METHOD) {
+			fLocationType = LOCATION_LINE;
+			fTypeName = computeTypeName(node);
+			int startLine = lineNumber(fMemberOffset);
+			if (fLineNumber <= startLine) {
+				if (fInputOffset != -1) {
+					fLineLocation = lineNumber(fInputOffset);
+				} else {
+					fLineLocation = startLine;
+				}
+			} else {
+				// visit the body
+				ASTNode body = node.getBody();
+				if (body instanceof Block) { // body is null for abstract methods
+					fLocationFound = false;
+					Block block1 = (Block) body;
+					if (visit(block1)) {
+						for (Object object : block1.statements()) {
+							if (object instanceof ASTNode) {
+								ASTNode node1 = (ASTNode) object;
+								node1.accept(this);
+							}
+
+						}
+					}
+				} else if (body instanceof LambdaExpression) {
+					body.accept(this);
+				} else if (body instanceof MethodInvocation) {
+					body.accept(this);
+				}
+			}
+			return false;
+		}
+		return visit(node, true);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 *
@@ -1028,6 +1156,29 @@ public class ValidBreakpointLocationLocator extends ASTVisitor {
 	 */
 	@Override
 	public boolean visit(MethodInvocation node) {
+		if (fLocationFound && fLambdaVisited) {
+			return false;
+		}
+		if (visit(node, false)) {
+			Expression expression = node.getExpression();
+			if (expression instanceof ClassInstanceCreation || expression instanceof MethodInvocation) {
+				expression.accept(this);
+			}
+			if (fLocationFound) {
+				return false;
+			}
+			List<? extends ASTNode> arguments = node.arguments();
+			for (ASTNode astNode : arguments) {
+				// arguments needs to be accepted to handle stream operation where the lambda debug point
+				// is expected on a lambda expression which is a parameter on a nested method invocation like
+				// strings.stream().collect(Collectors.toMap(s -> s.substring(0), s -> s))
+				astNode.accept(this);
+				if (astNode instanceof LambdaExpression && fLambdaVisited) {
+					return false;
+				}
+			}
+
+		}
 		return visit(node, true);
 	}
 
@@ -1403,6 +1554,9 @@ public class ValidBreakpointLocationLocator extends ASTVisitor {
 						fLocationFound = true;
 						fLocationType = LOCATION_LINE;
 						fTypeName = computeTypeName(node);
+						if (initializer instanceof MethodInvocation || initializer instanceof LambdaExpression) {
+							initializer.accept(this);
+						}
 					return false;
 				}
 				initializer.accept(this);
