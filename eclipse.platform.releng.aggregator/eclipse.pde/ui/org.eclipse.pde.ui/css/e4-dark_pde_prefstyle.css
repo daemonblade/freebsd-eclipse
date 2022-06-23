@@ -1,0 +1,38 @@
+/*******************************************************************************
+ * Copyright (c) 2014, 2017 Andrea Guarinoni and others.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License 2.0
+ * which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *     Andrea Guarinoni - initial API and implementation
+ *     Lars Vogel <Lars.Vogel@vogella.com> - ongoing maintenance
+ *******************************************************************************/
+
+/* ############################# PDE preferences ############################# */
+
+IEclipsePreferences#org-eclipse-pde-ui:org-eclipse-pde-ui {
+	preferences:
+		'editor.color.default=217,232,247'
+		'editor.color.externalized_string=140,210,20'
+		'editor.color.externalized_string_italic=true'
+		'editor.color.header_assignment=103,207,241'
+		'editor.color.header_assignment_bold=true'
+		'editor.color.header_attributes=140,210,20'
+		'editor.color.header_key=221,40,103'
+		'editor.color.header_key_bold=true'
+		'editor.color.header_osgi=38,139,210'
+		'editor.color.header_value=23,198,163'
+		'editor.color.header_value_italic=true'
+		'editor.color.instr=221,40,103'
+		'editor.color.instr_bold=true'
+		'editor.color.string=23,198,163'
+		'editor.color.string_italic=true'
+		'editor.color.tag=38,139,210'
+		'editor.color.tag_bold=true'
+		'editor.color.xml_comment=98,98,98'
+}
