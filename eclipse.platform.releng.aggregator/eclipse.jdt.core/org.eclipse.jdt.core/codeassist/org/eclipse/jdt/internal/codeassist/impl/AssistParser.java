@@ -29,6 +29,7 @@ import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.AbstractVariableDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.Annotation;
 import org.eclipse.jdt.internal.compiler.ast.Block;
+import org.eclipse.jdt.internal.compiler.ast.CaseStatement;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.ConstructorDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.ExplicitConstructorCall;
@@ -37,6 +38,7 @@ import org.eclipse.jdt.internal.compiler.ast.FieldDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.ForeachStatement;
 import org.eclipse.jdt.internal.compiler.ast.ImportReference;
 import org.eclipse.jdt.internal.compiler.ast.Initializer;
+import org.eclipse.jdt.internal.compiler.ast.InstanceOfExpression;
 import org.eclipse.jdt.internal.compiler.ast.LambdaExpression;
 import org.eclipse.jdt.internal.compiler.ast.LocalDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.MessageSend;
@@ -353,9 +355,14 @@ public RecoveredElement buildInitialRecoveryState(){
 					element = element.add(stmt, 0);
 					this.lastCheckPoint = stmt.sourceEnd + 1;
 				} else if (stmt.containsPatternVariable()) {
+					LocalDeclaration localDeclaration = null;
+					if(stmt instanceof CaseStatement) {
+						localDeclaration = ((CaseStatement)stmt).getLocalDeclaration();
+						if(localDeclaration !=null)
+							element.add(localDeclaration, 0);
+					}
 					element.add(stmt, 0);
 					this.lastCheckPoint = stmt.sourceEnd + 1;
-					this.isOrphanCompletionNode = false;
 				}
 			}
 			continue;
@@ -365,6 +372,41 @@ public RecoveredElement buildInitialRecoveryState(){
 			element = element.add(importRef, 0);
 			this.lastCheckPoint = importRef.declarationSourceEnd + 1;
 		}
+	}
+	// This is  copy of the code that processes astStack early in this method
+	for (int i = 0; i <= this.expressionPtr; i++, lastNode = node) {
+		node = this.expressionStack[i];
+		if (node == null || !(node instanceof InstanceOfExpression)) continue;
+		/* check for intermediate block creation, so recovery can properly close them afterwards */
+		int nodeStart = node.sourceStart;
+		for (int j = blockIndex; j <= this.realBlockPtr; j++){
+			if (this.blockStarts[j] >= 0) {
+				if (this.blockStarts[j] > nodeStart){
+					blockIndex = j; // shift the index to the new block
+					break;
+				}
+				if (this.blockStarts[j] != lastStart){ // avoid multiple block if at same position
+					block = new Block(0);
+					block.sourceStart = lastStart = this.blockStarts[j];
+					element = element.add(block, 1);
+				}
+			} else {
+				if (-this.blockStarts[j] > nodeStart){
+					blockIndex = j; // shift the index to the new block
+					break;
+				}
+				block = new Block(0);
+				block.sourceStart = lastStart = -this.blockStarts[j];
+				element = element.add(block, 1);
+			}
+			blockIndex = j+1; // shift the index to the new block
+		}
+
+		InstanceOfExpression pattern = (InstanceOfExpression) node;
+		LocalDeclaration local = pattern.elementVariable;
+		if (local != null)
+			element = element.add(local, 0);
+		continue;
 	}
 	if (this.currentToken == TokenNameRBRACE) {
 		 if (isIndirectlyInsideLambdaExpression())
@@ -528,8 +570,16 @@ protected boolean triggerRecoveryUponLambdaClosure(Statement statement, boolean 
 		if (this.elementKindStack[i] != K_LAMBDA_EXPRESSION_DELIMITER)
 			continue;
 		LambdaExpression expression = (LambdaExpression) this.elementObjectInfoStack[i];
-		if (expression == null)
+
+		if (expression == null) {
 			return false;
+		} else if (lambdaClosed == true) {
+			// if we already have found the correct lambda and we still reach here, means we have another outer
+			// lambda, so try to push current statement into the ASTStack by trying to simulate a block
+			// statement processing.
+			shouldCommit = true;
+		}
+
 		if (expression.sourceStart >= statementStart && expression.sourceEnd <= statementEnd) {
 			this.elementPtr = i - 1;
 			lambdaClosed = true;

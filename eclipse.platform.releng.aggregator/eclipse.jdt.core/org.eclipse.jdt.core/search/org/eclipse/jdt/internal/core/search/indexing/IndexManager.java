@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -15,8 +15,10 @@ package org.eclipse.jdt.internal.core.search.indexing;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,6 +29,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -295,8 +298,13 @@ public synchronized IndexLocation computeIndexLocation(IPath containerPath, fina
 		// an existing index location exists - make sure it has not changed (i.e. the URL has not changed)
 		URL existingURL = indexLocation.getUrl();
 		if (newIndexURL != null) {
-			// if either URL is different then the index location has been updated so rebuild.
-			if(!newIndexURL.equals(existingURL)) {
+			boolean urisarequal = false;
+			try {
+				urisarequal = Objects.equals(newIndexURL.toURI(), existingURL.toURI());
+			} catch (URISyntaxException e) {
+				// ignore missing RFC 2396 compliance
+			}
+			if(!urisarequal) {
 				// URL has changed so remove the old index and create a new one
 				this.removeIndex(containerPath);
 				// create a new one
@@ -783,7 +791,7 @@ synchronized boolean addIndex(IPath containerPath, IndexLocation indexFile) {
  */
 public void indexSourceFolder(JavaProject javaProject, IPath sourceFolder, char[][] inclusionPatterns, char[][] exclusionPatterns) {
 	IProject project = javaProject.getProject();
-	if (this.awaitingJobs.size() > 1) {
+	if (awaitingJobsCount() > 1) {
 		// skip it if a job to index the project is already in the queue
 		IndexRequest request = new IndexAllProject(project, this);
 		if (isJobWaiting(request)) return;
@@ -1058,7 +1066,7 @@ public void removeIndexFamily(IPath path) {
  */
 public void removeSourceFolderFromIndex(JavaProject javaProject, IPath sourceFolder, char[][] inclusionPatterns, char[][] exclusionPatterns) {
 	IProject project = javaProject.getProject();
-	if (this.awaitingJobs.size() > 1) {
+	if (awaitingJobsCount() > 1) {
 		// skip it if a job to index the project is already in the queue
 		IndexRequest request = new IndexAllProject(project, this);
 		if (isJobWaiting(request)) return;
@@ -1132,18 +1140,27 @@ public void savePreBuiltIndex(Index index) throws IOException {
 	}
 }
 public void saveIndex(Index index) throws IOException {
+	ReadWriteMonitor monitor = index.monitor;
+	if (monitor == null) return; // index got deleted since acquired
+
 	// must have permission to write from the write monitor
 	if (index.hasChanged()) {
 		if (VERBOSE)
 			Util.verbose("-> saving index " + index.getIndexLocation()); //$NON-NLS-1$
-		index.save();
-		updateMetaIndex(index);
+		if (index.save()) {
+			updateMetaIndex(index);
+		} else {
+			if (VERBOSE)
+				Util.verbose("-> saving index cancelled " + index.getIndexLocation()); //$NON-NLS-1$
+			return;
+		}
 	}
 	synchronized (this) {
 		IPath containerPath = new Path(index.containerPath);
-		if (this.awaitingJobs.size() > 1) {
+		int awaitingJobsCount = awaitingJobsCount();
+		if (awaitingJobsCount > 1) {
 			// Start at the end and go backwards
-			ListIterator<IJob> iterator = this.awaitingJobs.listIterator(this.awaitingJobs.size());
+			ListIterator<IJob> iterator = this.awaitingJobs.listIterator(awaitingJobsCount);
 			IJob first = this.awaitingJobs.get(0);
 			while (iterator.hasPrevious()) {
 				IJob job = iterator.previous();
@@ -1190,12 +1207,13 @@ public void saveIndexes() {
 				if (monitor.exitReadEnterWrite()) {
 					try {
 						saveIndex(index);
-					} catch(IOException e) {
-						if (VERBOSE) {
-							Util.verbose("-> got the following exception while saving:", System.err); //$NON-NLS-1$
-							e.printStackTrace();
+					} catch(IOException | NegativeArraySizeException | OutOfMemoryError e) {
+						if(e instanceof FileNotFoundException && index.monitor == null) {
+							// index got deleted since acquired
+						} else {
+							Util.log(e, "Failed to save JDT index: " + index.toString()); //$NON-NLS-1$
+							allSaved = false;
 						}
-						allSaved = false;
 					} finally {
 						monitor.exitWriteEnterRead();
 					}
@@ -1758,11 +1776,15 @@ class MetaIndexUpdateRequest implements IJob {
 					iterator.remove();
 				}
 			}
-			if(index == null) {
+			if (index == null) {
 				return true;
 			}
+			if (index.monitor == null) {
+				// index got deleted since acquired
+				continue;
+			}
 			File indexFile = index.getIndexFile();
-			if(indexFile == null) {
+			if (indexFile == null) {
 				continue;
 			}
 			if (VERBOSE) {
@@ -1771,9 +1793,15 @@ class MetaIndexUpdateRequest implements IJob {
 			try {
 				updateMetaIndex(indexFile.getName(), index.getMetaIndexQualifications());
 			} catch (IOException e) {
-				if (JobManager.VERBOSE) {
-					Util.verbose("-> failed to update meta index for index " + indexFile.getName() + " because of the following exception:"); //$NON-NLS-1$ //$NON-NLS-2$
-					e.printStackTrace();
+				Throwable cause = e.getCause();
+				if (cause != null) {
+					Util.log(e, "Failed to update meta index"); //$NON-NLS-1$
+				} else {
+					if (JobManager.VERBOSE) {
+						Util.verbose("-> failed to update meta index for index " + indexFile.getName() //$NON-NLS-1$
+								+ " because of the following exception:"); //$NON-NLS-1$
+						e.printStackTrace();
+					}
 				}
 			}
 		}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2020 IBM Corporation and others.
+ * Copyright (c) 2004, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -56,6 +56,7 @@ public class CompletionTestsRequestor2 extends CompletionRequestor {
 	public boolean debug = false;
 
 	private Predicate<CompletionProposal> proposalFilter = x -> true;
+	private Predicate<String> typeProposalFilter = x -> false;
 
 	public CompletionTestsRequestor2() {
 		this(false, false);
@@ -109,6 +110,15 @@ public class CompletionTestsRequestor2 extends CompletionRequestor {
 			System.arraycopy(this.proposals, 0, this.proposals = new CompletionProposal[length+PROPOSALS_INCREMENT], 0, length);
 		}
 		this.proposals[this.proposalsPtr] = proposal;
+	}
+
+	@Override
+	public boolean isIgnored(char[] typeName) {
+		if (this.typeProposalFilter != null) {
+			return this.typeProposalFilter.test(new String(typeName));
+		}
+
+		return super.isIgnored(typeName);
 	}
 
 	public void allowAllRequiredProposals() {
@@ -438,6 +448,9 @@ public class CompletionTestsRequestor2 extends CompletionRequestor {
 			case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION :
 				buffer.append("ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION"); //$NON-NLS-1$
 				break;
+			case CompletionProposal.LAMBDA_EXPRESSION :
+				buffer.append("LAMBDA_EXPRESSION"); //$NON-NLS-1$
+				break;
 			default :
 				buffer.append("PROPOSAL"); //$NON-NLS-1$
 				break;
@@ -653,6 +666,9 @@ public class CompletionTestsRequestor2 extends CompletionRequestor {
 		this.proposalFilter = proposalFilter;
 	}
 
+	public void setTypeProposalFilter(Predicate<String> typeProposalFilter) {
+		this.typeProposalFilter = typeProposalFilter;
+	}
 	public boolean canUseDiamond(int proposalNo) {
 		if (proposalNo < this.proposals.length && this.proposals[proposalNo] != null) {
 			return this.proposals[proposalNo].canUseDiamond(this.context);
@@ -708,5 +724,9 @@ public class CompletionTestsRequestor2 extends CompletionRequestor {
 
 		}
 		return null;
+	}
+
+	public char[][] getExpectedTypesSignatures() {
+		return this.context.getExpectedTypesSignatures();
 	}
 }

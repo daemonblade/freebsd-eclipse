@@ -406,8 +406,17 @@ protected void consumeInstanceOfExpressionWithName() {
 
 private void matchPatternVariable() {
 	if (this.patternFineGrain == 0) {
-		InstanceOfExpression expression = (InstanceOfExpression) this.expressionStack[this.expressionPtr];
-		LocalDeclaration elementVariable = expression.elementVariable;
+		Expression expr = this.expressionStack[this.expressionPtr];
+		LocalDeclaration elementVariable = null;
+		if (expr instanceof InstanceOfExpression) {
+			InstanceOfExpression expression = (InstanceOfExpression) this.expressionStack[this.expressionPtr];
+			elementVariable = expression.elementVariable;
+		} else if (expr instanceof AND_AND_Expression) {
+			// Refer to Parser#consumeInstanceOfExpression() to understand how
+			// we can ever expect AND_AND_Expression in place of InstanceOfExpression
+			InstanceOfExpression expression = (InstanceOfExpression) ((AND_AND_Expression) expr).left;
+			elementVariable = expression.elementVariable;
+		}
 		if (elementVariable != null) {
 			// if pattern variable present, match that
 			this.patternLocator.match(elementVariable, this.nodeSet);
@@ -838,6 +847,17 @@ protected void consumeTypeParameterWithExtends() {
 	if ((this.patternFineGrain & IJavaSearchConstants.TYPE_VARIABLE_BOUND_TYPE_REFERENCE) != 0) {
 		TypeParameter typeParameter = (TypeParameter) this.genericsStack[this.genericsPtr];
 		this.patternLocator.match(typeParameter.type, this.nodeSet);
+	}
+}
+
+@Override
+protected void consumeTypePattern() {
+	super.consumeTypePattern();
+	if (this.patternFineGrain == 0) {
+		TypePattern td = (TypePattern) this.astStack[this.astPtr];
+		if (td.local != null) {
+			this.patternLocator.match(td.local, this.nodeSet);
+		}
 	}
 }
 

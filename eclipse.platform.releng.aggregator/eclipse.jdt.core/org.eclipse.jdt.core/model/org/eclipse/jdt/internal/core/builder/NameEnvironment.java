@@ -113,14 +113,9 @@ private void computeClasspathLocations(
 			cycleMarker.setAttribute(IMarker.SEVERITY, severity);
 	}
 
-	List<ClasspathLocation> allLocationsForEEA = null;
-	if (JavaCore.ENABLED.equals(javaProject.getOption(JavaCore.CORE_JAVA_BUILD_EXTERNAL_ANNOTATIONS_FROM_ALL_LOCATIONS, true))) {
-		allLocationsForEEA = new ArrayList<>(); // non-null value is also used as an enablement flag
-	}
-
 	IClasspathEntry[] classpathEntries = javaProject.getExpandedClasspath(this.compilationGroup == CompilationGroup.MAIN);
-	ArrayList sLocations = new ArrayList(classpathEntries.length);
-	ArrayList bLocations = new ArrayList(classpathEntries.length);
+	ArrayList<ClasspathLocation> sLocations = new ArrayList<>(classpathEntries.length);
+	ArrayList<ClasspathLocation> bLocations = new ArrayList<>(classpathEntries.length);
 	ArrayList sLocationsForTest = new ArrayList(classpathEntries.length);
 	Map<String, IModulePathEntry> moduleEntries = null;
 	String compliance = javaProject.getOption(JavaCore.COMPILER_COMPLIANCE, true);
@@ -146,7 +141,7 @@ private void computeClasspathLocations(
 		ClasspathEntry entry = (ClasspathEntry) classpathEntries[i];
 		IPath path = entry.getPath();
 		Object target = JavaModel.getTarget(path, true);
-		IPath externalAnnotationPath = ClasspathEntry.getExternalAnnotationPath(entry, javaProject.getProject(), true);
+		IPath externalAnnotationPath = entry.getExternalAnnotationPath(javaProject.getProject(), true);
 		if (target == null) continue nextEntry;
 		boolean isOnModulePath = isOnModulePath(entry);
 
@@ -174,8 +169,7 @@ private void computeClasspathLocations(
 						createOutputFolder(outputFolder);
 				}
 				if (this.compilationGroup == CompilationGroup.TEST && !entry.isTest()) {
-					ClasspathLocation bLocation = ClasspathLocation.forBinaryFolder(outputFolder, true, entry.getAccessRuleSet(),
-							externalAnnotationPath, allLocationsForEEA, isOnModulePath);
+					ClasspathLocation bLocation = ClasspathLocation.forBinaryFolder(outputFolder, true, entry.getAccessRuleSet(), externalAnnotationPath, isOnModulePath);
 					bLocations.add(bLocation);
 					sLocationsForTest.add(bLocation);
 					if (patchedModule != null) {
@@ -189,8 +183,7 @@ private void computeClasspathLocations(
 								entry.fullInclusionPatternChars(),
 								entry.fullExclusionPatternChars(),
 								entry.ignoreOptionalProblems(),
-								externalAnnotationPath,
-								allLocationsForEEA);
+								externalAnnotationPath);
 					if (patchedModule != null) {
 						ModuleEntryProcessor.combinePatchIntoModuleEntry(sourceLocation, patchedModule, moduleEntries);
 					}
@@ -215,7 +208,7 @@ private void computeClasspathLocations(
 							continue nextPrereqEntry;
 						IPath srcExtAnnotPath = (externalAnnotationPath != null)
 							? externalAnnotationPath
-							: ClasspathEntry.getExternalAnnotationPath(prereqEntry, javaProject.getProject(), true);
+							: prereqEntry.getExternalAnnotationPath(javaProject.getProject(), true);
 						Object prereqTarget = JavaModel.getTarget(prereqEntry.getPath(), true);
 						if (!(prereqTarget instanceof IContainer)) continue nextPrereqEntry;
 						if (srcExtAnnotPath == null) {
@@ -226,7 +219,7 @@ private void computeClasspathLocations(
 								if (other.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
 									IPath otherOutput = other.getOutputLocation();
 									if ((outputLoc == null) ? otherOutput == null : outputLoc.equals(otherOutput)) {
-										srcExtAnnotPath = ClasspathEntry.getExternalAnnotationPath(other, javaProject.getProject(),  true);
+										srcExtAnnotPath = other.getExternalAnnotationPath(javaProject.getProject(),  true);
 										if (srcExtAnnotPath != null)
 											break; // TODO: merging of several .eea?
 									}
@@ -242,7 +235,7 @@ private void computeClasspathLocations(
 						if (binaryFolder.exists() && !seen.contains(binaryFolder)) {
 							seen.add(binaryFolder);
 							ClasspathLocation bLocation = ClasspathLocation.forBinaryFolder(binaryFolder, true, entry.getAccessRuleSet(),
-									srcExtAnnotPath, allLocationsForEEA, isOnModulePath);
+									srcExtAnnotPath, isOnModulePath);
 							bLocations.add(bLocation);
 							projectLocations.add(bLocation);
 							if (binaryLocationsPerProject != null) { // normal builder mode
@@ -299,16 +292,14 @@ private void computeClasspathLocations(
 							&& JavaCore.IGNORE.equals(javaProject.getOption(JavaCore.COMPILER_PB_DISCOURAGED_REFERENCE, true)))
 								? null
 								: entry.getAccessRuleSet();
-						bLocation = ClasspathLocation.forLibrary((IFile) resource, accessRuleSet,
-								externalAnnotationPath, allLocationsForEEA, isOnModulePath, compliance);
+						bLocation = ClasspathLocation.forLibrary((IFile) resource, accessRuleSet, externalAnnotationPath, isOnModulePath, compliance);
 					} else if (resource instanceof IContainer) {
 						AccessRuleSet accessRuleSet =
 							(JavaCore.IGNORE.equals(javaProject.getOption(JavaCore.COMPILER_PB_FORBIDDEN_REFERENCE, true))
 							&& JavaCore.IGNORE.equals(javaProject.getOption(JavaCore.COMPILER_PB_DISCOURAGED_REFERENCE, true)))
 								? null
 								: entry.getAccessRuleSet();
-						bLocation = ClasspathLocation.forBinaryFolder((IContainer) target, false, accessRuleSet,	// is library folder not output folder
-								externalAnnotationPath, allLocationsForEEA, isOnModulePath);
+						bLocation = ClasspathLocation.forBinaryFolder((IContainer) target, false, accessRuleSet, externalAnnotationPath, isOnModulePath);	 // is library folder not output folder
 					}
 					bLocations.add(bLocation);
 					// TODO: Ideally we need to do something like mapToModulePathEntry using the path and if it is indeed
@@ -339,7 +330,7 @@ private void computeClasspathLocations(
 					ClasspathLocation bLocation = null;
 					String libPath = path.toOSString();
 					if (Util.isJrt(libPath)) {
-						bLocation = ClasspathLocation.forJrtSystem(path.toOSString(), accessRuleSet, externalAnnotationPath, allLocationsForEEA, release);
+						bLocation = ClasspathLocation.forJrtSystem(path.toOSString(), accessRuleSet, externalAnnotationPath, release);
 					} else {
 						bLocation = ClasspathLocation.forLibrary(path.toOSString(), accessRuleSet, externalAnnotationPath, isOnModulePath, compliance);
 					}
@@ -354,9 +345,13 @@ private void computeClasspathLocations(
 		}
 	}
 
-	if (allLocationsForEEA != null) {
-		allLocationsForEEA.addAll(bLocations);
-		allLocationsForEEA.addAll(sLocations);
+	if (JavaCore.ENABLED.equals(javaProject.getOption(JavaCore.CORE_JAVA_BUILD_EXTERNAL_ANNOTATIONS_FROM_ALL_LOCATIONS, true))) {
+		// make all locations known to each other:
+		List<ClasspathLocation> allLocationsForEEA = new ArrayList<>();
+		for (ClasspathLocation loc : bLocations)
+			loc.connectAllLocationsForEEA(allLocationsForEEA, true);
+		for (ClasspathLocation loc : sLocations)
+			loc.connectAllLocationsForEEA(allLocationsForEEA, true);
 	}
 
 	// now split the classpath locations... place the output folders ahead of the other .class file folders & jars
@@ -386,13 +381,28 @@ private void computeClasspathLocations(
 				// do nothing, probably a non module project
 			}
 		}
-		// collect the output folders, skipping duplicates
+		// collect the output folders, skipping, or merging duplicates
 		next : for (int i = 0, l = this.sourceLocations.length; i < l; i++) {
 			ClasspathMultiDirectory md = this.sourceLocations[i];
 			IPath outputPath = md.binaryFolder.getFullPath();
+			String eeaPath = md.externalAnnotationPath;
 			for (int j = 0; j < i; j++) { // compare against previously walked source folders
-				if (outputPath.equals(this.sourceLocations[j].binaryFolder.getFullPath())) {
-					md.hasIndependentOutputFolder = this.sourceLocations[j].hasIndependentOutputFolder;
+				ClasspathMultiDirectory previousMd = this.sourceLocations[j];
+				if (outputPath.equals(previousMd.binaryFolder.getFullPath())) {
+					if ((eeaPath == null) != (previousMd.externalAnnotationPath == null) // one has eeaPath other doesn't ?
+							&& md.isOnModulePath == previousMd.isOnModulePath
+							&& md.accessRuleSet == previousMd.accessRuleSet)
+					{
+						// only relevant difference between md and previousMd is a non-conflicting eea-path, so unify into one entry *with* eea-path:
+						if (eeaPath == null)
+							eeaPath = previousMd.externalAnnotationPath;
+						int prev = outputFolders.indexOf(previousMd);
+						if (prev != -1) {
+							outputFolders.set(prev, new ClasspathDirectory(md.binaryFolder, true, md.accessRuleSet, new Path(eeaPath), md.isOnModulePath));
+							continue next;
+						}
+					}
+					md.hasIndependentOutputFolder = previousMd.hasIndependentOutputFolder;
 					continue next;
 				}
 			}
@@ -412,7 +422,7 @@ private void computeClasspathLocations(
 	for (int i = 0, l = outputFolders.size(); i < l; i++)
 		this.binaryLocations[index++] = (ClasspathLocation) outputFolders.get(i);
 	for (int i = 0, l = bLocations.size(); i < l; i++)
-		this.binaryLocations[index++] = (ClasspathLocation) bLocations.get(i);
+		this.binaryLocations[index++] = bLocations.get(i);
 
 	if (moduleEntries != null && !moduleEntries.isEmpty())
 		this.modulePathEntries = moduleEntries;

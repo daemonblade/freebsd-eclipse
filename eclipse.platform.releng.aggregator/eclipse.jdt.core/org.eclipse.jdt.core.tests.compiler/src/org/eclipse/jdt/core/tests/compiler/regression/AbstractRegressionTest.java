@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -308,6 +308,10 @@ static class JavacCompiler {
 			return JavaCore.VERSION_15;
 		} else if(rawVersion.startsWith("16")) {
 			return JavaCore.VERSION_16;
+		} else if(rawVersion.startsWith("17")) {
+			return JavaCore.VERSION_17;
+		} else if(rawVersion.startsWith("18")) {
+			return JavaCore.VERSION_18;
 		} else {
 			throw new RuntimeException("unknown javac version: " + rawVersion);
 		}
@@ -488,6 +492,34 @@ static class JavacCompiler {
 				return 0100;
 			}
 			if ("16.0.2".equals(rawVersion)) {
+				return 0200;
+			}
+		}
+		if (version == JavaCore.VERSION_17) {
+			if ("17-ea".equals(rawVersion)) {
+				return 0000;
+			}
+			if ("17".equals(rawVersion)) {
+				return 0000;
+			}
+			if ("17.0.1".equals(rawVersion)) {
+				return 0100;
+			}
+			if ("17.0.2".equals(rawVersion)) {
+				return 0200;
+			}
+		}
+		if (version == JavaCore.VERSION_18) {
+			if ("18-ea".equals(rawVersion)) {
+				return 0000;
+			}
+			if ("18".equals(rawVersion)) {
+				return 0000;
+			}
+			if ("18.0.1".equals(rawVersion)) {
+				return 0100;
+			}
+			if ("18.0.2".equals(rawVersion)) {
 				return 0200;
 			}
 		}
@@ -1629,18 +1661,27 @@ protected static class JavacTestOptions {
 		return null;
 	}
 
-	protected INameEnvironment[] getClassLibs(boolean useDefaultClasspaths) {
+	protected INameEnvironment[] getClassLibs(boolean useDefaultClasspaths, Map<String, String> options) {
+		if (options == null)
+			options = getCompilerOptions();
 		String encoding = getCompilerOptions().get(CompilerOptions.OPTION_Encoding);
 		if ("".equals(encoding))
 			encoding = null;
+		String release = null;
+		if (CompilerOptions.ENABLED.equals(options.get(CompilerOptions.OPTION_Release))) {
+			release = getCompilerOptions().get(CompilerOptions.OPTION_Compliance);
+		}
 		if (useDefaultClasspaths && encoding == null)
-			return DefaultJavaRuntimeEnvironment.create(this.classpaths);
+			return DefaultJavaRuntimeEnvironment.create(this.classpaths, release);
 		// fall back to FileSystem
 		INameEnvironment[] classLibs = new INameEnvironment[1];
 		classLibs[0] = new FileSystem(this.classpaths, new String[]{}, // ignore initial file names
-				encoding // default encoding
+				encoding, release
 		);
 		return classLibs;
+	}
+	protected INameEnvironment[] getClassLibs(boolean useDefaultClasspaths) {
+		return getClassLibs(useDefaultClasspaths, null);
 	}
 	@Override
 	protected Map<String, String> getCompilerOptions() {
@@ -1684,14 +1725,14 @@ protected static class JavacTestOptions {
 		return DefaultJavaRuntimeEnvironment.getDefaultClassPaths();
 	}
 	/** Get class library paths built from default class paths plus the JDT null annotations. */
-	protected String[] getLibsWithNullAnnotations(long sourceLevel) throws IOException {
+	protected String[] getLibsWithNullAnnotations(long sourceLevel) {
 		String[] defaultLibs = getDefaultClassPaths();
 		int len = defaultLibs.length;
 		String[] libs = new String[len+1];
 		System.arraycopy(defaultLibs, 0, libs, 0, len);
 		String version = sourceLevel < ClassFileConstants.JDK1_8 ? "[1.1.0,2.0.0)" : "[2.0.0,3.0.0)";
 		Bundle[] bundles = Platform.getBundles("org.eclipse.jdt.annotation", version);
-		File bundleFile = FileLocator.getBundleFile(bundles[0]);
+		File bundleFile = FileLocator.getBundleFileLocation(bundles[0]).get();
 		if (bundleFile.isDirectory())
 			libs[len] = bundleFile.getPath()+"/bin";
 		else
@@ -1720,9 +1761,12 @@ protected static class JavacTestOptions {
 	/*
 	 * Will consider first the source units passed as arguments, then investigate the classpath: jdklib + output dir
 	 */
-	protected INameEnvironment getNameEnvironment(final String[] testFiles, String[] classPaths) {
+	protected INameEnvironment getNameEnvironment(final String[] testFiles, String[] classPaths, Map<String, String> options) {
 		this.classpaths = classPaths == null ? getDefaultClassPaths() : classPaths;
-		return new InMemoryNameEnvironment(testFiles, getClassLibs(classPaths == null));
+		return new InMemoryNameEnvironment(testFiles, getClassLibs((classPaths == null), options));
+	}
+	protected INameEnvironment getNameEnvironment(final String[] testFiles, String[] classPaths) {
+		return getNameEnvironment(testFiles, classPaths, null);
 	}
 	protected IProblemFactory getProblemFactory() {
 		return new DefaultProblemFactory(Locale.getDefault());
@@ -3420,7 +3464,7 @@ protected void runNegativeTest(boolean skipJavac, JavacTestOptions javacTestOpti
 		CompilerOptions compilerOptions = new CompilerOptions(options);
 		compilerOptions.performMethodsFullRecovery = performStatementsRecovery;
 		compilerOptions.performStatementsRecovery = performStatementsRecovery;
-		INameEnvironment nameEnvironment = getNameEnvironment(dependantFiles, classLibraries);
+		INameEnvironment nameEnvironment = getNameEnvironment(dependantFiles, classLibraries, options);
 		Compiler batchCompiler =
 			new Compiler(
 				nameEnvironment,

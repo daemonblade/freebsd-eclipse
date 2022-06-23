@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -478,6 +478,14 @@ public class NaiveASTFlattener extends ASTVisitor {
 	}
 
 	@Override
+	public boolean visit(CaseDefaultExpression node) {
+		if (DOMASTUtil.isPatternSupported(node.getAST())) {
+			this.buffer.append("default");//$NON-NLS-1$
+		}
+		return false;
+	}
+
+	@Override
 	public boolean visit(CastExpression node) {
 		this.buffer.append("(");//$NON-NLS-1$
 		node.getType().accept(this);
@@ -806,6 +814,16 @@ public class NaiveASTFlattener extends ASTVisitor {
 	}
 
 	@Override
+	public boolean visit(GuardedPattern node) {
+		if (DOMASTUtil.isPatternSupported(node.getAST())) {
+			node.getPattern().accept(this);
+			this.buffer.append(" && ");//$NON-NLS-1$
+			node.getExpression().accept(this);
+		}
+		return false;
+	}
+
+	@Override
 	public boolean visit(IfStatement node) {
 		printIndent();
 		this.buffer.append("if (");//$NON-NLS-1$
@@ -907,6 +925,12 @@ public class NaiveASTFlattener extends ASTVisitor {
 			e.accept(this);
 		}
 		this.buffer.append("\n */\n");//$NON-NLS-1$
+		return false;
+	}
+
+	@Override
+	public boolean visit(JavaDocRegion node) {
+		//ToDO
 		return false;
 	}
 
@@ -1218,6 +1242,14 @@ public class NaiveASTFlattener extends ASTVisitor {
 	@Override
 	public boolean visit(NullLiteral node) {
 		this.buffer.append("null");//$NON-NLS-1$
+		return false;
+	}
+
+	@Override
+	public boolean visit(NullPattern node) {
+		if (DOMASTUtil.isPatternSupported(node.getAST())) {
+			this.buffer.append("null");//$NON-NLS-1$
+		}
 		return false;
 	}
 
@@ -1580,7 +1612,7 @@ public class NaiveASTFlattener extends ASTVisitor {
 	@Override
 	public boolean visit(SwitchCase node) {
 		if ((node.getAST().apiLevel() >= JLS14)) {
-			if (node.isDefault()) {
+			if (node.isDefault() && !isCaseDefaultExpression(node)) {
 				this.buffer.append("default");//$NON-NLS-1$
 				this.buffer.append(node.isSwitchLabeledRule() ? " ->" : ":");//$NON-NLS-1$ //$NON-NLS-2$
 			} else {
@@ -1594,7 +1626,7 @@ public class NaiveASTFlattener extends ASTVisitor {
 			}
 		}
 		else {
-			if (node.isDefault()) {
+			if (node.isDefault() && !isCaseDefaultExpression(node)) {
 				this.buffer.append("default :\n");//$NON-NLS-1$
 			} else {
 				this.buffer.append("case ");//$NON-NLS-1$
@@ -1603,6 +1635,13 @@ public class NaiveASTFlattener extends ASTVisitor {
 			}
 		}
 		this.indent++; //decremented in visit(SwitchStatement)
+		return false;
+	}
+
+	private boolean isCaseDefaultExpression(SwitchCase node) {
+		if (node.expressions() != null && node.expressions().size() == 1 && node.expressions().get(0) instanceof CaseDefaultExpression) {
+			return true;
+		}
 		return false;
 	}
 	/**
@@ -1698,11 +1737,31 @@ public class NaiveASTFlattener extends ASTVisitor {
 			e.accept(this);
 			previousRequiresWhiteSpace = !currentIncludesWhiteSpace && !(e instanceof TagElement);
 		}
+		if (DOMASTUtil.isJavaDocCodeSnippetSupported(node.getAST().apiLevel())) {
+			for (Iterator it = node.tagProperties().iterator(); it.hasNext(); ) {
+				TagProperty tagProperty = (TagProperty) it.next();
+				tagProperty.accept(this);
+			}
+
+		}
 		if (node.isNested()) {
 			this.buffer.append("}");//$NON-NLS-1$
 		}
 		return false;
 	}
+
+	@Override
+	public boolean visit(TagProperty node) {
+		this.buffer.append("\n{"); //$NON-NLS-1$
+		this.buffer.append(node.getName());
+		this.buffer.append(" = "); //$NON-NLS-1$
+		this.buffer.append(node.getStringValue());
+		node.getNodeValue().accept(this);
+		this.buffer.append("}"); //$NON-NLS-1$
+		return false;
+	}
+
+
 
 	@Override
 	public boolean visit(TextBlock node) {
@@ -1900,6 +1959,14 @@ public class NaiveASTFlattener extends ASTVisitor {
 					this.buffer.append(" & ");//$NON-NLS-1$
 				}
 			}
+		}
+		return false;
+	}
+
+	@Override
+	public boolean visit(TypePattern node) {
+		if (DOMASTUtil.isPatternSupported(node.getAST())) {
+			node.getPatternVariable().accept(this);
 		}
 		return false;
 	}

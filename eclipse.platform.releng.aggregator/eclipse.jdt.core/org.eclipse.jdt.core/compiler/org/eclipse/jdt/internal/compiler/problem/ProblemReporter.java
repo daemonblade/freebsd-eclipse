@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -463,6 +463,7 @@ public static int getIrritant(int problemID) {
 		case IProblem.RedundantNullCheckOnConstNonNullField:
 		case IProblem.ConstNonNullFieldComparisonYieldsFalse:
 		case IProblem.FieldComparisonYieldsFalse:
+		case IProblem.UnnecessaryNullCaseInSwitchOverNonNull:
 			return CompilerOptions.RedundantNullCheck;
 
 		case IProblem.RequiredNonNullButProvidedNull:
@@ -557,6 +558,12 @@ public static int getIrritant(int problemID) {
 		case IProblem.JavadocDuplicateReturnTag:
 		case IProblem.JavadocInvalidThrowsClass:
 		case IProblem.JavadocInvalidSeeReference:
+		case IProblem.JavadocInvalidSnippet:
+		case IProblem.JavadocInvalidSnippetMissingColon:
+		case IProblem.JavadocInvalidSnippetContentNewLine:
+		case IProblem.JavadocInvalidSnippetRegexSubstringTogether:
+		case IProblem.JavadocInvalidSnippetRegionNotClosed:
+		case IProblem.JavadocInvalidSnippetDuplicateRegions:
 		case IProblem.JavadocInvalidParamTagName:
 		case IProblem.JavadocInvalidParamTagTypeParameter:
 		case IProblem.JavadocMalformedSeeReference:
@@ -1486,6 +1493,15 @@ public void cannotReferToNonFinalField(VariableBinding local, ASTNode location) 
 		nodeSourceStart(local, location),
 		nodeSourceEnd(local, location));
 }
+public void cannotReferToNonFinalLocalInGuard(VariableBinding local, ASTNode location) {
+	String[] arguments = new String[] { new String(local.readableName()) };
+	this.handle(
+		IProblem.LocalReferencedInGuardMustBeEffectivelyFinal,
+		arguments,
+		arguments,
+		nodeSourceStart(local, location),
+		nodeSourceEnd(local, location));
+}
 public void cannotReturnInInitializer(ASTNode location) {
 	this.handle(
 		IProblem.CannotReturnInInitializer,
@@ -1616,6 +1632,27 @@ public void classExtendFinalClass(SourceTypeBinding type, TypeReference supercla
 		superclass.sourceStart,
 		superclass.sourceEnd);
 }
+public void classExtendFinalRecord(SourceTypeBinding type, TypeReference superclass, TypeBinding superTypeBinding) {
+	String name = new String(type.sourceName());
+	String superTypeFullName = new String(superTypeBinding.readableName());
+	String superTypeShortName = new String(superTypeBinding.shortReadableName());
+	if (superTypeShortName.equals(name)) superTypeShortName = superTypeFullName;
+	this.handle(
+		IProblem.ClassExtendFinalRecord,
+		new String[] {superTypeFullName, name},
+		new String[] {superTypeShortName, name},
+		superclass.sourceStart,
+		superclass.sourceEnd);
+}
+public void recordErasureIncompatibilityInCanonicalConstructor(TypeReference type) {
+	String[] arguments = new String[] { new String(type.resolvedType.readableName()) };
+	this.handle(
+		IProblem.RecordErasureIncompatibilityInCanonicalConstructor,
+		arguments,
+		arguments,
+		type.sourceStart,
+		type.sourceEnd);
+}
 public void codeSnippetMissingClass(String missing, int start, int end) {
 	String[] arguments = new String[]{missing};
 	this.handle(
@@ -1662,6 +1699,7 @@ public int computeSeverity(int problemID){
  		case IProblem.SwitchExpressionsYieldUnqualifiedMethodWarning:
  		case IProblem.SwitchExpressionsYieldRestrictedGeneralWarning:
  		case IProblem.SwitchExpressionsYieldTypeDeclarationWarning:
+ 		case IProblem.StrictfpNotRequired:
  			return ProblemSeverities.Warning;
  		case IProblem.TypeCollidesWithPackage :
 			return ProblemSeverities.Error;
@@ -2022,7 +2060,7 @@ public void duplicateBounds(ASTNode location, TypeBinding type) {
 		location.sourceStart,
 		location.sourceEnd);
 }
-public void duplicateCase(CaseStatement caseStatement) {
+public void duplicateCase(Statement caseStatement) {
 	this.handle(
 		IProblem.DuplicateCase,
 		NoArgument,
@@ -5592,6 +5630,11 @@ public void javadocInvalidModuleQualification(int sourceStart, int sourceEnd, in
 		this.handle(IProblem.JavadocInvalidModuleQualification, NoArgument, NoArgument, sourceStart, sourceEnd);
 	}
 }
+public void javadocInvalidModule(ModuleReference ref) {
+	this.handle(IProblem.JavadocInvalidModule,
+		NoArgument, new String[] { CharOperation.charToString(ref.moduleName) },
+		ref.sourceStart, ref.sourceEnd);
+}
 /*
  * Similar implementation than invalidMethod(MessageSend...)
  * Note that following problem id cannot occur for Javadoc:
@@ -5811,6 +5854,24 @@ public void javadocInvalidProvidesClassName(TypeReference typeReference, int mod
 }
 public void javadocInvalidReference(int sourceStart, int sourceEnd) {
 	this.handle(IProblem.JavadocInvalidSeeReference, NoArgument, NoArgument, sourceStart, sourceEnd);
+}
+public void javadocInvalidSnippet(int sourceStart, int sourceEnd) {
+	this.handle(IProblem.JavadocInvalidSnippet, NoArgument, NoArgument, sourceStart, sourceEnd);
+}
+public void javadocInvalidSnippetMissingColon(int sourceStart, int sourceEnd) {
+	this.handle(IProblem.JavadocInvalidSnippetMissingColon, NoArgument, NoArgument, sourceStart, sourceEnd);
+}
+public void javadocInvalidSnippetContentNewLine(int sourceStart, int sourceEnd) {
+	this.handle(IProblem.JavadocInvalidSnippetContentNewLine, NoArgument, NoArgument, sourceStart, sourceEnd);
+}
+public void javadocInvalidSnippetRegionNotClosed(int sourceStart, int sourceEnd) {
+	this.handle(IProblem.JavadocInvalidSnippetRegionNotClosed, NoArgument, NoArgument, sourceStart, sourceEnd);
+}
+public void javadocInvalidSnippetRegexSubstringTogether(int sourceStart, int sourceEnd) {
+	this.handle(IProblem.JavadocInvalidSnippetRegexSubstringTogether, NoArgument, NoArgument, sourceStart, sourceEnd);
+}
+public void javadocInvalidSnippetDuplicateRegions(int sourceStart, int sourceEnd) {
+	this.handle(IProblem.JavadocInvalidSnippetDuplicateRegions, NoArgument, NoArgument, sourceStart, sourceEnd);
 }
 /**
  * Report an invalid reference that does not conform to the href syntax.
@@ -6326,6 +6387,9 @@ public boolean expressionNonNullComparison(Expression expr, boolean checkForNull
 	}
 	this.handle(problemId, arguments, arguments, start, end);
 	return true;
+}
+public void unnecessaryNullCaseInSwitchOverNonNull(CaseStatement caseStmt) {
+	this.handle(IProblem.UnnecessaryNullCaseInSwitchOverNonNull, NoArgument, NoArgument, caseStmt.sourceStart, caseStmt.sourceEnd);
 }
 public void nullAnnotationUnsupportedLocation(Annotation annotation) {
 	String[] arguments = new String[] {
@@ -7265,7 +7329,7 @@ public void notCompatibleTypesError(EqualExpression expression, TypeBinding left
 		expression.sourceStart,
 		expression.sourceEnd);
 }
-public void notCompatibleTypesError(InstanceOfExpression expression, TypeBinding leftType, TypeBinding rightType) {
+public void notCompatibleTypesError(Expression expression, TypeBinding leftType, TypeBinding rightType) {
 	String leftName = new String(leftType.readableName());
 	String rightName = new String(rightType.readableName());
 	String leftShortName = new String(leftType.shortReadableName());
@@ -8384,6 +8448,8 @@ private String replaceIfSynthetic(String token) {
 	   third synthetic token "ElidedSemicolonAndRightBrace" that we don't expect to show up in messages since it is manufactured by
 	   the parser automatically.
 	*/
+	if (token.equals("BeginCaseExpr")) //$NON-NLS-1$
+		return "->"; //$NON-NLS-1$
 	if (token.equals("BeginTypeArguments")) //$NON-NLS-1$
 		return "."; //$NON-NLS-1$
 	if (token.equals("BeginLambda")) //$NON-NLS-1$
@@ -9585,8 +9651,6 @@ public void previewFeatureUsed(int sourceStart, int sourceEnd) {
 			sourceEnd);
 }
 public void previewAPIUsed(int sourceStart, int sourceEnd, boolean isFatal) {
-	if (this.options.enablePreviewFeatures)
-		return;
 	this.handle(
 			IProblem.PreviewAPIUsed,
 			NoArgument,
@@ -11965,8 +12029,6 @@ public void illegalModifierForLocalEnumDeclaration(SourceTypeBinding type) {
 		type.sourceEnd());
 }
 private void sealedMissingModifier(int problem, SourceTypeBinding type, TypeDeclaration typeDecl, TypeBinding superTypeBinding) {
-	if (!this.options.enablePreviewFeatures)
-		return;
 	String name = new String(type.sourceName());
 	String superTypeFullName = new String(superTypeBinding.readableName());
 	String superTypeShortName = new String(superTypeBinding.shortReadableName());
@@ -11986,8 +12048,6 @@ public void sealedMissingInterfaceModifier(SourceTypeBinding type, TypeDeclarati
 	sealedMissingModifier(IProblem.SealedMissingInterfaceModifier, type, typeDecl, superTypeBinding);
 }
 public void sealedDisAllowedNonSealedModifierInClass(SourceTypeBinding type, TypeDeclaration typeDecl) {
-	if (!this.options.enablePreviewFeatures)
-		return;
 	String name = new String(type.sourceName());
 	this.handle(
 			IProblem.SealedDisAllowedNonSealedModifierInClass,
@@ -11998,8 +12058,6 @@ public void sealedDisAllowedNonSealedModifierInClass(SourceTypeBinding type, Typ
 }
 
 private void sealedSuperTypeDoesNotPermit(int problem, SourceTypeBinding type, TypeReference superType, TypeBinding superTypeBinding) {
-	if (!this.options.enablePreviewFeatures)
-		return;
 	String name = new String(type.sourceName());
 	String superTypeFullName = new String(superTypeBinding.readableName());
 	String superTypeShortName = new String(superTypeBinding.shortReadableName());
@@ -12013,8 +12071,6 @@ private void sealedSuperTypeDoesNotPermit(int problem, SourceTypeBinding type, T
 }
 
 public void sealedSuperTypeInDifferentPackage(int problem, SourceTypeBinding type, TypeReference curType, TypeBinding superTypeBinding, PackageBinding superPackageBinding) {
-	if (!this.options.enablePreviewFeatures)
-		return;
 	String typeName = new String(type.sourceName);
 	String name = new String(superTypeBinding.sourceName());
 	String packageName = superPackageBinding.compoundName == CharOperation.NO_CHAR_CHAR ? "default" : //$NON-NLS-1$
@@ -12028,8 +12084,6 @@ public void sealedSuperTypeInDifferentPackage(int problem, SourceTypeBinding typ
 }
 
 public void sealedSuperTypeDisallowed(int problem, SourceTypeBinding type, TypeReference curType, TypeBinding superTypeBinding) {
-	if (!this.options.enablePreviewFeatures)
-		return;
 	String typeName = new String(type.sourceName);
 	String name = new String(superTypeBinding.sourceName());
 	String[] arguments = new String[] {typeName, name};
@@ -12053,8 +12107,6 @@ public void sealedSuperClassDisallowed(SourceTypeBinding type, TypeReference cur
 }
 
 public void sealedSuperInterfaceDoesNotPermit(SourceTypeBinding type, TypeReference superType, TypeBinding superTypeBinding) {
-	if (!this.options.enablePreviewFeatures)
-		return;
 	String name = new String(type.sourceName());
 	String superTypeFullName = new String(superTypeBinding.readableName());
 	String superTypeShortName = new String(superTypeBinding.shortReadableName());
@@ -12077,16 +12129,12 @@ public void sealedSuperInterfaceDisallowed(SourceTypeBinding type, TypeReference
 }
 
 public void sealedMissingSealedModifier(SourceTypeBinding type, ASTNode node) {
-	if (!this.options.enablePreviewFeatures)
-		return;
 	String name = new String(type.sourceName());
 	this.handle(IProblem.SealedMissingSealedModifier, new String[] { name }, new String[] { name }, node.sourceStart,
 			node.sourceEnd);
 }
 
 public void sealedDuplicateTypeInPermits(SourceTypeBinding type, TypeReference reference, ReferenceBinding superType) {
-	if (!this.options.enablePreviewFeatures)
-		return;
 	this.handle(
 		IProblem.SealedDuplicateTypeInPermits,
 		new String[] {
@@ -12100,8 +12148,6 @@ public void sealedDuplicateTypeInPermits(SourceTypeBinding type, TypeReference r
 }
 
 public void sealedNotDirectSuperClass(ReferenceBinding type, TypeReference reference, SourceTypeBinding superType) {
-	if (!this.options.enablePreviewFeatures)
-		return;
 	this.handle(
 		IProblem.SealedNotDirectSuperClass,
 		new String[] {
@@ -12114,8 +12160,6 @@ public void sealedNotDirectSuperClass(ReferenceBinding type, TypeReference refer
 		reference.sourceEnd);
 }
 public void sealedPermittedTypeOutsideOfModule(ReferenceBinding permType, SourceTypeBinding type, ASTNode node, ModuleBinding moduleBinding) {
-	if (!this.options.enablePreviewFeatures)
-		return;
 	String permTypeName = new String(permType.sourceName);
 	String name = new String(type.sourceName());
 	String moduleName = new String(moduleBinding.name());
@@ -12127,16 +12171,12 @@ public void sealedPermittedTypeOutsideOfModule(ReferenceBinding permType, Source
 			node.sourceEnd);
 }
 public void sealedPermittedTypeOutsideOfModule(SourceTypeBinding type, ASTNode node) {
-	if (!this.options.enablePreviewFeatures)
-		return;
 	String name = new String(type.sourceName());
 	this.handle(IProblem.SealedPermittedTypeOutsideOfModule, new String[] { name }, new String[] { name },
 			node.sourceStart, node.sourceEnd);
 }
 
 public void sealedPermittedTypeOutsideOfPackage(ReferenceBinding permType, SourceTypeBinding type, ASTNode node, PackageBinding packageBinding) {
-	if (!this.options.enablePreviewFeatures)
-		return;
 	String permTypeName = new String(permType.sourceName);
 	String name = new String(type.sourceName());
 	String packageName = packageBinding.compoundName == CharOperation.NO_CHAR_CHAR ? "default" : //$NON-NLS-1$
@@ -12150,16 +12190,12 @@ public void sealedPermittedTypeOutsideOfPackage(ReferenceBinding permType, Sourc
 }
 
 public void sealedSealedTypeMissingPermits(SourceTypeBinding type, ASTNode node) {
-	if (!this.options.enablePreviewFeatures)
-		return;
 	String name = new String(type.sourceName());
 	this.handle(IProblem.SealedSealedTypeMissingPermits, new String[] { name }, new String[] { name }, node.sourceStart,
 			node.sourceEnd);
 }
 
 public void sealedInterfaceIsSealedAndNonSealed(SourceTypeBinding type, ASTNode node) {
-	if (!this.options.enablePreviewFeatures)
-		return;
 	String name = new String(type.sourceName());
 	this.handle(IProblem.SealedInterfaceIsSealedAndNonSealed,
 			new String[] { name },
@@ -12169,8 +12205,6 @@ public void sealedInterfaceIsSealedAndNonSealed(SourceTypeBinding type, ASTNode 
 }
 
 public void sealedDisAllowedNonSealedModifierInInterface(SourceTypeBinding type, TypeDeclaration typeDecl) {
-	if (!this.options.enablePreviewFeatures)
-		return;
 	String name = new String(type.sourceName());
 	this.handle(
 			IProblem.SealedDisAllowedNonSealedModifierInInterface,
@@ -12181,8 +12215,6 @@ public void sealedDisAllowedNonSealedModifierInInterface(SourceTypeBinding type,
 }
 
 public void sealedNotDirectSuperInterface(ReferenceBinding type, TypeReference reference, SourceTypeBinding superType) {
-	if (!this.options.enablePreviewFeatures)
-		return;
 	this.handle(
 		IProblem.SealedNotDirectSuperInterface,
 		new String[] {
@@ -12196,8 +12228,6 @@ public void sealedNotDirectSuperInterface(ReferenceBinding type, TypeReference r
 }
 
 public void sealedLocalDirectSuperTypeSealed(SourceTypeBinding type, TypeReference superclass, TypeBinding superTypeBinding) {
-	if (!this.options.enablePreviewFeatures)
-		return;
 	String name = new String(type.sourceName());
 	String superTypeFullName = new String(superTypeBinding.readableName());
 	String superTypeShortName = new String(superTypeBinding.shortReadableName());
@@ -12210,8 +12240,6 @@ public void sealedLocalDirectSuperTypeSealed(SourceTypeBinding type, TypeReferen
 		superclass.sourceEnd);
 }
 public void sealedAnonymousClassCannotExtendSealedType(TypeReference reference, TypeBinding type) {
-	if (!this.options.enablePreviewFeatures)
-		return;
 	this.handle(
 			IProblem.SealedAnonymousClassCannotExtendSealedType,
 			new String[] {new String(type.readableName())},
@@ -12219,4 +12247,83 @@ public void sealedAnonymousClassCannotExtendSealedType(TypeReference reference, 
 			reference.sourceStart,
 			reference.sourceEnd);
 }
+public void StrictfpNotRequired(int sourceStart, int sourceEnd) {
+	this.handle(
+			IProblem.StrictfpNotRequired,
+			NoArgument, NoArgument,
+			sourceStart, sourceEnd);
+}
+public void IllegalFallThroughToPattern(Statement statement) {
+	this.handle(
+		IProblem.IllegalFallthroughToPattern,
+		NoArgument,
+		NoArgument,
+		statement.sourceStart,
+		statement.sourceEnd);
+	}
+public void switchPatternOnlyOnePatternCaseLabelAllowed(Expression element) {
+	this.handle(
+			IProblem.OnlyOnePatternCaseLabelAllowed,
+			NoArgument,
+			NoArgument,
+			element.sourceStart,
+			element.sourceEnd);
+}
+public void switchPatternBothPatternAndDefaultCaseLabelsNotAllowed(Expression element) {
+	this.handle(
+			IProblem.CannotMixPatternAndDefault,
+			NoArgument,
+			NoArgument,
+			element.sourceStart,
+			element.sourceEnd);
+}
+public void switchPatternBothNullAndNonTypePatternNotAllowed(Expression element) {
+	this.handle(
+			IProblem.CannotMixNullAndNonTypePattern,
+			NoArgument,
+			NoArgument,
+			element.sourceStart,
+			element.sourceEnd);
+}
+public void patternDominatedByAnother(Expression element) {
+	this.handle(
+			IProblem.PatternDominated,
+			NoArgument,
+			NoArgument,
+			element.sourceStart,
+			element.sourceEnd);
+}
+public void illegalTotalPatternWithDefault(Statement element) {
+	this.handle(
+			IProblem.IllegalTotalPatternWithDefault,
+			NoArgument,
+			NoArgument,
+			element.sourceStart,
+			element.sourceEnd);
+}
+public void enhancedSwitchMissingDefaultCase(ASTNode element) {
+	this.handle(
+			IProblem.EnhancedSwitchMissingDefault,
+			NoArgument,
+			NoArgument,
+			element.sourceStart,
+			element.sourceEnd);
+}
+public void duplicateTotalPattern(ASTNode element) {
+	this.handle(
+			IProblem.DuplicateTotalPattern,
+			NoArgument,
+			NoArgument,
+			element.sourceStart,
+			element.sourceEnd);
+}
+public void unexpectedTypeinSwitchPattern(TypeBinding type, ASTNode element) {
+	this.handle(
+			IProblem.UnexpectedTypeinSwitchPattern,
+			new String[] {new String(type.readableName())},
+			new String[] {new String(type.shortReadableName())},
+			element.sourceStart,
+			element.sourceEnd);
+}
+
 }

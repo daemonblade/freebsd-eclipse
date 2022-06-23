@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2020 IBM Corporation.
+ * Copyright (c) 2017, 2021 IBM Corporation.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -60,7 +60,14 @@ public class Java9ElementsTests extends TestCase {
 		JavaCompiler compiler = BatchTestUtils.getEclipseCompiler();
 		internalTest2(compiler, MODULE_PROC, "testRootElements1", null);
 	}
-
+	public void testBug522472() throws IOException {
+		JavaCompiler compiler = BatchTestUtils.getEclipseCompiler();
+		internalTest2(compiler, MODULE_PROC, "bug522472", "testBug522472", null);
+	}
+	public void _testBug522472Javac() throws IOException {
+		JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+		internalTest2(compiler, MODULE_PROC, "bug522472", "testBug522472", null);
+	}
 	public void _testRootElements2Javac() throws IOException {
 		JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
 		if (compiler == null) {
@@ -418,7 +425,20 @@ public class Java9ElementsTests extends TestCase {
 	}
 	public void testBug535819() throws IOException {
 		JavaCompiler compiler = BatchTestUtils.getEclipseCompiler();
-		internalTest(compiler, MODULE_PROC, "testBug535819", null, "bug535819", true);
+		internalTest(compiler, MODULE_PROC, "testBug535819", null, "bug535819", true, null);
+	}
+	public void testBug572673() throws IOException {
+		if (!canRunJava17()) {
+			return;
+		}
+		JavaCompiler compiler = BatchTestUtils.getEclipseCompiler();
+		final String autoModuleJar = BatchTestUtils.setupProcessorJar("lib/lib.x.jar", BatchTestUtils._tmpFolder);
+		internalTest(compiler, MODULE_PROC, "testBug572673", null, "bug572673", true, 
+				(options) -> {
+					options.add("--module-path");
+					options.add(BatchTestUtils._jls8ProcessorJarPath + 
+							File.pathSeparator + autoModuleJar);
+				});
 	}
 	protected void internalTestWithBinary(JavaCompiler compiler, String processor, String compliance, String testMethod, String testClass, String resourceArea) throws IOException {
 		if (!canRunJava9()) {
@@ -478,9 +498,10 @@ public class Java9ElementsTests extends TestCase {
 		assertEquals("succeeded", System.getProperty(processor));
 	}
 	private void internalTest(JavaCompiler compiler, String processor, String testMethod, String testClass, String resourceArea) throws IOException {
-		internalTest(compiler, processor, testMethod, testClass, resourceArea, false);
+		internalTest(compiler, processor, testMethod, testClass, resourceArea, false, null);
 	}
-	private void internalTest(JavaCompiler compiler, String processor, String testMethod, String testClass, String resourceArea, boolean continueWithErrors) throws IOException {
+	private void internalTest(JavaCompiler compiler, String processor, String testMethod, String testClass, String resourceArea, 
+			boolean continueWithErrors, BatchTestUtils.InjectCustomOptions custom) throws IOException {
 		if (!canRunJava9()) {
 			return;
 		}
@@ -503,7 +524,7 @@ public class Java9ElementsTests extends TestCase {
 		PrintWriter printWriter = new PrintWriter(errBuffer);
 		TestDiagnosticListener diagnosticListener = new TestDiagnosticListener(printWriter);
 		if (continueWithErrors) {
-			BatchTestUtils.compileTreeWithErrors(compiler, options, targetFolder, diagnosticListener, true, true);
+			BatchTestUtils.compileTreeWithErrors(compiler, options, targetFolder, diagnosticListener, true, true, custom);
 		} else {
 			BatchTestUtils.compileTree(compiler, options, targetFolder, true);
 		}
@@ -516,12 +537,15 @@ public class Java9ElementsTests extends TestCase {
 	 * Tests are run in multi-module mode
 	 */
 	private void internalTest2(JavaCompiler compiler, String processor, String testMethod, String testClass) throws IOException {
+		internalTest2(compiler, processor, "modules", testMethod, testClass);
+	}
+	private void internalTest2(JavaCompiler compiler, String processor, String modLocation, String testMethod, String testClass) throws IOException {
 		if (!canRunJava9()) {
 			return;
 		}
 		System.clearProperty(processor);
 		File srcRoot = TestUtils.concatPath(BatchTestUtils.getSrcFolderName());
-		BatchTestUtils.copyResources("mod_locations/modules", srcRoot);
+		BatchTestUtils.copyResources("mod_locations" + File.separator + modLocation, srcRoot);
 
 		List<String> options = new ArrayList<String>();
 		options.add("-processor");
@@ -556,7 +580,14 @@ public class Java9ElementsTests extends TestCase {
 		BatchTestUtils.compileInModuleMode(compiler, options, processor, srcRoot, null, true, binaryMode);
 		assertEquals("succeeded", System.getProperty(processor));
 	}
-	
+	public boolean canRunJava17() {
+		try {
+			SourceVersion.valueOf("RELEASE_17");
+		} catch(IllegalArgumentException iae) {
+			return false;
+		}
+		return true;
+	}
 	public boolean canRunJava9() {
 		try {
 			SourceVersion.valueOf("RELEASE_9");

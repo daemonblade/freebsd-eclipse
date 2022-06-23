@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -7525,8 +7525,8 @@ public void testBug328240() {
 		"	 *            a <code>String</coe> value that will be the text of\n" +
 		"	\n" +
 		"	* the paragraph.\n" +
-		"	 * &#64;return a <code>Paragraph</code> containing the the text passed as\n" +
-		"	 *            the reportHeader parameter.\n" +
+		"	 * @return a <code>Paragraph</code> containing the the text passed as the\n" +
+		"	 *            reportHeader parameter.\n" +
 		"	 */\n" +
 		"\n" +
 		"	public static String createReportHeader(String reportHeader) {\n" +
@@ -12800,17 +12800,7 @@ public void testBug531981() {
 		" */\n" +
 		"class Test {\n" +
 		"}";
-	formatSource(source,
-		"/**\n" +
-		" * <code>a<code>\n" +
-		" *\n" +
-		" * &#64;param   b\n" +
-		" *               c\n" +
-		" *            d</code>\n" +
-		" */\n" +
-		"class Test {\n" +
-		"}"
-	);
+	formatSource(source);
 }
 /**
  * https://bugs.eclipse.org/373625 - [formatter] preserve whitespace between
@@ -13284,5 +13274,35 @@ public void _testBug562818() {
 		"public Record {\n" +
 		"}",
 		CodeFormatter.K_CLASS_BODY_DECLARATIONS);
+}
+/**
+ * https://bugs.eclipse.org/574437 - Incorrect formatting in pattern instanceof
+ */
+public void testBug574437() {
+	formatSource(
+		"class C {\n" +
+		"	void foo(Object o) {\n" +
+		"		if ((o) instanceof String s)\n" +
+		"			bar(s);\n" +
+		"	}\n" +
+		"}");
+}
+/**
+ * https://bugs.eclipse.org/576954 - [formatter] Switch expression formatting broken in a method chain with lambdas
+ */
+public void testBug576954() {
+	this.formatterPrefs.join_wrapped_lines = false;
+	this.formatterPrefs.indent_switchstatements_compare_to_switch = true;
+	formatSource(
+		"public class C {\n" +
+		"	void f() {\n" +
+		"		Stream.of(1, 2)\n" +
+		"				.map(it -> switch (it) {\n" +
+		"					case 1 -> \"one\";\n" +
+		"					case 2 -> \"two\";\n" +
+		"					default -> \"many\";\n" +
+		"				}).forEach(System.out::println);\n" +
+		"	}\n" +
+		"}");
 }
 }

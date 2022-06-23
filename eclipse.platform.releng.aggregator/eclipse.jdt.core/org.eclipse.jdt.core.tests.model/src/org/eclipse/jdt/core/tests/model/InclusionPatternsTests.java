@@ -114,7 +114,8 @@ public void testAddInclusionOnFolderUnderProject() throws CoreException {
 		assertResourceNamesEqual(
 			"Unexpected non-java resources of project",
 			".classpath\n" +
-			".project",
+			".project\n" +
+			".settings",
 			javaProject.getNonJavaResources());
 	} finally {
 		deleteProject("P1");
@@ -537,6 +538,8 @@ public void testIsOnClasspath1() throws CoreException {
 	);
 	assertTrue("Resource should not be on classpath", !this.project.isOnClasspath(file));
 
+	assertResourceNotOnClasspathEntry(this.project, file);
+
 	ICompilationUnit cu = getCompilationUnit("/P/src/p/A.java");
 	assertTrue("CU should not be on classpath", !this.project.isOnClasspath(cu));
 }
@@ -554,6 +557,8 @@ public void testIsOnClasspath2() throws CoreException {
 	);
 	assertTrue("Resource should be on classpath", this.project.isOnClasspath(file));
 
+	assertResourceOnClasspathEntry(this.project, file, "/P/src");
+
 	ICompilationUnit cu = getCompilationUnit("/P/src/p/A.java");
 	assertTrue("CU should be on classpath", this.project.isOnClasspath(cu));
 }
@@ -565,6 +570,7 @@ public void testIsOnClasspath3() throws CoreException {
 	createFolder("/P/src/p");
 	IFile file = createFile("/P/src/p/readme.txt", "");
 	assertTrue("Resource should not be on classpath", !this.project.isOnClasspath(file));
+	assertResourceNotOnClasspathEntry(this.project, file);
 }
 /*
  * Ensures that a non-java resource that is included is on the classpath of the project.
@@ -574,6 +580,7 @@ public void testIsOnClasspath4() throws CoreException {
 	createFolder("/P/src/p");
 	IFile file = createFile("/P/src/p/readme.txt", "");
 	assertTrue("Resource should be on classpath", this.project.isOnClasspath(file));
+	assertResourceOnClasspathEntry(this.project, file, "/P/src");
 }
 /*
  * Ensures that moving a folder that contains an included package reports the correct delta.

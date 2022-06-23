@@ -146,8 +146,12 @@ public FlowInfo analyseAssignment(BlockScope currentScope, FlowContext flowConte
 			}
 			if (flowInfo.isPotentiallyAssigned(localBinding) || (this.bits & ASTNode.IsCapturedOuterLocal) != 0) {
 				localBinding.tagBits &= ~TagBits.IsEffectivelyFinal;
-				if (!isFinal && (this.bits & ASTNode.IsCapturedOuterLocal) != 0) {
-					currentScope.problemReporter().cannotReferToNonEffectivelyFinalOuterLocal(localBinding, this);
+				if (!isFinal) {
+					if ((this.bits & ASTNode.IsCapturedOuterLocal) != 0) {
+						currentScope.problemReporter().cannotReferToNonEffectivelyFinalOuterLocal(localBinding, this);
+					} else if ((this.bits & ASTNode.IsUsedInPatternGuard) != 0) {
+						currentScope.problemReporter().cannotReferToNonFinalLocalInGuard(localBinding, this);
+					}
 				}
 			}
 			if (! isFinal && (localBinding.tagBits & TagBits.IsEffectivelyFinal) != 0 && (localBinding.tagBits & TagBits.IsArgument) == 0) {
@@ -496,9 +500,8 @@ public void generateCode(BlockScope currentScope, CodeStream codeStream, boolean
 					codeStream.recordPositionsFrom(pc, this.sourceStart);
 					return;
 				}
-				// outer local?
-				if ((this.bits & ASTNode.IsCapturedOuterLocal) != 0) {
-					checkEffectiveFinality(localBinding, currentScope);
+				// checkEffectiveFinality() returns if it's outer local
+				if (checkEffectiveFinality(localBinding, currentScope)) {
 					// outer local can be reached either through a synthetic arg or a synthetic field
 					VariableBinding[] path = currentScope.getEmulationPath(localBinding);
 					codeStream.generateOuterAccess(path, this, localBinding, currentScope);

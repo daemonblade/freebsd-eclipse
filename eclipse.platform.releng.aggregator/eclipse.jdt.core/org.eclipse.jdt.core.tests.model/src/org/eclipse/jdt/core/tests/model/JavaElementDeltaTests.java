@@ -280,14 +280,13 @@ public void _testAddExternalLibFolder2() throws CoreException {
  */
 public void testAddExternalLibFolder3() throws CoreException {
 	try {
-		startDeltas();
 		IJavaProject p =createJavaProject("P", new String[0], new String[] {getExternalResourcePath("externalLib")}, "");
+		refresh(p);
+		startDeltas();
 		createExternalFolder("externalLib");
 		refresh(p);
 		assertDeltas(
 			"Unexpected delta",
-			"P[+]: {}\n" +
-		    "\n" +
 			"P[*]: {CHILDREN}\n" +
 			"	"+ getExternalPath() + "externalLib[+]: {}"
 		);
@@ -1046,11 +1045,11 @@ public void testChangeJRE9_8() throws CoreException, IOException {
 public void testChangeJRE8_9() throws CoreException, IOException {
 	if (!isJRE9) return;
 	try {
+		// replace JRE System Library (8 - 9):
+		startDeltas();
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[] {"JCL18_LIB"}, "bin", "1.8");
 		waitUntilIndexesReady();
 
-		// replace JRE System Library (8 - 9):
-		startDeltas();
 		setUpJCLClasspathVariables("9", false);
 		IClasspathEntry[] rawClasspath = p.getRawClasspath();
 		for (int i = 0; i < rawClasspath.length; i++) {
@@ -1065,6 +1064,8 @@ public void testChangeJRE8_9() throws CoreException, IOException {
 
 		assertDeltas(
 			"Unexpected delta",
+			"P[+]: {}\n" +
+			"\n" +
 			"P[*]: {CHILDREN | CONTENT | RESOLVED CLASSPATH CHANGED}\n" +
 			"	"+ getExternalPath() + "jclMin1.8.jar[*]: {REMOVED FROM CLASSPATH}\n" +
 			"	"+ getExternalPath() + "jclMin9.jar[+]: {}\n" +
@@ -1981,10 +1982,10 @@ public void testModifyProjectDescriptionAndRemoveFolder() throws CoreException {
 		final IProject projectFolder = project.getProject();
 		final IFolder folder = createFolder("/P/folder");
 
-		startDeltas();
 		getWorkspace().run(
 			new IWorkspaceRunnable() {
 				public void run(IProgressMonitor monitor) throws CoreException {
+					startDeltas();
 					IProjectDescription desc = projectFolder.getDescription();
 					desc.setComment("A comment");
 					projectFolder.setDescription(desc, null);
@@ -2358,7 +2359,8 @@ public void testRemoveAddBinaryProject() throws CoreException {
 			"	<project root>[*]: {ADDED TO CLASSPATH}\n" +
 			"	lib.jar[-]: {}\n" +
 			"	ResourceDelta(/P/.classpath)[*]\n" +
-			"	ResourceDelta(/P/.project)[*]"
+			"	ResourceDelta(/P/.project)[*]\n" +
+			"	ResourceDelta(/P/.settings)[*]"
 		);
 	} finally {
 		stopDeltas();
@@ -2386,7 +2388,8 @@ public void testRemoveAddJavaProject() throws CoreException {
 			"\n" +
 			"P[*]: {CONTENT}\n" +
 			"	ResourceDelta(/P/.classpath)[*]\n" +
-			"	ResourceDelta(/P/.project)[*]"
+			"	ResourceDelta(/P/.project)[*]\n" +
+			"	ResourceDelta(/P/.settings)[*]"
 		);
 	} finally {
 		stopDeltas();

@@ -1655,7 +1655,7 @@ public abstract class Scope {
 		if (method != null && method.isValidBinding() && method.isVarargs()) {
 			TypeBinding elementType = method.parameters[method.parameters.length - 1].leafComponentType();
 			if (elementType instanceof ReferenceBinding) {
-				if (!((ReferenceBinding) elementType).canBeSeenBy(this)) {
+				if (!((ReferenceBinding) elementType).erasure().canBeSeenBy(this)) {
 					return new ProblemMethodBinding(method, method.selector, invocationSite.genericTypeArguments(), ProblemReasons.VarargsElementTypeNotVisible);
 				}
 			}
@@ -2913,6 +2913,11 @@ public abstract class Scope {
 		CompilationUnitScope unitScope = compilationUnitScope();
 		unitScope.recordQualifiedReference(TypeConstants.JAVA_LANG_RUNTIME_OBJECTMETHODS);
 		return unitScope.environment.getResolvedJavaBaseType(TypeConstants.JAVA_LANG_RUNTIME_OBJECTMETHODS, this);
+	}
+	public final ReferenceBinding getJavaLangRuntimeSwitchBootstraps() {
+		CompilationUnitScope unitScope = compilationUnitScope();
+		unitScope.recordQualifiedReference(TypeConstants.JAVA_LANG_RUNTIME_SWITCHBOOTSTRAPS);
+		return unitScope.environment.getResolvedJavaBaseType(TypeConstants.JAVA_LANG_RUNTIME_SWITCHBOOTSTRAPS, this);
 	}
 	public final ReferenceBinding getJavaLangInvokeLambdaMetafactory() {
 		CompilationUnitScope unitScope = compilationUnitScope();

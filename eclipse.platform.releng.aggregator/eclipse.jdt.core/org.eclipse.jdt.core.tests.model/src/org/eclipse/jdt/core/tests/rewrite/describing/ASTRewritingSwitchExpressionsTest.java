@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2021 IBM Corporation and others.
+ * Copyright (c) 2019, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * Contributors:
+ *
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 package org.eclipse.jdt.core.tests.rewrite.describing;
@@ -53,7 +53,7 @@ public class ASTRewritingSwitchExpressionsTest extends ASTRewritingTest {
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		//super.setUpProjectAbove14();
+		super.setUpProjectAbove14();
 
 	}
 
@@ -309,7 +309,9 @@ public class ASTRewritingSwitchExpressionsTest extends ASTRewritingTest {
 		buf.append(" 				int z = 100;\n");
 		buf.append(" 				yield z;\n");
 		buf.append("			}\n");
-		buf.append("			case 100, 200 -> {yield 2048;}\n");
+		buf.append("			case 100, 200 -> {\n");
+		buf.append("    yield 2048;\n");
+		buf.append("}\n");
 		buf.append("            default -> {\n");
 		buf.append("				yield 12;\n");
 		buf.append("			}\n");

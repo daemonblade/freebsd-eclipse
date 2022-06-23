@@ -53,6 +53,8 @@ public class SwitchExpression extends SwitchStatement implements IPolyExpression
 	private boolean isPolyExpression = false;
 	private TypeBinding[] originalValueResultExpressionTypes;
 	private TypeBinding[] finalValueResultExpressionTypes;
+	/* package */ Map<Expression, TypeBinding> originalTypeMap;
+
 
 	private int nullStatus = FlowInfo.UNKNOWN;
 	public List<Expression> resultExpressions;
@@ -99,7 +101,7 @@ public class SwitchExpression extends SwitchStatement implements IPolyExpression
 	protected int getFallThroughState(Statement stmt, BlockScope blockScope) {
 		if ((stmt instanceof Expression && ((Expression) stmt).isTrulyExpression())|| stmt instanceof ThrowStatement)
 			return BREAKING;
-		if (this.switchLabeledRules // do this check for every block if '->' (Switch Labeled Rules)
+		if ((this.switchBits & LabeledRules) != 0 // do this check for every block if '->' (Switch Labeled Rules)
 				&& stmt instanceof Block) {
 			Block block = (Block) stmt;
 			if (!block.canCompleteNormally()) {
@@ -146,7 +148,7 @@ public class SwitchExpression extends SwitchStatement implements IPolyExpression
 		/* JLS 12 15.28.1 Given a switch expression, if the switch block consists of switch labeled rules
 		 * then it is a compile-time error if any switch labeled block can complete normally.
 		 */
-		if (this.switchLabeledRules) {
+		if ((this.switchBits & LabeledRules) != 0) {
 			for (Statement stmt : this.statements) {
 				if (!(stmt instanceof Block))
 					continue;
@@ -184,7 +186,7 @@ public class SwitchExpression extends SwitchStatement implements IPolyExpression
 	}
 	@Override
 	protected boolean needToCheckFlowInAbsenceOfDefaultBranch() { // JLS 12 16.1.8
-		return !this.switchLabeledRules;
+		return (this.switchBits & LabeledRules) == 0;
 	}
 	@Override
 	public Expression[] getPolyExpressions() {
@@ -473,6 +475,8 @@ public class SwitchExpression extends SwitchStatement implements IPolyExpression
 					}
 				}
 
+				if (this.originalTypeMap == null)
+					this.originalTypeMap = new HashMap<>();
 				resolve(upperScope);
 
 				if (this.statements == null || this.statements.length == 0) {
@@ -512,7 +516,8 @@ public class SwitchExpression extends SwitchStatement implements IPolyExpression
 					return this.resolvedType = null; // error flagging would have been done during the earlier phase.
 				for (int i = 0; i < resultExpressionsCount; i++) {
 					Expression resultExpr = this.resultExpressions.get(i);
-					if (resultExpr.resolvedType == null || resultExpr.resolvedType.kind() == Binding.POLY_TYPE) {
+					TypeBinding origType = this.originalTypeMap.get(resultExpr);
+					if (origType == null || origType.kind() == Binding.POLY_TYPE) {
 						this.finalValueResultExpressionTypes[i] = this.originalValueResultExpressionTypes[i] =
 							resultExpr.resolveTypeExpecting(upperScope, this.expectedType);
 					}

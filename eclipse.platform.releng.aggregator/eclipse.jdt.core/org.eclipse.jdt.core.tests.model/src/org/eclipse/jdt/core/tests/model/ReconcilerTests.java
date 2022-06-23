@@ -5838,7 +5838,7 @@ public void testBug440592() throws Exception {
 		deleteProjects(new String[] { "P" });
 	}
 }
-public void testBug485092() throws CoreException, IOException, InterruptedException {
+public void testBug485092() throws CoreException, InterruptedException {
 
 	IJavaProject project15 = null;
 	IJavaProject project18 = null;
@@ -5883,7 +5883,7 @@ public void testBug485092() throws CoreException, IOException, InterruptedExcept
 
 		project18.setOption(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS, JavaCore.ENABLED);
 		Bundle[] bundles = Platform.getBundles("org.eclipse.jdt.annotation","[2.0.0,3.0.0)");
-		File bundleFile = FileLocator.getBundleFile(bundles[0]);
+		File bundleFile = FileLocator.getBundleFileLocation(bundles[0]).get();
 		String annotationsLib = bundleFile.isDirectory() ? bundleFile.getPath()+"/bin" : bundleFile.getPath();
 		IClasspathEntry nullAnnotationsClassPathEntry = JavaCore.newLibraryEntry(new Path(annotationsLib), null, null);
 
@@ -6039,13 +6039,13 @@ public void testBug562637() throws CoreException, IOException, InterruptedExcept
 	}
 }
 public void testBug564613_001() throws CoreException, IOException, InterruptedException {
-	if (!isJRE15) return;
+	if (!isJRE17) return;
 	IJavaProject project15 = null;
 	try {
 		project15 = createJava15Project("Reconciler_15", new String[] {"src"});
-		project15.setOption(JavaCore.COMPILER_SOURCE, JavaCore.VERSION_16);
-		project15.setOption(JavaCore.COMPILER_COMPLIANCE, JavaCore.VERSION_16);
-		project15.setOption(JavaCore.COMPILER_CODEGEN_TARGET_PLATFORM, JavaCore.VERSION_16);
+		project15.setOption(JavaCore.COMPILER_SOURCE, JavaCore.VERSION_17);
+		project15.setOption(JavaCore.COMPILER_COMPLIANCE, JavaCore.VERSION_17);
+		project15.setOption(JavaCore.COMPILER_CODEGEN_TARGET_PLATFORM, JavaCore.VERSION_17);
 		project15.setOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
 		project15.setOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
 

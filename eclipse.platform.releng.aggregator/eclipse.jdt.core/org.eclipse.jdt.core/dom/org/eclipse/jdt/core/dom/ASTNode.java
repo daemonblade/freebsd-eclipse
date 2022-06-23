@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -7,7 +7,6 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- *
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
@@ -1003,6 +1002,56 @@ public abstract class ASTNode {
 	 */
 	public static final int MODULE_QUALIFIED_NAME = 105;
 
+
+	/**
+	 * Node type constant indicating a node of type
+	 * <code>TypePattern</code>.
+	 * @see TypePattern
+	 * @since 3.28
+	 */
+	public static final int TYPE_PATTERN = 106;
+
+	/**
+	 * Node type constant indicating a node of type
+	 * <code>GuardedPattern</code>.
+	 * @see GuardedPattern
+	 * @since 3.28
+	 */
+	public static final int GUARDED_PATTERN = 107;
+
+	/**
+	 * Node type constant indicating a node of type
+	 * <code>NullPattern</code>.
+	 * @see NullPattern
+	 * @since 3.28
+	 */
+	public static final int NULL_PATTERN = 108;
+
+	/**
+	 * Node type constant indicating a node of type
+	 * <code>CaseDefaultExpression</code>.
+	 * @see CaseDefaultExpression
+	 * @since 3.28
+	 */
+	public static final int CASE_DEFAULT_EXPRESSION = 109;
+
+	/**
+	 * Node type constant indicating a node of type
+	 * <code>TagProperty</code>.
+	 * @see TagProperty
+	 * @since 3.30
+	 */
+	public static final int TAG_PROPERTY = 110;
+
+	/**
+	 * Node type constant indicating a node of type
+	 * <code>JavaDocRegion</code>.
+	 * @see JavaDocRegion
+	 * @since 3.30
+	 */
+	public static final int JAVADOC_REGION = 111;
+
+
 	/**
 	 * Returns the node class for the corresponding node type.
 	 *
@@ -1041,6 +1090,8 @@ public abstract class ASTNode {
 				return BooleanLiteral.class;
 			case BREAK_STATEMENT :
 				return BreakStatement.class;
+			case CASE_DEFAULT_EXPRESSION :
+				return CaseDefaultExpression.class;
 			case CAST_EXPRESSION :
 				return CastExpression.class;
 			case CATCH_CLAUSE :
@@ -1083,6 +1134,8 @@ public abstract class ASTNode {
 				return FieldDeclaration.class;
 			case FOR_STATEMENT :
 				return ForStatement.class;
+			case GUARDED_PATTERN :
+				return GuardedPattern.class;
 			case IF_STATEMENT :
 				return IfStatement.class;
 			case IMPORT_DECLARATION :
@@ -1097,6 +1150,8 @@ public abstract class ASTNode {
 				return IntersectionType.class;
 			case JAVADOC :
 				return Javadoc.class;
+			case JAVADOC_REGION :
+				return JavaDocRegion.class;
 			case LABELED_STATEMENT :
 				return LabeledStatement.class;
 			case LAMBDA_EXPRESSION :
@@ -1131,6 +1186,8 @@ public abstract class ASTNode {
 				return NormalAnnotation.class;
 			case NULL_LITERAL :
 				return NullLiteral.class;
+			case NULL_PATTERN :
+				return NullPattern.class;
 			case NUMBER_LITERAL :
 				return NumberLiteral.class;
 			case OPENS_DIRECTIVE :
@@ -1189,6 +1246,8 @@ public abstract class ASTNode {
 				return SynchronizedStatement.class;
 			case TAG_ELEMENT :
 				return TagElement.class;
+			case TAG_PROPERTY :
+				return TagProperty.class;
 			case TEXT_BLOCK :
 				return TextBlock.class;
 			case TEXT_ELEMENT :
@@ -1209,6 +1268,8 @@ public abstract class ASTNode {
 				return TypeLiteral.class;
 			case TYPE_PARAMETER :
 				return TypeParameter.class;
+			case TYPE_PATTERN :
+				return TypePattern.class;
 			case UNION_TYPE :
 				return UnionType.class;
 			case USES_DIRECTIVE :
@@ -2216,6 +2277,38 @@ public abstract class ASTNode {
 		}
 	}
 
+	/**
+     * Checks that this AST operation is not used when
+     * building JLS2, JLS3, JLS4, JLS8, JLS9, JLS10, JLS11, JLS12, JLS13, JSL14, JSL15 or JLS16 level ASTs.
+     * <p>
+     * Use this method to prevent access to new properties that have been added in JLS17
+     * </p>
+     *
+	 * @exception UnsupportedOperationException if this operation is used below JLS17
+	 * @since 3.27
+	 */
+	final void unsupportedBelow17() {
+		if (this.ast.apiLevel < AST.JLS17_INTERNAL) {
+			throw new UnsupportedOperationException("Operation only supported in ASTs with level JLS17 and above"); //$NON-NLS-1$
+		}
+	}
+
+	/**
+     * Checks that this AST operation is not used when
+     * building JLS2, JLS3, JLS4, JLS8, JLS9, JLS10, JLS11, JLS12, JLS13, JSL14, JSL15, JLS16 or JLS17 level ASTs.
+     * <p>
+     * Use this method to prevent access to new properties that have been added in JLS18
+     * </p>
+     *
+	 * @exception UnsupportedOperationException if this operation is used below JLS18
+	 * @since 3.30
+	 */
+	final void unsupportedBelow18() {
+		if (this.ast.apiLevel < AST.JLS18_INTERNAL) {
+			throw new UnsupportedOperationException("Operation only supported in ASTs with level JLS17 and above"); //$NON-NLS-1$
+		}
+	}
+
 
 	/**
      * Checks that this AST operation is not used when
@@ -2345,6 +2438,37 @@ public abstract class ASTNode {
 	final void supportedOnlyIn16() {
 		if (this.ast.apiLevel != AST.JLS16_INTERNAL) {
 			throw new UnsupportedOperationException("Operation only supported in JLS16 AST"); //$NON-NLS-1$
+		}
+	}
+
+	/**
+ 	 * Checks that this AST operation is only used when
+     * building JLS17 level ASTs.
+     * <p>
+     * Use this method to prevent access to new properties available only in JLS17.
+     * </p>
+     *
+	 * @exception UnsupportedOperationException if this operation is not used in JLS17
+	 * @since 3.27
+	 */
+	final void supportedOnlyIn17() {
+		if (this.ast.apiLevel != AST.JLS17_INTERNAL) {
+			throw new UnsupportedOperationException("Operation only supported in JLS17 AST"); //$NON-NLS-1$
+		}
+	}
+	/**
+ 	 * Checks that this AST operation is only used when
+     * building JLS18 level ASTs.
+     * <p>
+     * Use this method to prevent access to new properties available only in JLS18.
+     * </p>
+     *
+	 * @exception UnsupportedOperationException if this operation is not used in JLS18
+	 * @since 3.30
+	 */
+	final void supportedOnlyIn18() {
+		if (this.ast.apiLevel != AST.JLS18_INTERNAL) {
+			throw new UnsupportedOperationException("Operation only supported in JLS17 AST"); //$NON-NLS-1$
 		}
 	}
 

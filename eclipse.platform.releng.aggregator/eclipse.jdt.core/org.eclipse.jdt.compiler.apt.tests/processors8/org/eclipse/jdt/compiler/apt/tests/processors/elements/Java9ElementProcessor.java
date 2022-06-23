@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2020 IBM Corporation.
+ * Copyright (c) 2017, 2022 IBM Corporation.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -52,10 +52,12 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.NoType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.ElementFilter;
 import javax.tools.JavaFileObject;
 
 import org.eclipse.jdt.compiler.apt.tests.processors.base.BaseProcessor;
 import org.eclipse.jdt.compiler.apt.tests.processors.util.TestDirectiveVisitor;
+import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
 import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
 
 /**
@@ -70,15 +72,21 @@ public class Java9ElementProcessor extends BaseProcessor {
 	boolean reportSuccessAlready = true;
 	RoundEnvironment roundEnv = null;
 	Messager _messager = null;
+	boolean isJre18;
+	boolean isJre17;
 	boolean isJre12;
 	boolean isJre11;
 	boolean isJre10;
 	int roundNo = 0;
+	boolean isJavac;
 	@Override
 	public synchronized void init(ProcessingEnvironment processingEnv) {
 		super.init(processingEnv);
 		_typeUtils = processingEnv.getTypeUtils();
 		_messager = processingEnv.getMessager();
+		if (!(processingEnv.getClass().getSimpleName().equals("BatchProcessingEnvImpl"))) {
+			this.isJavac = true;
+		}
 		String property = System.getProperty("java.specification.version");
 		if (property.equals(CompilerOptions.VERSION_10)) {
 			this.isJre10 = true;
@@ -87,9 +95,17 @@ public class Java9ElementProcessor extends BaseProcessor {
 		} else {
 			char c = '.';
 			if (property.indexOf(c) == -1) {
-				int ver12 = Integer.parseInt(CompilerOptions.VERSION_12);
-				int current = Integer.parseInt(property);
-				if (current >= ver12) this.isJre12 = true;
+				int current = Integer.parseInt(property) + ClassFileConstants.MAJOR_VERSION_0;
+				if (current >= ClassFileConstants.MAJOR_VERSION_12) {
+					if (current >= ClassFileConstants.MAJOR_VERSION_17) {
+						this.isJre17 = true;
+						if (current >= ClassFileConstants.MAJOR_VERSION_18) {
+							this.isJre18 = true;
+						}
+					} else {
+						this.isJre12 = true;
+					}
+				}
 			}
 		}
 	}
@@ -171,6 +187,7 @@ public class Java9ElementProcessor extends BaseProcessor {
 		testUnnamedModule3();
 		testUnnamedModule4();
 		testUnnamedModule5();
+		testBug522472();
 	}
 
 	private Element getRoot(Element elem) {
@@ -485,7 +502,7 @@ public class Java9ElementProcessor extends BaseProcessor {
 		assertNotNull("java.base module null", base);
 		List<? extends Directive> directives = base.getDirectives();
 		List<Directive> filterDirective = filterDirective(directives, DirectiveKind.USES);
-		assertEquals("incorrect no of uses", (this.isJre11 || this.isJre12) ? 33 : 34, filterDirective.size());
+		assertEquals("incorrect no of uses", (this.isJre11 || this.isJre12) ? 33 : (this.isJre18 ? 35 : 34), filterDirective.size());
 	}
 	/*
 	 * Test java.base module can be loaded and verify its 'provides' attributes
@@ -501,7 +518,7 @@ public class Java9ElementProcessor extends BaseProcessor {
 		assertNotNull("java.base module null", base);
 		List<? extends Directive> directives = base.getDirectives();
 		List<Directive> filterDirective = filterDirective(directives, DirectiveKind.PROVIDES);
-		assertEquals("incorrect no of provides", 1 , filterDirective.size());
+		assertEquals("incorrect no of provides", (isJre17 ? (this.isJavac ? 4 : 2) : 1), filterDirective.size());
 		ProvidesDirective provides = (ProvidesDirective) filterDirective.get(0);
 		assertEquals("incorrect service name", "java.nio.file.spi.FileSystemProvider", provides.getService().getQualifiedName().toString());
 		List<? extends TypeElement> implementations = provides.getImplementations();
@@ -539,7 +556,7 @@ public class Java9ElementProcessor extends BaseProcessor {
 		assertNotNull("java.sql module null", base);
 		List<? extends Directive> directives = base.getDirectives();
 		List<Directive> filterDirective = filterDirective(directives, DirectiveKind.REQUIRES);
-		assertEquals("Incorrect no of requires", (this.isJre11 || this.isJre12) ? 4 : 3, filterDirective.size());
+		assertEquals("Incorrect no of requires", (this.isJre11 || this.isJre12 || this.isJre17) ? 4 : 3, filterDirective.size());
 		RequiresDirective req = null;
 		for (Directive directive : filterDirective) {
 			if (((RequiresDirective) directive).getDependency().getQualifiedName().toString().equals("java.logging")) {
@@ -879,6 +896,67 @@ public class Java9ElementProcessor extends BaseProcessor {
 			this.reportSuccessAlready = true;
 		}
 		return false;
+	}
+	public void testBug572673() {
+		Set<? extends Element> rootElements = roundEnv.getRootElements();
+		Set<ModuleElement> modulesIn = ElementFilter.modulesIn(rootElements);
+		assertEquals("incorrect modules" , 1, modulesIn.size());
+		boolean found = false;
+		for (ModuleElement moduleElement : modulesIn) {
+			if (moduleElement.getQualifiedName().toString().equals("mod.one")) {
+				found = true;
+				List<? extends Directive> directives = moduleElement.getDirectives();
+				List<Directive> requires = filterDirective(directives, DirectiveKind.REQUIRES);
+				assertEquals("incorrect requires" , 2, requires.size());
+				for (Directive r : requires) {
+					RequiresDirective req = (RequiresDirective) r;
+					ModuleElement depModule = req.getDependency();
+					if (_elementUtils.isAutomaticModule(depModule)) {
+						assertEquals("incorrect auto-module", "lib.x", depModule.getQualifiedName().toString());
+					} else {
+						assertEquals("incorrect non auto-module", "java.base", depModule.getQualifiedName().toString());
+					}
+				}
+			}
+		}
+		assertTrue("module not found", found);
+	}
+	public void testBug522472() {
+		Set<? extends Element> rootElements = this.roundEnv.getRootElements();
+		ModuleElement module = null;
+		for (Element element : rootElements) {
+			if (element instanceof ModuleElement) {
+				ModuleElement mod = (ModuleElement) element;
+				if (mod.getQualifiedName().toString().equals("mod.a")) {
+					module = mod;
+					break;
+				}
+			} else if (element instanceof TypeElement) {
+				Element root = getRoot(element);
+				if (root instanceof ModuleElement) {
+					ModuleElement mod = (ModuleElement) root;
+					if (mod.getQualifiedName().toString().equals("mod.a")) {
+						module = mod;
+						break;
+					}
+				}
+			}
+		}
+		assertNotNull("module should not be null", module);
+		List<? extends Element> elements = module.getEnclosedElements();
+		assertEquals("incorrect no of elements", 2, elements.size());
+		List<Element> packages = filterElements(elements, ElementKind.PACKAGE);
+//		ECJ fails the following tests. 
+		for (Element element : packages) {
+			Element enclosingElement = element.getEnclosingElement();
+			assertNotNull("module should not be null", enclosingElement);
+			assertEquals("module should be same", enclosingElement, module);
+		}
+		assertEquals("incorrect packages count", 2, packages.size());
+		List<? extends Directive> directives = module.getDirectives();
+		assertEquals("incorrect no of directives", 3, directives.size());
+		List<Directive> exports = filterDirective(directives, DirectiveKind.EXPORTS);
+		assertEquals("incorrect exports count", 2, exports.size());
 	}
 	private void validateModifiers(ExecutableElement method, Modifier[] expected) {
 		Set<Modifier> modifiers = method.getModifiers();

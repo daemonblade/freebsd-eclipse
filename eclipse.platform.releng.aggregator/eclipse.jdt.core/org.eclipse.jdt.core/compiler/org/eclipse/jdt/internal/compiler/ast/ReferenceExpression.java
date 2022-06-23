@@ -277,7 +277,7 @@ public class ReferenceExpression extends FunctionalExpression implements IPolyEx
 	private boolean shouldGenerateImplicitLambda(BlockScope currentScope) {
 		// these cases are either too complicated, impossible to handle or result in significant code duplication
 		return (this.binding.isVarargs() ||
-				(isConstructorReference() && this.receiverType.syntheticOuterLocalVariables() != null && this.shouldCaptureInstance) ||
+				(isConstructorReference() && (this.receiverType.syntheticOuterLocalVariables() != null || this.shouldCaptureInstance)) ||
 				this.requiresBridges() || // bridges.
 				!isDirectCodeGenPossible());
 		// To fix: We should opt for direct code generation wherever possible.
@@ -1258,7 +1258,8 @@ public class ReferenceExpression extends FunctionalExpression implements IPolyEx
 		} else if (copy.resolvedType != null && copy.resolvedType.isValidBinding() && copy.binding != null && copy.binding.isValidBinding()) {
 			return true;
 		} else {
-			return !isPertinentToApplicability(targetType, null); // not mentioned in JLS (see prior art in LE.internalIsCompatibleWith()
+			boolean notPertinentToApplicability = targetType instanceof ParameterizedTypeBinding && !isPertinentToApplicability(targetType, null); // not mentioned in JLS (see prior art in LE.internalIsCompatibleWith()
+			return notPertinentToApplicability;
 		}
 	}
 

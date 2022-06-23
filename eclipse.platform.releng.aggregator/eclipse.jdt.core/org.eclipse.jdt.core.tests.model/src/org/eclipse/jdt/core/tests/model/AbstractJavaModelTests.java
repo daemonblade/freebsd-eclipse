@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -7,6 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -19,14 +20,20 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.net.URI;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+import org.eclipse.core.internal.resources.CharsetDeltaJob;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
@@ -157,6 +164,8 @@ public abstract class AbstractJavaModelTests extends SuiteOfTestCases {
 	protected static boolean isJRE14 = false;
 	protected static boolean isJRE15 = false;
 	protected static boolean isJRE16 = false;
+	protected static boolean isJRE17 = false;
+	protected static boolean isJRE18 = false;
 	static {
 		String javaVersion = System.getProperty("java.version");
 		String vmName = System.getProperty("java.vm.name");
@@ -169,6 +178,12 @@ public abstract class AbstractJavaModelTests extends SuiteOfTestCases {
 			}
 		}
 		long jdkLevel = CompilerOptions.versionToJdkLevel(javaVersion.length() > 3 ? javaVersion.substring(0, 3) : javaVersion);
+		if (jdkLevel >= ClassFileConstants.JDK18) {
+			isJRE18 = true;
+		}
+		if (jdkLevel >= ClassFileConstants.JDK17) {
+			isJRE17 = true;
+		}
 		if (jdkLevel >= ClassFileConstants.JDK16) {
 			isJRE16 = true;
 		}
@@ -244,9 +259,19 @@ public abstract class AbstractJavaModelTests extends SuiteOfTestCases {
 	/**
 	 * Internal synonym for constant AST.JSL16
 	 * to alleviate deprecation warnings once AST.JLS16 is deprecated in future.
+	 * @deprecated
 	 */
 	protected static final int AST_INTERNAL_JLS16 = AST.JLS16;
 
+	/**
+	 * Internal synonym for constant AST.JSL17
+	 * @deprecated
+	 */
+	protected static final int AST_INTERNAL_JLS17 = AST.JLS17;
+	/**
+	 * Internal synonym for constant AST.JSL18
+	 */
+	protected static final int AST_INTERNAL_JLS18 = AST.JLS18;
 	/**
 	 * Internal synonym for the latest AST level.
 	 *
@@ -505,6 +530,8 @@ public abstract class AbstractJavaModelTests extends SuiteOfTestCases {
 	protected ILogListener logListener;
 	protected ILog log;
 
+	protected static boolean systemConfigReported;
+
 
 	public AbstractJavaModelTests(String name) {
 		super(name);
@@ -573,6 +600,11 @@ public abstract class AbstractJavaModelTests extends SuiteOfTestCases {
 		IProjectDescription description = project.getDescription();
 		description.setNatureIds(new String[] {JavaCore.NATURE_ID});
 		project.setDescription(description, null);
+	}
+	protected IProjectDescription projectDescriptionForLocation(String projectName, URI location) throws CoreException {
+		IProjectDescription desc = ResourcesPlugin.getWorkspace().newProjectDescription(projectName);
+		desc.setLocationURI(location);
+		return desc;
 	}
 	protected void assertSearchResults(String expected, Object collector) {
 		assertSearchResults("Unexpected search results", expected, collector);
@@ -864,6 +896,17 @@ public abstract class AbstractJavaModelTests extends SuiteOfTestCases {
 			expected,
 			buffer.toString()
 		);
+	}
+
+	protected void assertResourceOnClasspathEntry(IJavaProject project, IResource resource, String path) {
+		IClasspathEntry cp = project.findContainingClasspathEntry(resource);
+		assertNotNull("IClasspathEntry exists for the resource", cp);
+		assertEquals("In the expected classpath entry", path, cp.getPath().toPortableString());
+	}
+
+	protected void assertResourceNotOnClasspathEntry(IJavaProject project, IResource resource) {
+		IClasspathEntry cp = project.findContainingClasspathEntry(resource);
+		assertNull("IClasspathEntry does not exists for the resource", cp);
 	}
 
 	protected void assertResourceTreeEquals(String message, String expected, Object[] resources) throws CoreException {
@@ -1589,7 +1632,9 @@ public abstract class AbstractJavaModelTests extends SuiteOfTestCases {
 				if (parent instanceof IFolder && !parent.exists()) {
 					createFolder(parent.getFullPath());
 				}
-				folder.create(true, true, null);
+				if(!folder.exists()) {
+					folder.create(true, true, null);
+				}
 			}
 		},
 		null);
@@ -1755,6 +1800,7 @@ public abstract class AbstractJavaModelTests extends SuiteOfTestCases {
 		return
 				this.createJavaProject(
 					projectName,
+					null,
 					sourceFolders,
 					libraries,
 					null/*no inclusion pattern*/,
@@ -1930,6 +1976,7 @@ public abstract class AbstractJavaModelTests extends SuiteOfTestCases {
 			final boolean simulateImport) throws CoreException {
 		return createJavaProject(
 				projectName,
+				null,
 				sourceFolders,
 				libraries,
 				librariesInclusionPatterns,
@@ -1949,6 +1996,7 @@ public abstract class AbstractJavaModelTests extends SuiteOfTestCases {
 	}
 	protected IJavaProject createJavaProject(
 			final String projectName,
+			URI locationURI,
 			final String[] sourceFolders,
 			final String[] libraries,
 			final String[][] librariesInclusionPatterns,
@@ -1969,7 +2017,10 @@ public abstract class AbstractJavaModelTests extends SuiteOfTestCases {
 		IWorkspaceRunnable create = new IWorkspaceRunnable() {
 			public void run(IProgressMonitor monitor) throws CoreException {
 				// create project
-				createProject(projectName);
+				if (locationURI != null)
+					createExternalProject(projectName, locationURI);
+				else
+					createProject(projectName);
 
 				// set java nature
 				addJavaNature(projectName);
@@ -2249,6 +2300,12 @@ public abstract class AbstractJavaModelTests extends SuiteOfTestCases {
 					options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_16);
 					options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_16);
 					javaProject.setOptions(options);
+				} else if ("17".equals(compliance)) {
+					Map options = new HashMap();
+					options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_17);
+					options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_17);
+					options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_17);
+					javaProject.setOptions(options);
 				}
 
 				result[0] = javaProject;
@@ -2286,6 +2343,17 @@ public abstract class AbstractJavaModelTests extends SuiteOfTestCases {
 		IWorkspaceRunnable create = new IWorkspaceRunnable() {
 			public void run(IProgressMonitor monitor) throws CoreException {
 				project.create(null);
+				project.open(null);
+			}
+		};
+		getWorkspace().run(create, null);
+		return project;
+	}
+	protected IProject createExternalProject(final String projectName, URI location) throws CoreException {
+		final IProject project = getProject(projectName);
+		IWorkspaceRunnable create = new IWorkspaceRunnable() {
+			public void run(IProgressMonitor monitor) throws CoreException {
+				project.create(projectDescriptionForLocation(projectName, location), null);
 				project.open(null);
 			}
 		};
@@ -3355,9 +3423,11 @@ public abstract class AbstractJavaModelTests extends SuiteOfTestCases {
 			public void run(IProgressMonitor monitor) throws CoreException {
 				project.create(null);
 				project.open(null);
+				project.setDefaultCharset(ResourcesPlugin.getEncoding(), monitor);
 			}
 		};
 		getWorkspace().run(populate, null);
+		waitForCharsetDeltaJob();
 		IJavaProject javaProject = JavaCore.create(project);
 		setUpProjectCompliance(javaProject, compliance, useFullJCL);
 		javaProject.setOption(JavaCore.COMPILER_PB_UNUSED_LOCAL, JavaCore.IGNORE);
@@ -3390,7 +3460,11 @@ public abstract class AbstractJavaModelTests extends SuiteOfTestCases {
 				newJclSrcString = "JCL18_SRC"; // Use the same source
 			}
 		} else {
-			if (compliance.equals("16")) {
+			if (compliance.equals("17")) {
+				// Reuse the same 14 stuff as of now. No real need for a new one
+				newJclLibString = "JCL_17_LIB";
+				newJclSrcString = "JCL_17_SRC";
+			} else if (compliance.equals("16")) {
 				// Reuse the same 14 stuff as of now. No real need for a new one
 				newJclLibString = "JCL14_LIB";
 				newJclSrcString = "JCL14_SRC";
@@ -3467,11 +3541,12 @@ public abstract class AbstractJavaModelTests extends SuiteOfTestCases {
 		IPath jcl12Lib = new Path("JCL12_LIB");
 		IPath jcl13Lib = new Path("JCL13_LIB");
 		IPath jcl14Lib = new Path("JCL14_LIB");
+		IPath jcl17Lib = new Path("JCL_17_LIB");
 		IPath jclFull = new Path("JCL18_FULL");
 
 		return path.equals(jclLib) || path.equals(jcl5Lib) || path.equals(jcl8Lib) || path.equals(jcl9Lib)
 				|| path.equals(jcl10Lib) ||  path.equals(jcl11Lib) || path.equals(jcl12Lib) || path.equals(jcl13Lib)
-				|| path.equals(jcl14Lib) || path.equals(jclFull);
+				|| path.equals(jcl14Lib) || path.equals(jcl17Lib) || path.equals(jclFull);
 	}
 	public void setUpJCLClasspathVariables(String compliance) throws JavaModelException, IOException {
 		setUpJCLClasspathVariables(compliance, false);
@@ -3574,6 +3649,14 @@ public abstract class AbstractJavaModelTests extends SuiteOfTestCases {
 					new IPath[] {getExternalJCLPath("14"), getExternalJCLSourcePath("14"), getExternalJCLRootSourcePath()},
 					null);
 			}
+		} else if ("17".equals(compliance)) {
+			if (JavaCore.getClasspathVariable("JCL_17_LIB") == null) {
+				setupExternalJCL("jclMin17");
+				JavaCore.setClasspathVariables(
+					new String[] {"JCL_17_LIB", "JCL_17_SRC", "JCL_SRCROOT"},
+					new IPath[] {getExternalJCLPath("17"), getExternalJCLSourcePath("17"), getExternalJCLRootSourcePath()},
+					null);
+			}
 		} else {
 			if (JavaCore.getClasspathVariable("JCL_LIB") == null) {
 				setupExternalJCL("jclMin");
@@ -3594,7 +3677,14 @@ public abstract class AbstractJavaModelTests extends SuiteOfTestCases {
 			description.setAutoBuilding(false);
 			getWorkspace().setDescription(description);
 		}
+
+		if (!systemConfigReported) {
+			printSystemEnv();
+			systemConfigReported = true;
+		}
+		printMemoryUse();
 	}
+
 	@Override
 	protected void setUp () throws Exception {
 		super.setUp();
@@ -3605,6 +3695,56 @@ public abstract class AbstractJavaModelTests extends SuiteOfTestCases {
 		}
 		logInfo("SETUP " + getName());
 	}
+
+    private static void printSystemEnv() {
+        Set<Entry<String, String>> set = new TreeMap<>(System.getenv()).entrySet();
+        StringBuilder sb = new StringBuilder("\n###################### System environment ######################\n");
+        for (Entry<String, String> entry : set) {
+            sb.append(" ").append(entry.getKey()).append("=").append(entry.getValue()).append("\n");
+        }
+
+        sb.append("\n###################### System properties ######################\n");
+        Set<Entry<String, String>> props = getPropertiesSafe();
+        for (Entry<String, String> entry : props) {
+            sb.append(" ").append(entry.getKey()).append("=").append(entry.getValue()).append("\n");
+        }
+        String env = sb.toString();
+        System.out.println(env);
+        logInfo(env);
+    }
+
+    private static void printMemoryUse() {
+    	System.gc();
+    	System.runFinalization();
+    	System.gc();
+    	System.runFinalization();
+    	long nax = Runtime.getRuntime().maxMemory();
+    	long total = Runtime.getRuntime().totalMemory();
+		long free = Runtime.getRuntime().freeMemory();
+		long used = total - free;
+		System.out.print("\n########### Memory usage reported by JVM ########");
+		System.out.printf(Locale.GERMAN, "%n%,16d bytes max heap", nax);
+		System.out.printf(Locale.GERMAN, "%n%,16d bytes heap allocated", total);
+		System.out.printf(Locale.GERMAN, "%n%,16d bytes free heap", free);
+    	System.out.printf(Locale.GERMAN, "%n%,16d bytes used heap", used);
+    	System.out.println("\n#################################################\n");
+    }
+
+    /**
+     * Retrieves properties safely. In case if someone tries to change the properties set
+     * while iterating over the collection, we repeat the procedure till this
+     * works without an error.
+     */
+    private static Set<Entry<String, String>> getPropertiesSafe() {
+        try {
+            return new TreeMap<>(System.getProperties().entrySet().stream()
+                    .collect(Collectors.toMap(e -> String.valueOf(e.getKey()),
+                            e -> String.valueOf(e.getValue())))).entrySet();
+        } catch (Exception e) {
+            return getPropertiesSafe();
+        }
+    }
+
 	protected void sortElements(IJavaElement[] elements) {
 		Util.Comparer comparer = new Util.Comparer() {
 			public int compare(Object a, Object b) {
@@ -3788,16 +3928,43 @@ public abstract class AbstractJavaModelTests extends SuiteOfTestCases {
 
 		// ensure workspace options have been restored to their default
 		Hashtable options = JavaCore.getOptions();
-		Hashtable defaultOptions = JavaCore.getDefaultOptions();
-		assertEquals(
-			"Workspace options should be back to their default",
-			new CompilerOptions(defaultOptions).toString(),
-			new CompilerOptions(options).toString());
+		Hashtable defaultOptions = getDefaultJavaCoreOptions();
+		boolean resetToDefault = true;
+		try {
+			String expected = new CompilerOptions(defaultOptions).toString();
+			String actual = new CompilerOptions(options).toString();
+			assertEquals("Workspace options should be back to their default", expected, actual);
+			resetToDefault = false;
+		} finally {
+			if(resetToDefault) {
+				// Don't let all following tests use broken defaults and fail too
+				JavaCore.setOptions(defaultOptions);
+			}
+		}
 		super.tearDown();
+	}
+
+	/**
+	 * Override to supply "test class default JavaCore options"
+	 * so that these options will be restored for other tests in the class
+	 * even if one the test changes them without restoring in teardown.
+	 *
+	 * @return by default {@link JavaCore#getDefaultOptions()}
+	 */
+	protected Hashtable<String, String> getDefaultJavaCoreOptions() {
+		return JavaCore.getDefaultOptions();
 	}
 
 	protected IPath getJRE9Path() {
 		return new Path(System.getProperty("java.home") + "/lib/jrt-fs.jar");
+	}
+
+	public void waitForCharsetDeltaJob() throws CoreException {
+		try {
+			Job.getJobManager().join(CharsetDeltaJob.FAMILY_CHARSET_DELTA, null);
+		} catch (OperationCanceledException | InterruptedException e) {
+			throw new CoreException(new Status(IStatus.ERROR, JavaCore.PLUGIN_ID, e.getMessage(), e));
+		}
 	}
 
 	/**
@@ -3867,6 +4034,9 @@ public abstract class AbstractJavaModelTests extends SuiteOfTestCases {
 			ILog log = plugin.getLog();
 			Status status = new Status(IStatus.ERROR, JavaCore.PLUGIN_ID, errorMessage, e);
 			log.log(status);
+		} else {
+			System.out.println(errorMessage);
+			e.printStackTrace(System.out);
 		}
 	}
 
@@ -3874,6 +4044,8 @@ public abstract class AbstractJavaModelTests extends SuiteOfTestCases {
 		Plugin plugin = JavaCore.getPlugin();
 		if (plugin != null) {
 			plugin.getLog().log(new Status(IStatus.INFO, JavaCore.PLUGIN_ID, message));
+		} else {
+			System.out.println(message);
 		}
 	}
 }

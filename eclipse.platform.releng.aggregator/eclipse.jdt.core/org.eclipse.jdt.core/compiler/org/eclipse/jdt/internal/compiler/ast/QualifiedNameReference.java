@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -100,6 +100,9 @@ public FlowInfo analyseAssignment(BlockScope currentScope, FlowContext flowConte
 				if (!fieldInits.isDefinitelyAssigned(lastFieldBinding)) {
 					currentScope.problemReporter().uninitializedBlankFinalField(lastFieldBinding, this);
 				}
+			}
+			if (needValue) {
+				checkInternalNPE(currentScope, flowContext, flowInfo, true);
 			}
 			break;
 		case Binding.LOCAL :
@@ -597,9 +600,8 @@ public FieldBinding generateReadSequence(BlockScope currentScope, CodeStream cod
 				codeStream.generateConstant(localConstant, 0);
 				// no implicit conversion
 			} else {
-				// outer local?
-				if ((this.bits & ASTNode.IsCapturedOuterLocal) != 0) {
-					checkEffectiveFinality(localBinding, currentScope);
+				// checkEffectiveFinality() returns if it's outer local
+				if (checkEffectiveFinality(localBinding, currentScope)) {
 					// outer local can be reached either through a synthetic arg or a synthetic field
 					VariableBinding[] path = currentScope.getEmulationPath(localBinding);
 					codeStream.generateOuterAccess(path, this, localBinding, currentScope);

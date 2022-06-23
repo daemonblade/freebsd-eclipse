@@ -36,7 +36,7 @@ public abstract class JobManager implements Runnable {
 
 	/* background processing */
 	protected volatile Thread processingThread;
-	protected Job progressJob;
+	protected volatile Job progressJob;
 
 	/* counter indicating whether job execution is enabled or not, disabled if <= 0
 	    it cannot go beyond 1 */
@@ -47,6 +47,8 @@ public abstract class JobManager implements Runnable {
 	public boolean activated = false;
 
 	private int awaitingClients = 0;
+
+	private final Object idleMonitor = new Object();
 
 	/**
 	 * Invoked exactly once, in background, before starting processing any job
@@ -251,6 +253,11 @@ public abstract class JobManager implements Runnable {
 									throw new OperationCanceledException();
 								IJob currentJob = currentJob();
 								// currentJob can be null when jobs have been added to the queue but job manager is not enabled
+								if (currentJob != null ) {
+									synchronized (this.idleMonitor) {
+										this.idleMonitor.notifyAll(); // wake up idle sleepers
+									}
+								}
 								if (currentJob != null && currentJob != previousJob) {
 									if (VERBOSE)
 										Util.verbose("-> NOT READY - waiting until ready - " + searchJob);//$NON-NLS-1$
@@ -385,6 +392,8 @@ public abstract class JobManager implements Runnable {
 						}
 						job = currentJob();
 					}
+					//make sure next index job will schedule new ProgressJob:
+					JobManager.this.progressJob = null;
 					return Status.OK_STATUS;
 				}
 			}
@@ -398,8 +407,9 @@ public abstract class JobManager implements Runnable {
 
 						// must check for new job inside this sync block to avoid timing hole
 						if ((job = currentJob()) == null) {
-							if (this.progressJob != null) {
-								this.progressJob.cancel();
+							Job pJob = this.progressJob;
+							if (pJob != null) {
+								pJob.cancel();
 								this.progressJob = null;
 							}
 							if (idlingStart < 0)
@@ -414,7 +424,9 @@ public abstract class JobManager implements Runnable {
 					if (job == null) {
 						notifyIdle(System.currentTimeMillis() - idlingStart);
 						// just woke up, delay before processing any new jobs, allow some time for the active thread to finish
-						Thread.sleep(500);
+						synchronized (this.idleMonitor) {
+							this.idleMonitor.wait(500); // avoid sleep fixed time
+						}
 						continue;
 					}
 					if (VERBOSE) {
@@ -424,10 +436,11 @@ public abstract class JobManager implements Runnable {
 					try {
 						this.executing = true;
 						if (this.progressJob == null) {
-							this.progressJob = new ProgressJob(Messages.bind(Messages.jobmanager_indexing, "", "")); //$NON-NLS-1$ //$NON-NLS-2$
-							this.progressJob.setPriority(Job.LONG);
-							this.progressJob.setSystem(true);
-							this.progressJob.schedule();
+							ProgressJob pJob = new ProgressJob(Messages.bind(Messages.jobmanager_indexing, "", "")); //$NON-NLS-1$ //$NON-NLS-2$
+							pJob.setPriority(Job.LONG);
+							pJob.setSystem(true);
+							pJob.schedule();
+							this.progressJob = pJob;
 						}
 						/*boolean status = */job.execute(null);
 						//if (status == FAILED) request(job);
@@ -440,7 +453,9 @@ public abstract class JobManager implements Runnable {
 							if (VERBOSE) {
 								Util.verbose("WAITING after job - " + job); //$NON-NLS-1$
 							}
-							Thread.sleep(5);
+							synchronized (this.idleMonitor) {
+								this.idleMonitor.wait(5); // avoid sleep fixed time
+							}
 						}
 					}
 				} catch (InterruptedException e) { // background indexing was interrupted
