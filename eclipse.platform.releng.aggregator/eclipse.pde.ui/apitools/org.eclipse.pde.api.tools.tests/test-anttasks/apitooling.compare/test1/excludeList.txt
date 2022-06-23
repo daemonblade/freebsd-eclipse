@@ -1,1 +1,0 @@
-R:org.example.*.intro
