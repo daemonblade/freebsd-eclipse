@@ -10,23 +10,29 @@
 # Contributors:
 #     Krzysztof Daniel, Red Hat, Inc. - initial API and implementation
 ###############################################################################
---><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <artifactId>eclipse.platform.swt.binaries</artifactId>
         <groupId>eclipse.platform.swt.binaries</groupId>
-        <version>4.21.0-SNAPSHOT</version>
+        <version>4.24.0-SNAPSHOT</version>
         <relativePath>../../</relativePath>
     </parent>
-      
+
     <groupId>eclipse.platform.swt.binaries</groupId>
     <artifactId>binaries-parent</artifactId>
     <packaging>pom</packaging>
-      
+
     <properties>
-        <forceContextQualifier>v20210906-0842</forceContextQualifier>
+        <!-- 
+            forceContextQualifier gets updated during build input process using
+            ant script <SWT source repo>/bundles/org.eclipse.swt/buildInternal.xml 
+        -->
+        
+        <forceContextQualifier>v20220530-1036</forceContextQualifier>
     </properties>
-      
+
     <build>
         <plugins>
             <plugin>
@@ -78,17 +84,17 @@
                     <dependency>
                         <groupId>org.mozilla</groupId>
                         <artifactId>rhino-runtime</artifactId>
-                        <version>1.7.13</version>
+                        <version>1.7.14</version>
                     </dependency>
                     <dependency>
                         <groupId>org.apache.ant</groupId>
                         <artifactId>ant</artifactId>
-                        <version>1.10.11</version>
+                        <version>1.10.12</version>
                     </dependency>
                     <dependency>
                         <groupId>org.apache.ant</groupId>
                         <artifactId>ant-apache-bsf</artifactId>
-                        <version>1.10.11</version>
+                        <version>1.10.12</version>
                     </dependency>
                 </dependencies>
             </plugin>

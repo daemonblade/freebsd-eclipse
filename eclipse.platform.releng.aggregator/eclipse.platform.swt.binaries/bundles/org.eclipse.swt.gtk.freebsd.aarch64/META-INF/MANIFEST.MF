@@ -3,7 +3,7 @@ Fragment-Host: org.eclipse.swt;bundle-version="[3.116.0,4.0.0)"
 Bundle-Name: %fragmentName
 Bundle-Vendor: %providerName
 Bundle-SymbolicName: org.eclipse.swt.gtk.freebsd.aarch64; singleton:=true
-Bundle-Version: 3.117.0.qualifier
+Bundle-Version: 3.120.0.qualifier
 Bundle-ManifestVersion: 2
 Bundle-Localization: fragment
 Export-Package: 
@@ -25,6 +25,8 @@ Export-Package:
  org.eclipse.swt.internal.accessibility.gtk; x-internal:=true,
  org.eclipse.swt.internal.cairo; x-internal:=true,
  org.eclipse.swt.internal.gtk; x-internal:=true,
+ org.eclipse.swt.internal.gtk3; x-internal:=true,
+ org.eclipse.swt.internal.gtk4; x-internal:=true,
  org.eclipse.swt.internal.opengl.glx; x-internal:=true
 Eclipse-PlatformFilter: (& (osgi.ws=gtk) (osgi.os=freebsd) (osgi.arch=aarch64))
 SWT-WS: gtk
