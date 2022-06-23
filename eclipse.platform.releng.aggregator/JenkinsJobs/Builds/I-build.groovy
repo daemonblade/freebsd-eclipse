@@ -116,10 +116,10 @@ spec:
 	  stage('Setup intial configuration'){
           steps {
               container('jnlp') {
-                  sshagent(['git.eclipse.org-bot-ssh']) {
+                  sshagent(['github-bot-ssh']) {
                       dir ('eclipse.platform.releng.aggregator') {
                         sh '''
-                            git clone -b R4_21_maintenance ssh://genie.releng@git.eclipse.org:29418/platform/eclipse.platform.releng.aggregator.git
+                            git clone -b R4_24_maintenance git@github.com:eclipse-platform/eclipse.platform.releng.aggregator.git
                         '''
                       }
                     }
@@ -139,7 +139,26 @@ spec:
                     ./mb010_createEnvfiles.sh $CJE_ROOT/buildproperties.shsource 2>&1 | tee $logDir/mb010_createEnvfiles.sh.log
                     if [[ ${PIPESTATUS[0]} -ne 0 ]]
                     then
-                        echo "Failed in Genrerate environment variables stage"
+                        echo "Failed in Generate environment variables stage"
+                        exit 1
+                    fi
+                '''
+                }
+            }
+		}
+	  stage('Load PGP keys'){
+          environment {
+                KEYRING = credentials('secret-subkeys-releng.asc')
+                KEYRING_PASSPHRASE = credentials('secret-subkeys-releng.acs-passphrase')
+          }
+          steps {
+              container('jnlp') {
+                sh '''
+                    cd ${WORKSPACE}/eclipse.platform.releng.aggregator/eclipse.platform.releng.aggregator/cje-production/mbscripts
+                    ./mb011_loadPGPKeys.sh 2>&1 | tee $logDir/mb011_loadPGPKeys.sh.log
+                    if [[ ${PIPESTATUS[0]} -ne 0 ]]
+                    then
+                        echo "Failed in Load PGP keys"
                         exit 1
                     fi
                 '''
@@ -161,7 +180,7 @@ spec:
         }
 	  stage('Swt build input') {
 	      steps {
-	          build 'SWT-Increment_if_needed_without_chromium_maintenance'
+	          build 'SWT-Increment_if_needed'
 	      }
 	    }
 	  stage('Create Base builder'){
@@ -206,7 +225,7 @@ spec:
 	  stage('Clone Repositories'){
           steps {
               container('jnlp') {
-                  sshagent(['git.eclipse.org-bot-ssh']) {
+                  sshagent(['git.eclipse.org-bot-ssh', 'github-bot-ssh']) {
                     sh '''
                         git config --global user.email "releng-bot@eclipse.org"
                         git config --global user.name "Eclipse Releng Bot"
@@ -225,9 +244,9 @@ spec:
 	  stage('Tag Build Inputs'){
           steps {
               container('jnlp') {
-                  sshagent (['git.eclipse.org-bot-ssh', 'projects-storage.eclipse.org-bot-ssh']) {
+                  sshagent (['git.eclipse.org-bot-ssh', 'github-bot-ssh', 'projects-storage.eclipse.org-bot-ssh']) {
                     sh '''
-                        git config --global user.email "releng-bot@eclipse.org"
+                        git config --global user.email "eclipse-releng-bot@eclipse.org"
                         git config --global user.name "Eclipse Releng Bot"
                         cd ${WORKSPACE}/eclipse.platform.releng.aggregator/eclipse.platform.releng.aggregator/cje-production/mbscripts
                         bash -x ./mb110_tagBuildInputs.sh $CJE_ROOT/buildproperties.shsource 2>&1 | tee $logDir/mb110_tagBuildInputs.sh.log
@@ -260,28 +279,11 @@ spec:
                 }
             }
 		}
-	  stage('Update Pom files in the source'){
-          steps {
-              container('jnlp') {
-                  withEnv(["JAVA_HOME=${ tool 'openjdk-jdk11-latest' }"]) {
-	                  sshagent(['git.eclipse.org-bot-ssh']) {
-	                    sh '''
-	                        cd ${WORKSPACE}/eclipse.platform.releng.aggregator/eclipse.platform.releng.aggregator/cje-production/mbscripts
-	                        unset JAVA_TOOL_OPTIONS 
-	                        unset _JAVA_OPTIONS
-	                        ./mb210_updatePom.sh $CJE_ROOT/buildproperties.shsource 2>&1 | tee $logDir/mb210_updatePom.sh.log
-	                        if [[ ${PIPESTATUS[0]} -ne 0 ]]
-	                        then
-	                            echo "Failed in Update Pom files in the source stage"
-	                            exit 1
-	                        fi
-	                    '''
-	                  }
-                  }
-                }
-            }
-		}
 	  stage('Aggregator maven build'){
+	      environment {
+                KEYRING = credentials('secret-subkeys-releng.asc')
+                KEYRING_PASSPHRASE = credentials('secret-subkeys-releng.acs-passphrase')
+          }
           steps {
               container('jnlp') {
                   withEnv(["JAVA_HOME=${ tool 'openjdk-jdk11-latest' }"]) {
@@ -301,7 +303,7 @@ spec:
             }
 		}
 	  stage('Gather Eclipse Parts'){
-	  environment {
+	      environment {
                 KEYRING = credentials('secret-subkeys-releng.asc')
                 KEYRING_PASSPHRASE = credentials('secret-subkeys-releng.acs-passphrase')
           }
@@ -459,12 +461,13 @@ spec:
 		}
 	  stage('Trigger tests'){
           steps {
-              build job: 'ep421I-unit-cen64-gtk3-java11', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
-              build job: 'ep421I-unit-cen64-gtk3-java16', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
-              build job: 'ep421I-unit-cen64-gtk3-java17', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
-              build job: 'ep421I-unit-mac64-java11', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
-              build job: 'ep421I-unit-win32-java11', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
-              build job: 'ep421I-perf-lin64-baseline', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
+              build job: 'ep424I-unit-cen64-gtk3-java11', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
+              build job: 'ep424I-unit-cen64-gtk3-java17', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
+              build job: 'ep424I-unit-cen64-gtk3-java18', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
+              build job: 'ep424I-unit-macM1-java17', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
+              build job: 'ep424I-unit-mac64-java17', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
+              build job: 'ep424I-unit-win32-java11', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
+              build job: 'ep424I-perf-lin64-baseline', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
               build job: 'Start-smoke-tests', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
             }
 		}
