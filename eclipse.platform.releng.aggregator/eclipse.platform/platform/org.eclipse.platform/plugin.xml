@@ -52,7 +52,7 @@
                 value="2,290,450,10"/>
           <property
                 name="buildIdLocation"
-                value="102,222">
+                value="108,222">
           </property>
           <property
                 name="buildIdSize"
@@ -110,6 +110,9 @@
          </action>
       </actionSet>
    </extension>
-  
+
+   <extension point="org.eclipse.equinox.p2.engine.pgp">
+    <trustedKeys path="700E4F39BC05364B.asc"/>
+   </extension>
 
 </plugin>
