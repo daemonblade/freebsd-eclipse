@@ -18,12 +18,12 @@
   <parent>
     <groupId>eclipse.platform.ua</groupId>
     <artifactId>eclipse.platform.ua</artifactId>
-    <version>4.21.0-SNAPSHOT</version>
+    <version>4.24.0-SNAPSHOT</version>
     <relativePath>../</relativePath>
   </parent>
   <groupId>org.eclipse.ui</groupId>
   <artifactId>org.eclipse.tips.feature</artifactId>
-  <version>0.2.1500-SNAPSHOT</version>
+  <version>0.2.1700-SNAPSHOT</version>
   <packaging>eclipse-feature</packaging>
     <build>
      <plugins>

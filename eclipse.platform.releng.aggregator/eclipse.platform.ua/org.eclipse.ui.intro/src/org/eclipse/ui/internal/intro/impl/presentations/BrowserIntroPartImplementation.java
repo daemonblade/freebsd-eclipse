@@ -579,7 +579,7 @@ public class BrowserIntroPartImplementation extends
 			// initially in standby mode, it means standby was forced on
 			// intro view on close. react.
 			AbstractIntroPage currentPage = model.getCurrentPage();
-			if (currentPage == null || standbyPage.getId().equals(currentPage)) {
+			if (currentPage == null || standbyPage.getId().equals(currentPage.getId())) {
 				model.setCurrentPageId(model.getHomePage().getId());
 			}
 			generateContentForPage(currentPage);
@@ -621,7 +621,9 @@ public class BrowserIntroPartImplementation extends
 	 * Regenerate the dynamic content for the current page
 	 */
 	protected void updateContent() {
-		generateContentForPage(getModel().getCurrentPage());
+		if (!getBrowser().isDisposed()) {
+			generateContentForPage(getModel().getCurrentPage());
+		}
 	}
 
 	@Override
