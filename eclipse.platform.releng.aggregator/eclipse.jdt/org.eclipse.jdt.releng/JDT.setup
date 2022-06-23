@@ -13,6 +13,11 @@
     xsi:schemaLocation="http://www.eclipse.org/oomph/setup/git/1.0 http://git.eclipse.org/c/oomph/org.eclipse.oomph.git/plain/setups/models/Git.ecore http://www.eclipse.org/oomph/setup/jdt/1.0 http://git.eclipse.org/c/oomph/org.eclipse.oomph.git/plain/setups/models/JDT.ecore http://www.eclipse.org/oomph/predicates/1.0 http://git.eclipse.org/c/oomph/org.eclipse.oomph.git/plain/setups/models/Predicates.ecore http://www.eclipse.org/oomph/setup/targlets/1.0 http://git.eclipse.org/c/oomph/org.eclipse.oomph.git/plain/setups/models/SetupTarglets.ecore http://www.eclipse.org/oomph/setup/workingsets/1.0 http://git.eclipse.org/c/oomph/org.eclipse.oomph.git/plain/setups/models/SetupWorkingSets.ecore"
     name="jdt"
     label="JDT">
+  <annotation
+      source="http://www.eclipse.org/oomph/setup/ConfigurationReference">
+    <reference
+        href="JDTConfiguration.setup#/"/>
+  </annotation>
   <setupTask
       xsi:type="setup.p2:P2Task">
     <requirement
@@ -93,7 +98,7 @@
       <repositoryList
           name="CBI">
         <repository
-            url="http://download.eclipse.org/cbi/updates/license"/>
+            url="https://download.eclipse.org/cbi/updates/license"/>
       </repositoryList>
     </targlet>
   </setupTask>
@@ -101,30 +106,24 @@
       label="Features">
     <setupTask
         xsi:type="git:GitCloneTask"
-        id="git.clone.jdt"
-        remoteURI="jdt/eclipse.jdt"
+        id="github.clone.jdt"
+        remoteURI="eclipse-jdt/eclipse.jdt"
         userID="">
       <annotation
           source="http://www.eclipse.org/oomph/setup/InducedChoices">
         <detail
             key="inherit">
-          <value>eclipse.git.gerrit.remoteURIs</value>
+          <value>github.remoteURIs</value>
         </detail>
         <detail
             key="label">
-          <value>JDT Features Git or Gerrit Repository</value>
+          <value>JDT Features Github Repository</value>
         </detail>
         <detail
             key="target">
           <value>remoteURI</value>
         </detail>
       </annotation>
-      <configSections
-          name="gerrit">
-        <properties
-            key="createchangeid"
-            value="true"/>
-      </configSections>
       <description>JDT Features</description>
     </setupTask>
     <setupTask
@@ -135,11 +134,12 @@
         <requirement
             name="*"/>
         <sourceLocator
-            rootFolder="${git.clone.jdt.location}"/>
+            rootFolder="${github.clone.jdt.location}"/>
       </targlet>
     </setupTask>
     <setupTask
-        xsi:type="setup.workingsets:WorkingSetTask">
+        xsi:type="setup.workingsets:WorkingSetTask"
+        id="jdt.workingsets">
       <workingSet
           name="JDT Features">
         <predicate
@@ -150,7 +150,7 @@
     <setupTask
         xsi:type="setup:EclipseIniTask"
         option="-Doomph.redirection.jdt"
-        value="=https://git.eclipse.org/c/jdt/eclipse.jdt.git/plain/org.eclipse.jdt.releng/JDT.setup->${git.clone.jdt.location|uri}/org.eclipse.jdt.releng/JDT.setup"
+        value="=https://raw.githubusercontent.com/eclipse-jdt/eclipse.jdt/master/org.eclipse.jdt.releng/JDT.setup->${github.clone.jdt.location|uri}/org.eclipse.jdt.releng/JDT.setup"
         vm="true">
       <description>Set an Oomph redirection system property to redirect the logical location of this setup to its physical location in the Git clone.</description>
     </setupTask>
@@ -163,29 +163,23 @@
       label="Core">
     <setupTask
         xsi:type="git:GitCloneTask"
-        id="git.clone.jdt.core"
-        remoteURI="jdt/eclipse.jdt.core">
+        id="github.clone.jdt.core"
+        remoteURI="eclipse-jdt/eclipse.jdt.core">
       <annotation
           source="http://www.eclipse.org/oomph/setup/InducedChoices">
         <detail
             key="inherit">
-          <value>eclipse.git.gerrit.remoteURIs</value>
+          <value>github.remoteURIs</value>
         </detail>
         <detail
             key="label">
-          <value>JDT Features Git or Gerrit Repository</value>
+          <value>JDT Core Github Repository</value>
         </detail>
         <detail
             key="target">
           <value>remoteURI</value>
         </detail>
       </annotation>
-      <configSections
-          name="gerrit">
-        <properties
-            key="createchangeid"
-            value="true"/>
-      </configSections>
       <description>JDT Core</description>
     </setupTask>
     <setupTask
@@ -200,11 +194,12 @@
         <requirement
             name="org.eclipse.jdt.core.ecj.validation.plain.project"/>
         <sourceLocator
-            rootFolder="${git.clone.jdt.core.location}"/>
+            rootFolder="${github.clone.jdt.core.location}"/>
       </targlet>
     </setupTask>
     <setupTask
-        xsi:type="setup.workingsets:WorkingSetTask">
+        xsi:type="setup.workingsets:WorkingSetTask"
+        id="jdt.core.workingsets">
       <workingSet
           name="JDT Core">
         <predicate
@@ -240,7 +235,8 @@
         </targlet>
       </setupTask>
       <setupTask
-          xsi:type="setup.workingsets:WorkingSetTask">
+          xsi:type="setup.workingsets:WorkingSetTask"
+          id="jdt.core.tests.workingsets">
         <workingSet
             name="JDT Core Tests">
           <predicate
@@ -263,29 +259,23 @@
         label="Test Binaries">
       <setupTask
           xsi:type="git:GitCloneTask"
-          id="git.clone.jdt.binaries"
-          remoteURI="jdt/eclipse.jdt.core.binaries">
+          id="github.clone.jdt.binaries"
+          remoteURI="eclipse-jdt/eclipse.jdt.core.binaries">
         <annotation
             source="http://www.eclipse.org/oomph/setup/InducedChoices">
           <detail
               key="inherit">
-            <value>eclipse.git.gerrit.remoteURIs</value>
+            <value>github.remoteURIs</value>
           </detail>
           <detail
               key="label">
-            <value>JDT Core Test Binaries Git or Gerrit Repository</value>
+            <value>JDT Core Test Binaries Github Repository</value>
           </detail>
           <detail
               key="target">
             <value>remoteURI</value>
           </detail>
         </annotation>
-        <configSections
-            name="gerrit">
-          <properties
-              key="createchangeid"
-              value="true"/>
-        </configSections>
         <description>JDT Core Tests</description>
       </setupTask>
       <setupTask
@@ -296,11 +286,12 @@
           <requirement
               name="org.eclipse.jdt.core.tests.binaries"/>
           <sourceLocator
-              rootFolder="${git.clone.jdt.binaries.location}"/>
+              rootFolder="${github.clone.jdt.binaries.location}"/>
         </targlet>
       </setupTask>
       <setupTask
-          xsi:type="setup.workingsets:WorkingSetTask">
+          xsi:type="setup.workingsets:WorkingSetTask"
+          id="jdt.core.binaries.workingsets">
         <workingSet
             name="JDT Core Test Binaries">
           <predicate
@@ -322,29 +313,23 @@
       label="Debug">
     <setupTask
         xsi:type="git:GitCloneTask"
-        id="git.clone.jdt.debug"
-        remoteURI="jdt/eclipse.jdt.debug">
+        id="github.clone.jdt.debug"
+        remoteURI="eclipse-jdt/eclipse.jdt.debug">
       <annotation
           source="http://www.eclipse.org/oomph/setup/InducedChoices">
         <detail
             key="inherit">
-          <value>eclipse.git.gerrit.remoteURIs</value>
+          <value>github.remoteURIs</value>
         </detail>
         <detail
             key="label">
-          <value>JDT Debug Git or Gerrit Repository</value>
+          <value>JDT Debug Github Repository</value>
         </detail>
         <detail
             key="target">
           <value>remoteURI</value>
         </detail>
       </annotation>
-      <configSections
-          name="gerrit">
-        <properties
-            key="createchangeid"
-            value="true"/>
-      </configSections>
       <description>JDT Core</description>
     </setupTask>
     <setupTask
@@ -355,7 +340,7 @@
         <requirement
             name="*"/>
         <sourceLocator
-            rootFolder="${git.clone.jdt.debug.location}">
+            rootFolder="${github.clone.jdt.debug.location}">
           <predicate
               xsi:type="predicates:NotPredicate">
             <operand
@@ -366,7 +351,8 @@
       </targlet>
     </setupTask>
     <setupTask
-        xsi:type="setup.workingsets:WorkingSetTask">
+        xsi:type="setup.workingsets:WorkingSetTask"
+        id="jdt.debug.workingsets">
       <workingSet
           name="JDT Debug">
         <predicate
@@ -394,7 +380,7 @@
           <requirement
               name="*"/>
           <sourceLocator
-              rootFolder="${git.clone.jdt.debug.location}">
+              rootFolder="${github.clone.jdt.debug.location}">
             <predicate
                 xsi:type="predicates:NamePredicate"
                 pattern=".*tests.*"/>
@@ -402,7 +388,8 @@
         </targlet>
       </setupTask>
       <setupTask
-          xsi:type="setup.workingsets:WorkingSetTask">
+          xsi:type="setup.workingsets:WorkingSetTask"
+          id="jdt.debug.tests.workingsets">
         <workingSet
             name="JDT Debug Tests">
           <predicate
@@ -429,29 +416,23 @@
       label="UI">
     <setupTask
         xsi:type="git:GitCloneTask"
-        id="git.clone.jdt.ui"
-        remoteURI="jdt/eclipse.jdt.ui">
+        id="github.clone.jdt.ui"
+        remoteURI="eclipse-jdt/eclipse.jdt.ui">
       <annotation
           source="http://www.eclipse.org/oomph/setup/InducedChoices">
         <detail
             key="inherit">
-          <value>eclipse.git.gerrit.remoteURIs</value>
+          <value>github.remoteURIs</value>
         </detail>
         <detail
             key="label">
-          <value>JDT UI Git or Gerrit Repository</value>
+          <value>JDT UI Github Repository</value>
         </detail>
         <detail
             key="target">
           <value>remoteURI</value>
         </detail>
       </annotation>
-      <configSections
-          name="gerrit">
-        <properties
-            key="createchangeid"
-            value="true"/>
-      </configSections>
       <description>JDT UI</description>
     </setupTask>
     <setupTask
@@ -464,11 +445,12 @@
         <requirement
             name="org.eclipse.jdt.jeview.feature.feature.group"/>
         <sourceLocator
-            rootFolder="${git.clone.jdt.ui.location}"/>
+            rootFolder="${github.clone.jdt.ui.location}"/>
       </targlet>
     </setupTask>
     <setupTask
-        xsi:type="setup.workingsets:WorkingSetTask">
+        xsi:type="setup.workingsets:WorkingSetTask"
+        id="jdt.ui.workingsets">
       <workingSet
           name="JDT UI">
         <predicate
@@ -503,7 +485,8 @@
         </targlet>
       </setupTask>
       <setupTask
-          xsi:type="setup.workingsets:WorkingSetTask">
+          xsi:type="setup.workingsets:WorkingSetTask"
+          id="jdt.ui.tests.workingsets">
         <workingSet
             name="JDT UI Tests">
           <predicate
@@ -535,7 +518,8 @@
         </targlet>
       </setupTask>
       <setupTask
-          xsi:type="setup.workingsets:WorkingSetTask">
+          xsi:type="setup.workingsets:WorkingSetTask"
+          id="jdt.ui.examples.workingsets">
         <workingSet
             name="JDT UI Examples">
           <predicate
