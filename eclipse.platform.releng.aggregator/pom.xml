@@ -18,17 +18,24 @@
 
   <groupId>org.eclipse.platform</groupId>
   <artifactId>platform-aggregator</artifactId>
-  <version>4.21.0-SNAPSHOT</version>
+  <version>4.24.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <properties>
     <!--Property used in parent pom which if defined disables activation of build-individual-bundles profile -->
     <aggregatorBuild>true</aggregatorBuild>
   </properties>
   <pluginRepositories>
-    <pluginRepository>
-      <id>tycho-snapshots</id>
-      <url>https://repo.eclipse.org/content/repositories/tycho-snapshots/</url>
-    </pluginRepository>
+	<pluginRepository>
+		<id>tycho-snapshots</id>
+		<url>https://repo.eclipse.org/content/repositories/tycho-snapshots/</url>
+	</pluginRepository>
+	<pluginRepository>
+		<id>dash-licenses-snapshots</id>
+		<url>https://repo.eclipse.org/content/repositories/dash-licenses-snapshots/</url>
+		<snapshots>
+			<enabled>true</enabled>
+		</snapshots>
+	</pluginRepository>
   </pluginRepositories>
   <modules>
 
@@ -42,8 +49,7 @@
     <module>eclipse.jdt.debug</module>
     <module>eclipse.jdt.ui</module>
 
-    <module>eclipse.pde.build</module>
-    <module>eclipse.pde.ui</module>
+    <module>eclipse.pde</module>
 
     <module>eclipse.platform</module>
     <module>eclipse.platform.ui</module>
