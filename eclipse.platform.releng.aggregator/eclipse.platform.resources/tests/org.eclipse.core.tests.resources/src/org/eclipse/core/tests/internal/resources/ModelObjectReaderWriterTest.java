@@ -24,7 +24,6 @@ import java.util.Map.Entry;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.filesystem.URIUtil;
-import org.eclipse.core.internal.localstore.SafeFileOutputStream;
 import org.eclipse.core.internal.resources.*;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
@@ -251,10 +250,6 @@ public class ModelObjectReaderWriterTest extends ResourceTest {
 		return createLinkDescription(new Path(path), type, uriFromPortableString(location));
 	}
 
-	protected String getInvalidWorkspaceDescription() {
-		return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + "<workspaceDescription>\n" + "<name>Foo</name>\n" + "<autobuild>Foo</autobuild>\n" + "<snapshotInterval>300Foo000</snapshotInterval>\n" + "<fileStateLongevity>Foo480000</fileStateLongevity>\n" + "<maxFileStateSize>104856Foo</maxFileStateSize>\n" + "<maxFileStates>5Foo0</maxFileStates>\n" + "</workspaceDescription>\n";
-	}
-
 	private String getLongDescription() {
 		return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<projectDescription>" + "<name>org.eclipse.help.ui</name>" + "<comment></comment>" + "<charset>UTF-8</charset>" + "	<projects>" + "	<project>org.eclipse.core.boot</project>" + "	<project>org.eclipse.core.resources</project>" + "	<project>org.eclipse.core.runtime</project>" + "	<project>org.eclipse.help</project>" + "	<project>org.eclipse.help.appserver</project>" + "	<project>org.eclipse.search</project>" + "	<project>org.eclipse.ui</project>" + "	</projects>" + "	<buildSpec>" + "	<buildCommand>" + "	<name>org.eclipse.jdt.core.javabuilder</name>" + "	<arguments>" + "	</arguments>" + "	</buildCommand>" + "	<buildCommand>" + "	<name>org.eclipse.pde.ManifestBuilder</name>" + "	<arguments>"
 				+ "	</arguments>" + "	</buildCommand>" + "	<buildCommand>" + "	<name>org.eclipse.pde.SchemaBuilder</name>" + "	<arguments>" + "	</arguments>" + "	</buildCommand>" + "	</buildSpec>" + "	<natures>" + "	<nature>org.eclipse.jdt.core.javanature</nature>" + "	<nature>org.eclipse.pde.PluginNature</nature>" + "	</natures>" + "	<linkedResources>" + "	<link>" + "	<name>contexts.xml</name>" + "	<type>1</type>" + "	<location>" + LONG_LOCATION + "</location>" + "	</link>" + "	<link>" + "	<name>doc</name>" + "	<type>2</type>" + "	<location>" + LONG_LOCATION + "</location>" + "	</link>" + "	<link>" + "	<name>icons</name>" + "	<type>2</type>" + "	<location>" + LONG_LOCATION + "</location>" + "	</link>" + "	<link>" + "	<name>preferences.ini</name>"
@@ -280,7 +275,7 @@ public class ModelObjectReaderWriterTest extends ResourceTest {
 		try {
 			input = store.openInputStream(EFS.NONE, getMonitor());
 			InputSource in = new InputSource(input);
-			return new ProjectDescriptionReader().read(in);
+			return new ProjectDescriptionReader(getWorkspace()).read(in);
 		} finally {
 			assertClose(input);
 		}
@@ -331,9 +326,10 @@ public class ModelObjectReaderWriterTest extends ResourceTest {
 	public void testInvalidProjectDescription1() throws Throwable {
 		String invalidProjectDescription = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + "<homeDescription>\n" + "	<name>abc</name>\n" + "	<comment></comment>\n" + "	<projects>\n" + "	</projects>\n" + "	<buildSpec>\n" + "		<buildCommand>\n" + "			<name>org.eclipse.jdt.core.javabuilder</name>\n" + "			<arguments>\n" + "			</arguments>\n" + "		</buildCommand>\n" + "	</buildSpec>\n" + "	<natures>\n" + "	<nature>org.eclipse.jdt.core.javanature</nature>\n" + "	</natures>\n" + "	<linkedResources>\n" + "		<link>\n" + "			<name>newLink</name>\n" + "			<type>2</type>\n" + "			<location>" + PATH_STRING + "</location>\n" + "		</link>\n" + "	</linkedResources>\n" + "</homeDescription>";
 
-		IPath root = getWorkspace().getRoot().getLocation();
+		IWorkspace workspace = getWorkspace();
+		IPath root = workspace.getRoot().getLocation();
 		IPath location = root.append("ModelObjectReaderWriterTest.txt");
-		ProjectDescriptionReader reader = new ProjectDescriptionReader();
+		ProjectDescriptionReader reader = new ProjectDescriptionReader(workspace);
 		// Write out the project description file
 		ensureDoesNotExistInFileSystem(location.toFile());
 		InputStream stream = new ByteArrayInputStream(invalidProjectDescription.getBytes());
@@ -403,44 +399,6 @@ public class ModelObjectReaderWriterTest extends ResourceTest {
 		assertEquals("3.8", PATH_STRING, URIUtil.toPath(link.getLocationURI()).toString());
 	}
 
-	public void testInvalidWorkspaceDescription() {
-		/* initialize common objects */
-		WorkspaceDescriptionReader reader = new WorkspaceDescriptionReader();
-		IPath root = getWorkspace().getRoot().getLocation();
-		IPath location = root.append("ModelObjectWriterTest2.pbs");
-
-		/* write the bogus description */
-		try (FileWriter writer = new FileWriter(location.toFile())) {
-			writer.write(getInvalidWorkspaceDescription());
-		} catch (IOException e) {
-			fail("1.91", e);
-		}
-
-		/* test read */
-		try {
-			Preferences prefs = ResourcesPlugin.getPlugin().getPluginPreferences();
-			FileInputStream input = null;
-			try {
-				input = new FileInputStream(location.toFile());
-			} catch (FileNotFoundException e) {
-				fail("1.99", e);
-			}
-			//on reading invalid values the reader should revert to default values
-			WorkspaceDescription desc2 = (WorkspaceDescription) reader.read(input);
-			//assertion "1.1" removed because workspace name can't be invalid
-			assertEquals("1.2", prefs.getDefaultBoolean(ResourcesPlugin.PREF_AUTO_BUILDING), desc2.isAutoBuilding());
-			assertEquals("1.3", prefs.getDefaultLong(PreferenceInitializer.PREF_DELTA_EXPIRATION), desc2.getDeltaExpiration());
-			assertEquals("1.4", prefs.getDefaultBoolean(ResourcesPlugin.PREF_APPLY_FILE_STATE_POLICY), desc2.isApplyFileStatePolicy());
-			assertEquals("1.5", prefs.getDefaultLong(ResourcesPlugin.PREF_FILE_STATE_LONGEVITY), desc2.getFileStateLongevity());
-			assertEquals("1.6", prefs.getDefaultInt(ResourcesPlugin.PREF_MAX_FILE_STATES), desc2.getMaxFileStates());
-			assertEquals("1.7", prefs.getDefaultLong(ResourcesPlugin.PREF_MAX_FILE_STATE_SIZE), desc2.getMaxFileStateSize());
-			assertEquals("1.8", prefs.getDefaultInt(PreferenceInitializer.PREF_OPERATIONS_PER_SNAPSHOT), desc2.getOperationsPerSnapshot());
-		} finally {
-			/* remove trash */
-			Workspace.clear(location.toFile());
-		}
-	}
-
 	/**
 	 * Tests a project description with a very long local location for a linked resource.
 	 */
@@ -449,7 +407,7 @@ public class ModelObjectReaderWriterTest extends ResourceTest {
 
 		IPath location = getRandomLocation();
 		try {
-			ProjectDescriptionReader reader = new ProjectDescriptionReader();
+			ProjectDescriptionReader reader = new ProjectDescriptionReader(getWorkspace());
 			// Write out the project description file
 			ensureDoesNotExistInFileSystem(location.toFile());
 			InputStream stream = new ByteArrayInputStream(longProjectDescription.getBytes());
@@ -471,7 +429,7 @@ public class ModelObjectReaderWriterTest extends ResourceTest {
 		String longProjectDescription = getLongDescriptionURI();
 		IPath location = getRandomLocation();
 		try {
-			ProjectDescriptionReader reader = new ProjectDescriptionReader();
+			ProjectDescriptionReader reader = new ProjectDescriptionReader(ResourcesPlugin.getWorkspace());
 			// Write out the project description file
 			ensureDoesNotExistInFileSystem(location.toFile());
 			InputStream stream = new ByteArrayInputStream(longProjectDescription.getBytes());
@@ -493,10 +451,11 @@ public class ModelObjectReaderWriterTest extends ResourceTest {
 		String singleLineProjectDescription = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + "<projectDescription>\n" + "	<name>abc</name>\n" + "	<charset>ISO-8859-1</charset>\n" + "	<comment>This is the comment.</comment>\n" + "	<projects>\n" + "	   <project>org.eclipse.core.boot</project>\n" + "	</projects>\n" + "	<buildSpec>\n" + "		<buildCommand>\n" + "			<name>org.eclipse.jdt.core.javabuilder</name>\n" + "			<arguments>\n" + "              <key>thisIsTheKey</key>\n" + "              <value>thisIsTheValue</value>\n" + "			</arguments>\n" + "		</buildCommand>\n" + "	</buildSpec>\n" + "	<natures>\n" + "	   <nature>org.eclipse.jdt.core.javanature</nature>\n" + "	</natures>\n" + "	<linkedResources>\n" + "		<link>\n"
 				+ "			<name>newLink</name>\n" + "			<type>2</type>\n" + "			<location>" + PATH_STRING + "</location>\n" + "		</link>\n" + "	</linkedResources>\n" + "</projectDescription>";
 
-		IPath root = getWorkspace().getRoot().getLocation();
+		IWorkspace workspace = getWorkspace();
+		IPath root = workspace.getRoot().getLocation();
 		IPath multiLocation = root.append("multiLineTest.txt");
 		IPath singleLocation = root.append("singleLineTest.txt");
-		ProjectDescriptionReader reader = new ProjectDescriptionReader();
+		ProjectDescriptionReader reader = new ProjectDescriptionReader(workspace);
 		// Write out the project description file
 		ensureDoesNotExistInFileSystem(multiLocation.toFile());
 		ensureDoesNotExistInFileSystem(singleLocation.toFile());
@@ -518,7 +477,7 @@ public class ModelObjectReaderWriterTest extends ResourceTest {
 		URL whereToLook = Platform.getBundle("org.eclipse.core.tests.resources").getEntry("MultipleProjectTestFiles/");
 		String[] members = {"abc.project", "def.project", "org.apache.lucene.project", "org.eclipse.ant.core.project"};
 		HashMap<String, ProjectDescription> baselines = buildBaselineDescriptors();
-		ProjectDescriptionReader reader = new ProjectDescriptionReader();
+		ProjectDescriptionReader reader = new ProjectDescriptionReader(getWorkspace());
 
 		for (int i = 0; i < members.length; i++) {
 			URL currentURL = null;
@@ -584,7 +543,7 @@ public class ModelObjectReaderWriterTest extends ResourceTest {
 
 		/* initialize common objects */
 		ModelObjectWriter writer = new ModelObjectWriter();
-		ProjectDescriptionReader reader = new ProjectDescriptionReader();
+		ProjectDescriptionReader reader = new ProjectDescriptionReader(getWorkspace());
 		IFileStore tempStore = getTempStore();
 		URI location = tempStore.toURI();
 		/* test write */
@@ -685,45 +644,6 @@ public class ModelObjectReaderWriterTest extends ResourceTest {
 		assertEquals("1.3", locationWithSpaces, description2.getLinkLocationURI(path));
 	}
 
-	public void testWorkspaceDescription() throws Throwable {
-
-		/* initialize common objects */
-		ModelObjectWriter writer = new ModelObjectWriter();
-		WorkspaceDescriptionReader reader = new WorkspaceDescriptionReader();
-		IPath root = getWorkspace().getRoot().getLocation();
-		IPath location = root.append("ModelObjectWriterTest.pbs");
-
-		/* test write */
-		WorkspaceDescription desc = new WorkspaceDescription("MyWorkspace");
-		desc.setName("aName");
-		desc.setAutoBuilding(false);
-		desc.setApplyFileStatePolicy(false);
-		desc.setFileStateLongevity(654321l);
-		desc.setMaxFileStates(1000);
-		desc.setMaxFileStateSize(123456789l);
-
-		SafeFileOutputStream output = new SafeFileOutputStream(location.toFile());
-		writer.write(desc, output, System.lineSeparator());
-		output.close();
-
-		/* test read */
-		try {
-			FileInputStream input = new FileInputStream(location.toFile());
-			WorkspaceDescription desc2 = (WorkspaceDescription) reader.read(input);
-			assertTrue("1.1", desc.getName().equals(desc2.getName()));
-			assertTrue("1.2", desc.isAutoBuilding() == desc2.isAutoBuilding());
-			assertTrue("1.3", desc.getDeltaExpiration() == desc2.getDeltaExpiration());
-			assertTrue("1.4", desc.isApplyFileStatePolicy() == desc2.isApplyFileStatePolicy());
-			assertTrue("1.5", desc.getFileStateLongevity() == desc2.getFileStateLongevity());
-			assertTrue("1.6", desc.getMaxFileStates() == desc2.getMaxFileStates());
-			assertTrue("1.7", desc.getMaxFileStateSize() == desc2.getMaxFileStateSize());
-			assertTrue("1.8", desc.getOperationsPerSnapshot() == desc2.getOperationsPerSnapshot());
-		} finally {
-			/* remove trash */
-			Workspace.clear(location.toFile());
-		}
-	}
-
 	protected URI uriFromPortableString(String pathString) {
 		return Path.fromPortableString(pathString).toFile().toURI();
 	}
@@ -776,7 +696,7 @@ public class ModelObjectReaderWriterTest extends ResourceTest {
 
 		IPath root = getWorkspace().getRoot().getLocation();
 		IPath location = root.append("ModelObjectReaderWriterTest.txt");
-		ProjectDescriptionReader reader = new ProjectDescriptionReader();
+		ProjectDescriptionReader reader = new ProjectDescriptionReader(getWorkspace());
 		// Write out the project description file
 		ensureDoesNotExistInFileSystem(location.toFile());
 		InputStream stream = new ByteArrayInputStream(projectDescription.getBytes());

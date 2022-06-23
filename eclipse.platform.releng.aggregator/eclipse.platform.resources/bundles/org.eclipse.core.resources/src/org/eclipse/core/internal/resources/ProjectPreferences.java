@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2015 IBM Corporation and others.
+ * Copyright (c) 2004, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,12 +13,15 @@
  *     Markus Schorn (Wind River) - [108066] Project prefs marked dirty on read
  *     James Blackburn (Broadcom Corp.) - ongoing development
  *     Lars Vogel <Lars.Vogel@vogella.com> - Bug 473427, 483529
+ *     Christoph Läubrich - Issue #124
  *******************************************************************************/
 package org.eclipse.core.internal.resources;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.Map.Entry;
 import org.eclipse.core.internal.preferences.*;
 import org.eclipse.core.internal.utils.*;
 import org.eclipse.core.resources.*;
@@ -40,6 +43,8 @@ import org.osgi.service.prefs.Preferences;
 public class ProjectPreferences extends EclipsePreferences {
 	static final String PREFS_REGULAR_QUALIFIER = ResourcesPlugin.PI_RESOURCES;
 	static final String PREFS_DERIVED_QUALIFIER = PREFS_REGULAR_QUALIFIER + ".derived"; //$NON-NLS-1$
+	static final String PLACEHOLDER = "<temporary_value_placeholder>"; //$NON-NLS-1$
+
 	/**
 	 * Cache which nodes have been loaded from disk
 	 */
@@ -62,6 +67,7 @@ public class ProjectPreferences extends EclipsePreferences {
 
 	// cache
 	private int segmentCount;
+	private Workspace workspace;
 
 	static void deleted(IFile file) throws CoreException {
 		IPath path = file.getFullPath();
@@ -187,7 +193,7 @@ public class ProjectPreferences extends EclipsePreferences {
 	}
 
 	private static void preferencesChanged(IProject project) {
-		Workspace workspace = ((Workspace) ResourcesPlugin.getWorkspace());
+		Workspace workspace = (Workspace) project.getWorkspace();
 		workspace.getCharsetManager().projectPreferencesChanged(project);
 		workspace.getContentDescriptionManager().projectPreferencesChanged(project);
 	}
@@ -198,14 +204,11 @@ public class ProjectPreferences extends EclipsePreferences {
 				Policy.debug("Unable to determine preference file or file does not exist for node: " + node.absolutePath()); //$NON-NLS-1$
 			return;
 		}
-		Properties fromDisk = loadProperties(file);
-		// no work to do
-		if (fromDisk.isEmpty())
-			return;
-		// create a new node to store the preferences in.
-		IExportedPreferences myNode = (IExportedPreferences) ExportedPreferences.newRoot().node(node.absolutePath());
-		convertFromProperties((EclipsePreferences) myNode, fromDisk, false);
-		//flag that we are currently reading, to avoid unnecessary writing
+
+		// Create special "overriding" preferences to be applied
+		ExportedPreferences myNode = overridingPreferences(node, file);
+
+		// flag that we are currently reading, to avoid unnecessary writing
 		boolean oldIsReading = node.isReading;
 		node.isReading = true;
 		try {
@@ -213,6 +216,66 @@ public class ProjectPreferences extends EclipsePreferences {
 		} finally {
 			node.isReading = oldIsReading;
 		}
+	}
+
+	/**
+	 * Creates new preferences node from given file that can be used to apply via
+	 * preferences service and override the current in-memory preferences state.
+	 *
+	 * @param current in-memory state
+	 * @param file    new state on the disk to be loaded
+	 * @return new node that contains everything required to apply new state
+	 * @throws BackingStoreException
+	 * @see PreferencesService#applyPreferences(IExportedPreferences)
+	 */
+	private static ExportedPreferences overridingPreferences(ProjectPreferences current, IFile file)
+			throws BackingStoreException {
+		Properties fromDisk = loadProperties(file);
+
+		Properties fromMemory = new Properties();
+		current.convertToProperties(fromMemory, ""); //$NON-NLS-1$
+
+		// Re-create all the child elements existing in memory but not in the file
+		// in the node to be applied to preferences, so we can delete previously
+		// existing node values
+		Set<Entry<Object, Object>> set = fromMemory.entrySet();
+		for (Entry<Object, Object> entry : set) {
+			String key = (String) entry.getKey();
+			// Only touch nodes that are not in the file
+			if (!fromDisk.containsKey(key)) {
+				// and only touch "children" nodes, like encoding/<project>
+				if (key.indexOf('/') > 0) {
+					fromDisk.put(key, PLACEHOLDER);
+				}
+			}
+		}
+
+		// create a new node to store the preferences in.
+		ExportedPreferences myNode = (ExportedPreferences) ExportedPreferences.newRoot().node(current.absolutePath());
+		convertFromProperties(myNode, fromDisk, false);
+
+		// Makes sure the properties are overridden, not merged by marking children
+		// via setExportRoot() - this will remove & recreate them in memory,
+		// so only new values from the file are kept, old ones are removed
+		// See PreferencesService#applyPreferences(IExportedPreferences)
+		myNode.accept(child -> {
+			String[] keys = child.keys();
+			boolean nodeShouldBeRemoved = false;
+			// Remove our placeholders, we don't need them, only nodes
+			for (String key : keys) {
+				if (PLACEHOLDER.equals(child.get(key, null))) {
+					child.remove(key);
+					nodeShouldBeRemoved = true;
+				}
+			}
+			// Only mark child nodes for deletion, if we do that for the root
+			// node, the preferences file will be re-created (which leads to errors)
+			if (child != myNode && nodeShouldBeRemoved) {
+				((ExportedPreferences) child).setExportRoot();
+			}
+			return true;
+		});
+		return myNode;
 	}
 
 	static void removeNode(Preferences node) throws CoreException {
@@ -300,8 +363,9 @@ public class ProjectPreferences extends EclipsePreferences {
 		super(null, null);
 	}
 
-	private ProjectPreferences(EclipsePreferences parent, String name) {
+	private ProjectPreferences(EclipsePreferences parent, String name, Workspace workspace) {
 		super(parent, name);
+		setWorkspace(workspace);
 
 		// cache the segment count
 		String path = absolutePath();
@@ -313,7 +377,7 @@ public class ProjectPreferences extends EclipsePreferences {
 		// cache the project name
 		String projectName = getSegment(path, 1);
 		if (projectName != null)
-			project = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName);
+			project = getWorkspace().getRoot().getProject(projectName);
 
 		// cache the qualifier
 		if (segmentCount > 2)
@@ -341,24 +405,26 @@ public class ProjectPreferences extends EclipsePreferences {
 	 * Figure out what the children of this node are based on the resources
 	 * that are in the workspace.
 	 */
-	private String[] computeChildren() {
-		if (project == null)
-			return EMPTY_STRING_ARRAY;
+	private List<String> computeChildren() {
+		if (project == null) {
+			return List.of();
+		}
 		IFolder folder = project.getFolder(DEFAULT_PREFERENCES_DIRNAME);
-		if (!folder.exists())
-			return EMPTY_STRING_ARRAY;
+		if (!folder.exists()) {
+			return List.of();
+		}
 		IResource[] members = null;
 		try {
 			members = folder.members();
 		} catch (CoreException e) {
-			return EMPTY_STRING_ARRAY;
+			return List.of();
 		}
-		ArrayList<String> result = new ArrayList<>();
+		List<String> result = new ArrayList<>();
 		for (IResource resource : members) {
 			if (resource.getType() == IResource.FILE && PREFS_FILE_EXTENSION.equals(resource.getFullPath().getFileExtension()))
 				result.add(resource.getFullPath().removeFileExtension().lastSegment());
 		}
-		return result.toArray(EMPTY_STRING_ARRAY);
+		return result;
 	}
 
 	@Override
@@ -423,7 +489,7 @@ public class ProjectPreferences extends EclipsePreferences {
 
 	@Override
 	protected EclipsePreferences internalCreate(EclipsePreferences nodeParent, String nodeName, Object context) {
-		return new ProjectPreferences(nodeParent, nodeName);
+		return new ProjectPreferences(nodeParent, nodeName, workspace);
 	}
 
 	@Override
@@ -444,7 +510,7 @@ public class ProjectPreferences extends EclipsePreferences {
 		silentLoad();
 		if ((segmentCount == 3) && PREFS_REGULAR_QUALIFIER.equals(qualifier) && (project != null)) {
 			if (ResourcesPlugin.PREF_SEPARATE_DERIVED_ENCODINGS.equals(key)) {
-				CharsetManager charsetManager = ((Workspace) ResourcesPlugin.getWorkspace()).getCharsetManager();
+				CharsetManager charsetManager = getWorkspace().getCharsetManager();
 				if (Boolean.parseBoolean(newValue))
 					charsetManager.splitEncodingPreferences(project);
 				else
@@ -466,12 +532,11 @@ public class ProjectPreferences extends EclipsePreferences {
 		if (project.isOpen()) {
 			try {
 				synchronized (this) {
-					List<String> addedNames = Arrays.asList(internalChildNames());
-					String[] names = computeChildren();
+					Set<String> addedNames = Set.of(internalChildNames());
 					// add names only for nodes that were not added previously
-					for (String name : names) {
-						if (!addedNames.contains(name)) {
-							addChild(name, null);
+					for (String child : computeChildren()) {
+						if (!addedNames.contains(child)) {
+							addChild(child, null);
 						}
 					}
 				}
@@ -510,9 +575,7 @@ public class ProjectPreferences extends EclipsePreferences {
 		if (Policy.DEBUG_PREFERENCES)
 			Policy.debug("Loading preferences from file: " + localFile.getFullPath()); //$NON-NLS-1$
 		Properties fromDisk = new Properties();
-		try (
-			InputStream input = new BufferedInputStream(localFile.getContents(true));
-		) {
+		try (InputStream input = localFile.getContents(true)) {
 			fromDisk.load(input);
 			convertFromProperties(this, fromDisk, true);
 			loadedNodes.add(absolutePath());
@@ -561,7 +624,7 @@ public class ProjectPreferences extends EclipsePreferences {
 			return super.nodeExists(path);
 		// if we are checking existance of a single segment child of /project, base the answer on
 		// whether or not it exists in the workspace.
-		return ResourcesPlugin.getWorkspace().getRoot().getProject(path).exists() || super.nodeExists(path);
+		return getWorkspace().getRoot().getProject(path).exists() || super.nodeExists(path);
 	}
 
 	@Override
@@ -572,7 +635,7 @@ public class ProjectPreferences extends EclipsePreferences {
 		super.remove(key);
 		if ((segmentCount == 3) && PREFS_REGULAR_QUALIFIER.equals(qualifier) && (project != null)) {
 			if (ResourcesPlugin.PREF_SEPARATE_DERIVED_ENCODINGS.equals(key)) {
-				CharsetManager charsetManager = ((Workspace) ResourcesPlugin.getWorkspace()).getCharsetManager();
+				CharsetManager charsetManager = getWorkspace().getCharsetManager();
 				if (ResourcesPlugin.DEFAULT_PREF_SEPARATE_DERIVED_ENCODINGS)
 					charsetManager.splitEncodingPreferences(project);
 				else
@@ -621,7 +684,7 @@ public class ProjectPreferences extends EclipsePreferences {
 					String fileLineSeparator = FileUtil.getLineSeparator(fileInWorkspace);
 					if (!systemLineSeparator.equals(fileLineSeparator))
 						s = s.replaceAll(systemLineSeparator, fileLineSeparator);
-					InputStream input = new BufferedInputStream(new ByteArrayInputStream(s.getBytes("UTF-8"))); //$NON-NLS-1$
+					InputStream input = new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8));
 					// make sure that preference folder and file are in sync
 					fileInWorkspace.getParent().refreshLocal(IResource.DEPTH_ZERO, null);
 					fileInWorkspace.refreshLocal(IResource.DEPTH_ZERO, null);
@@ -631,7 +694,6 @@ public class ProjectPreferences extends EclipsePreferences {
 						if (fileInWorkspace.isReadOnly()) {
 							IStatus status2 = fileInWorkspace.getWorkspace().validateEdit(new IFile[] {fileInWorkspace}, IWorkspace.VALIDATE_PROMPT);
 							if (!status2.isOK()) {
-								input.close();
 								throw new CoreException(status2);
 							}
 						}
@@ -661,8 +723,8 @@ public class ProjectPreferences extends EclipsePreferences {
 			};
 			//don't bother with scheduling rules if we are already inside an operation
 			try {
-				IWorkspace workspace = ResourcesPlugin.getWorkspace();
-				if (((Workspace) workspace).getWorkManager().isLockAlreadyAcquired()) {
+				Workspace workspace = getWorkspace();
+				if (workspace.getWorkManager().isLockAlreadyAcquired()) {
 					operation.run(null);
 				} else {
 					IResourceRuleFactory factory = workspace.getRuleFactory();
@@ -696,5 +758,17 @@ public class ProjectPreferences extends EclipsePreferences {
 		} finally {
 			node.setLoading(false);
 		}
+	}
+
+	void setWorkspace(Workspace workspace) {
+		this.workspace = workspace;
+	}
+
+	private Workspace getWorkspace() {
+		if (workspace != null) {
+			return workspace;
+		}
+		// last resort...
+		return (Workspace) ResourcesPlugin.getWorkspace();
 	}
 }

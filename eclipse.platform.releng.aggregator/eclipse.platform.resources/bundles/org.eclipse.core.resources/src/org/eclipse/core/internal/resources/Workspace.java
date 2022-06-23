@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2015 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -15,15 +15,19 @@
  *     Serge Beauchamp (Freescale Semiconductor) - [229633] Group and Project Path Variable Support
  *     Broadcom Corporation - ongoing development
  *     Lars Vogel <Lars.Vogel@vogella.com> - Bug 473427
+ *     Christoph Läubrich - Issue #77, Issue #86, Issue #124
  *******************************************************************************/
 package org.eclipse.core.internal.resources;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.management.ManagementFactory;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
@@ -42,8 +46,11 @@ import org.eclipse.core.resources.*;
 import org.eclipse.core.resources.team.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.*;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.osgi.util.NLS;
 import org.osgi.framework.Bundle;
+import org.osgi.service.prefs.Preferences;
 import org.xml.sax.InputSource;
 
 /**
@@ -106,7 +113,7 @@ public class Workspace extends PlatformObject implements IWorkspace, ICoreConsta
 	protected WorkspacePreferences description;
 	protected FileSystemResourceManager fileSystemManager;
 	protected final CopyOnWriteArrayList<ILifecycleListener> lifecycleListeners = new CopyOnWriteArrayList<>();
-	protected LocalMetaArea localMetaArea;
+	protected final LocalMetaArea localMetaArea;
 	/**
 	 * Helper class for performing validation of resource names and locations.
 	 */
@@ -118,8 +125,8 @@ public class Workspace extends PlatformObject implements IWorkspace, ICoreConsta
 	protected IMoveDeleteHook moveDeleteHook = null;
 	protected NatureManager natureManager;
 	protected FilterTypeManager filterManager;
-	protected long nextMarkerId = 0;
-	protected long nextNodeId = 1;
+	protected final AtomicLong nextMarkerId = new AtomicLong();
+	protected final AtomicLong nextNodeId = new AtomicLong(1L);
 
 	protected NotificationManager notificationManager;
 	protected boolean openFlag = false;
@@ -290,7 +297,7 @@ public class Workspace extends PlatformObject implements IWorkspace, ICoreConsta
 
 	public Workspace() {
 		super();
-		localMetaArea = new LocalMetaArea();
+		localMetaArea = new LocalMetaArea(this);
 		tree = new ElementTree();
 		/* tree should only be modified during operations */
 		tree.immutable();
@@ -433,12 +440,13 @@ public class Workspace extends PlatformObject implements IWorkspace, ICoreConsta
 		ISchedulingRule currentRule = null;
 		boolean buildParallel = noEnclosingRule && getDescription().getMaxConcurrentBuilds() > 1 && getDescription().getBuildOrder() == null;
 		SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
+		SubMonitor newChild = subMonitor.newChild(1);
 		try {
 			try {
 
 				// Must run the PRE_BUILD with the WRule held before acquiring WS lock
 				// Can remove this if we run notifications without the WS lock held: bug 249951
-				prepareOperation(notificationRule, subMonitor.newChild(1));
+				prepareOperation(notificationRule, newChild);
 				currentRule = notificationRule;
 				beginOperation(true);
 				aboutToBuild(this, trigger);
@@ -609,18 +617,21 @@ public class Workspace extends PlatformObject implements IWorkspace, ICoreConsta
 		//nothing to do if the workspace failed to open
 		if (!isOpen())
 			return;
+		String msg = Messages.resources_closing_0;
+		SubMonitor subMonitor = SubMonitor.convert(monitor, msg, 20);
+		subMonitor.subTask(msg);
+		// this operation will never end because the world is going away
+		SubMonitor newChild = subMonitor.newChild(1);
 		try {
-			String msg = Messages.resources_closing_0;
-			SubMonitor subMonitor = SubMonitor.convert(monitor, msg, 20);
-			subMonitor.subTask(msg);
-			//this operation will never end because the world is going away
 			try {
 				stringPoolJob.cancel();
+				// stop accepting refresh tasks & doing refresh
+				refreshManager.shutdown(null);
 				//shutdown save manager now so a last snapshot can be taken before we close
 				//note: you can't call #save() from within a nested operation
 				saveManager.shutdown(null);
 				saveManager.reportSnapshotRequestor();
-				prepareOperation(getRoot(), subMonitor.newChild(1));
+				prepareOperation(getRoot(), newChild);
 				//shutdown notification first to avoid calling third parties during shutdown
 				notificationManager.shutdown(null);
 				beginOperation(true);
@@ -1803,7 +1814,7 @@ public class Workspace extends PlatformObject implements IWorkspace, ICoreConsta
 	public WorkManager getWorkManager() throws CoreException {
 		if (_workManager == null) {
 			String message = Messages.resources_shutdown;
-			throw new ResourceException(new ResourceStatus(IResourceStatus.INTERNAL_ERROR, null, message));
+			throw new ResourceException(IResourceStatus.INTERNAL_ERROR, null, message, null);
 		}
 		return _workManager;
 	}
@@ -1853,7 +1864,7 @@ public class Workspace extends PlatformObject implements IWorkspace, ICoreConsta
 	 * Add the project scope to the preference service's default look-up order so
 	 * people get it for free
 	 */
-	private void initializePreferenceLookupOrder() {
+	private void initializePreferenceLookupOrder() throws CoreException {
 		PreferencesService service = PreferencesService.getDefault();
 		String[] original = service.getDefaultDefaultLookupOrder();
 		List<String> newOrder = new ArrayList<>();
@@ -1861,6 +1872,15 @@ public class Workspace extends PlatformObject implements IWorkspace, ICoreConsta
 		newOrder.add(ProjectScope.SCOPE);
 		newOrder.addAll(Arrays.asList(original));
 		service.setDefaultDefaultLookupOrder(newOrder.toArray(new String[newOrder.size()]));
+		Preferences node = service.getRootNode().node(ProjectScope.SCOPE);
+		if (node instanceof ProjectPreferences) {
+			ProjectPreferences projectPreferences = (ProjectPreferences) node;
+			projectPreferences.setWorkspace(this);
+		} else {
+			throw new CoreException(Status.error(MessageFormat.format(
+					"Internal error while open workspace, expected ProjectPreferences for the scope {0} but got {1}", //$NON-NLS-1$
+					ProjectScope.SCOPE, node.getClass().getSimpleName())));
+		}
 	}
 
 	/**
@@ -1901,7 +1921,7 @@ public class Workspace extends PlatformObject implements IWorkspace, ICoreConsta
 			// default to use Core's implementation
 			//create anonymous subclass because TeamHook is abstract
 			if (teamHook == null)
-				teamHook = new TeamHook() {
+				teamHook = new TeamHook(this) {
 					// empty
 				};
 		}
@@ -1971,8 +1991,7 @@ public class Workspace extends PlatformObject implements IWorkspace, ICoreConsta
 
 	@Override
 	public IProjectDescription loadProjectDescription(InputStream stream) throws CoreException {
-		IProjectDescription result = null;
-		result = new ProjectDescriptionReader().read(new InputSource(stream));
+		IProjectDescription result = new ProjectDescriptionReader(this).read(new InputSource(stream));
 		if (result == null) {
 			String message = NLS.bind(Messages.resources_errorReadProject, stream.toString());
 			IStatus status = new Status(IStatus.ERROR, ResourcesPlugin.PI_RESOURCES, IResourceStatus.FAILED_READ_METADATA, message, null);
@@ -1986,7 +2005,7 @@ public class Workspace extends PlatformObject implements IWorkspace, ICoreConsta
 		IProjectDescription result = null;
 		IOException e = null;
 		try {
-			result = new ProjectDescriptionReader().read(path);
+			result = new ProjectDescriptionReader(this).read(path);
 			if (result != null) {
 				// check to see if we are using in the default area or not. use java.io.File for
 				// testing equality because it knows better w.r.t. drives and case sensitivity
@@ -2158,19 +2177,23 @@ public class Workspace extends PlatformObject implements IWorkspace, ICoreConsta
 	 * modifications to the tree.
 	 */
 	public ElementTree newWorkingTree() {
-		tree = tree.newEmptyDelta();
-		return tree;
+		// synchronized for atomic swap. Should have already synchronized by
+		// getWorkManager().checkIn/checkout, but it's not guaranteed
+		synchronized (this) {
+			tree = tree.newEmptyDelta();
+			return tree;
+		}
 	}
 
 	/**
 	 * Returns the next, previously unassigned, marker id.
 	 */
 	protected long nextMarkerId() {
-		return nextMarkerId++;
+		return nextMarkerId.getAndIncrement();
 	}
 
 	protected long nextNodeId() {
-		return nextNodeId++;
+		return nextNodeId.getAndIncrement();
 	}
 
 	/**
@@ -2205,7 +2228,6 @@ public class Workspace extends PlatformObject implements IWorkspace, ICoreConsta
 			localMetaArea.createMetaArea();
 		}
 		PlatformURLResourceConnection.startup(getRoot().getLocation());
-		initializePreferenceLookupOrder();
 
 		// This method is not inside an operation because it is the one responsible for
 		// creating the WorkManager object (who takes care of operations).
@@ -2217,12 +2239,11 @@ public class Workspace extends PlatformObject implements IWorkspace, ICoreConsta
 		}
 		description = new WorkspacePreferences();
 
-		// if we have an old description file, read it (getting rid of it)
-		WorkspaceDescription oldDescription = getMetaArea().readOldWorkspace();
-		if (oldDescription != null) {
-			description.copyFrom(oldDescription);
-			ResourcesPlugin.getPlugin().savePluginPreferences();
+		// Set explicit workspace encoding if no projects exist in the workspace
+		if (!localMetaArea.hasSavedProjects()) {
+			setExplicitWorkspaceEncoding();
 		}
+		initializePreferenceLookupOrder();
 
 		// create root location
 		localMetaArea.locationFor(getRoot()).toFile().mkdirs();
@@ -2244,6 +2265,52 @@ public class Workspace extends PlatformObject implements IWorkspace, ICoreConsta
 		stringPoolJob = new StringPoolJob();
 		stringPoolJob.addStringPoolParticipant(saveManager, getRoot());
 		return Status.OK_STATUS;
+	}
+
+	/**
+	 * Writes explicit workspace encoding to workspace preferences
+	 * ("org.eclipse.core.resources/encoding"). If the user started Eclipse with
+	 * explicit encoding set (-Dfile.encoding=XYZ), this encoding used, otherwise
+	 * UTF-8.
+	 * <p>
+	 * With that, if user did not specified any encoding, all projects created in
+	 * this workspace will get explicit UTF-8 encoding set.
+	 */
+	private void setExplicitWorkspaceEncoding() {
+		// ResourcesPlugin.getEncoding() defaults to JVM "file.encoding" value
+		// which is *always* set in the JVM, so it can't be used.
+		// Therefore check preferences directly (encoding could be set even in a new
+		// workspace via product customization file, like
+		// org.eclipse.core.resources/encoding=ISO-8859-1)
+		String defaultEncoding = Platform.getPreferencesService().getString(ResourcesPlugin.PI_RESOURCES,
+				ResourcesPlugin.PREF_ENCODING, /* default */null, /* all scopes */null);
+
+		if (defaultEncoding == null || defaultEncoding.isBlank()) {
+			// Check if -Dfile.encoding= startup argument was given to Eclipse's JVM
+			List<String> commandLineArgs = ManagementFactory.getRuntimeMXBean().getInputArguments();
+			for (String arg : commandLineArgs) {
+				if (arg.startsWith("-Dfile.encoding=")) { //$NON-NLS-1$
+					defaultEncoding = arg.substring("-Dfile.encoding=".length()); //$NON-NLS-1$
+					// continue, it can be specified multiple times, last one wins.
+				}
+			}
+			// Now we are sure user didn't specified encoding, so we can set
+			// default encoding for the workspace
+			if (defaultEncoding == null || defaultEncoding.isBlank()) {
+				defaultEncoding = "UTF-8"; //$NON-NLS-1$
+			}
+
+			// Persist encoding to the workspace preferences - if same workspace is started
+			// later by other Eclipse instance without product customization or system
+			// property or with differently set properties, we want keep same encoding as on
+			// the first startup. Otherwise users may end up with projects in same workspace
+			// created with different encodings. This is surely supported but would surprise
+			// users sooner or later. So better to set it first time, users can always
+			// change it later if needed.
+			IEclipsePreferences workspacePrefs = InstanceScope.INSTANCE.getNode(ResourcesPlugin.PI_RESOURCES);
+			workspacePrefs.put(ResourcesPlugin.PREF_ENCODING, defaultEncoding);
+			Assert.isTrue(defaultEncoding.equals(ResourcesPlugin.getEncoding()));
+		}
 	}
 
 	/**
@@ -2465,7 +2532,7 @@ public class Workspace extends PlatformObject implements IWorkspace, ICoreConsta
 			fileSystemManager.startup(monitor);
 			pathVariableManager = new PathVariableManager();
 			pathVariableManager.startup(null);
-			natureManager = new NatureManager();
+			natureManager = new NatureManager(this);
 			natureManager.startup(null);
 			filterManager = new FilterTypeManager();
 			filterManager.startup(null);
@@ -2478,11 +2545,11 @@ public class Workspace extends PlatformObject implements IWorkspace, ICoreConsta
 			synchronizer = new Synchronizer(this);
 			saveManager = new SaveManager(this);
 			saveManager.startup(null);
-			propertyManager = new PropertyManager2((Workspace) ResourcesPlugin.getWorkspace());
+			propertyManager = new PropertyManager2(this);
 			propertyManager.startup(monitor);
 			charsetManager = new CharsetManager(this);
 			charsetManager.startup(null);
-			contentDescriptionManager = new ContentDescriptionManager();
+			contentDescriptionManager = new ContentDescriptionManager(this);
 			contentDescriptionManager.startup(null);
 			//must start after save manager, because (read) access to tree is needed
 			//must start after other managers to avoid potential cyclic dependency on uninitialized managers (see bug 316182)
@@ -2512,6 +2579,12 @@ public class Workspace extends PlatformObject implements IWorkspace, ICoreConsta
 		};
 		new ElementTreeIterator(tree, Path.ROOT).iterate(visitor);
 		return buffer.toString();
+	}
+
+	/** for debugging only **/
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + "[localMetaArea=" + localMetaArea.getLocation() + "]"; //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
 	public void updateModificationStamp(ResourceInfo info) {

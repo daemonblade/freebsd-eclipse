@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2015 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -16,6 +16,7 @@
  *     Markus Schorn (Wind River) - [306575] Save snapshot location with project
  *     Broadcom Corporation - ongoing development
  *     Lars Vogel <Lars.Vogel@vogella.com> - Bug 473427
+ *     Christoph Läubrich - Issue #80 - CharsetManager access the ResourcesPlugin.getWorkspace before init
  *******************************************************************************/
 package org.eclipse.core.internal.resources;
 
@@ -23,6 +24,7 @@ import java.net.URI;
 import java.util.*;
 import org.eclipse.core.filesystem.*;
 import org.eclipse.core.internal.events.LifecycleEvent;
+import org.eclipse.core.internal.preferences.EclipsePreferences;
 import org.eclipse.core.internal.utils.*;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.resources.team.IMoveDeleteHook;
@@ -178,8 +180,9 @@ public class Project extends Container implements IProject {
 		String msg = NLS.bind(Messages.resources_closing_1, getName());
 		SubMonitor subMonitor = SubMonitor.convert(monitor, msg, 100);
 		final ISchedulingRule rule = workspace.getRuleFactory().modifyRule(this);
+		SubMonitor newChild = subMonitor.newChild(1);
 		try {
-			workspace.prepareOperation(rule, subMonitor.newChild(1));
+			workspace.prepareOperation(rule, newChild);
 			ResourceInfo info = getResourceInfo(false, false);
 			int flags = getFlags(info);
 			checkExists(flags, true);
@@ -1008,6 +1011,7 @@ public class Project extends Container implements IProject {
 	@Override
 	public void open(int updateFlags, IProgressMonitor monitor) throws CoreException {
 		monitor = Policy.monitorFor(monitor);
+		boolean encodingWritten = false;
 		try {
 			String msg = NLS.bind(Messages.resources_opening_1, getName());
 			monitor.beginTask(msg, Policy.totalWork);
@@ -1094,6 +1098,12 @@ public class Project extends Container implements IProject {
 						monitor.worked(Policy.opWork * 60 / 100);
 					}
 				}
+
+				// Project is new and does not have any content already (not imported)
+				if (!used && !unknownChildren) {
+					writeEncodingAfterOpen(monitor);
+					encodingWritten = true;
+				}
 				//creation of this project may affect overlapping resources
 				workspace.getAliasManager().updateAliases(this, getStore(), IResource.DEPTH_INFINITE, monitor);
 			} catch (OperationCanceledException e) {
@@ -1104,6 +1114,31 @@ public class Project extends Container implements IProject {
 			}
 		} finally {
 			monitor.done();
+		}
+		if (!encodingWritten) {
+			ValidateProjectEncoding.scheduleProjectValidation((Workspace) getWorkspace(), this);
+		}
+	}
+
+	/**
+	 * Try to set encoding if we open the project for the first time. See bug 479450
+	 */
+	private void writeEncodingAfterOpen(IProgressMonitor monitor) throws CoreException {
+		IPath settings = new Path(EclipsePreferences.DEFAULT_PREFERENCES_DIRNAME).append(ResourcesPlugin.PI_RESOURCES)
+				.addFileExtension(EclipsePreferences.PREFS_FILE_EXTENSION);
+		IFile file = getFile(settings);
+
+		// The file could not yet be up-to-date with underlined resource
+		// force refresh to force reading project preferences via
+		// org.eclipse.core.internal.resources.ProjectPreferences.updatePreferences(IFile)
+		IPath location = file.getLocation();
+		if (!file.exists() && location != null && location.toFile().exists()) {
+			file.refreshLocal(IResource.DEPTH_ZERO, monitor);
+		}
+		String charset = workspace.getCharsetManager().getCharsetFor(getFullPath(), false);
+		if (charset == null) {
+			String encoding = ResourcesPlugin.getEncoding();
+			workspace.getCharsetManager().setCharsetFor(getFullPath(), encoding);
 		}
 	}
 

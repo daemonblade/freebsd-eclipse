@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -15,6 +15,7 @@
  *     Sergey Prigogin (Google) - [437005] Out-of-date .snap file prevents Eclipse from running
  *     Lars Vogel <Lars.Vogel@vogella.com> - Bug 473427
  *     Mickael Istria (Red Hat Inc.) - Bug 488937
+ *     Christoph Läubrich - Issue #77 - SaveManager access the ResourcesPlugin.getWorkspace at init phase
  *******************************************************************************/
 package org.eclipse.core.internal.resources;
 
@@ -57,9 +58,10 @@ public class LocalMetaArea implements ICoreConstants {
 	 * The project location is just stored as an optimization, to avoid recomputing it.
 	 */
 	protected final IPath projectMetaLocation;
+	private Workspace workspace;
 
-	public LocalMetaArea() {
-		super();
+	public LocalMetaArea(Workspace workspace) {
+		this.workspace = workspace;
 		metaAreaLocation = ResourcesPlugin.getPlugin().getStateLocation();
 		projectMetaLocation = metaAreaLocation.append(F_PROJECTS);
 	}
@@ -152,10 +154,6 @@ public class LocalMetaArea implements ICoreConstants {
 	 */
 	public IPath getOldDescriptionLocationFor(IProject target) {
 		return locationFor(target).append(F_OLD_PROJECT);
-	}
-
-	public IPath getOldWorkspaceDescriptionLocation() {
-		return metaAreaLocation.append(F_DESCRIPTION);
 	}
 
 	public IPath getPropertyStoreLocation(IResource resource) {
@@ -253,7 +251,7 @@ public class LocalMetaArea implements ICoreConstants {
 	}
 
 	protected Workspace getWorkspace() {
-		return (Workspace) ResourcesPlugin.getWorkspace();
+		return workspace;
 	}
 
 	public boolean hasSavedProject(IProject project) {
@@ -263,6 +261,10 @@ public class LocalMetaArea implements ICoreConstants {
 
 	public boolean hasSavedWorkspace() {
 		return metaAreaLocation.toFile().exists() || getBackupLocationFor(metaAreaLocation).toFile().exists();
+	}
+
+	public boolean hasSavedProjects() {
+		return projectMetaLocation.toFile().exists();
 	}
 
 	/**
@@ -307,24 +309,6 @@ public class LocalMetaArea implements ICoreConstants {
 			throw new ResourceException(IResourceStatus.FAILED_READ_METADATA, project.getFullPath(), msg, null);
 		}
 		return description;
-	}
-
-	/**
-	 * Provides backward compatibility with existing workspaces based on
-	 * descriptions.
-	 */
-	public WorkspaceDescription readOldWorkspace() {
-		IPath path = getOldWorkspaceDescriptionLocation();
-		IPath tempPath = getBackupLocationFor(path);
-		try {
-			WorkspaceDescription oldDescription = (WorkspaceDescription) new WorkspaceDescriptionReader().read(path, tempPath);
-			// if one of those files exist, get rid of them
-			Workspace.clear(path.toFile());
-			Workspace.clear(tempPath.toFile());
-			return oldDescription;
-		} catch (IOException e) {
-			return null;
-		}
 	}
 
 	/**
@@ -417,26 +401,6 @@ public class LocalMetaArea implements ICoreConstants {
 		} catch (IOException e) {
 			//ignore - this is an old location file or an exception occurred
 			// closing the stream
-		}
-	}
-
-	/**
-	 * Writes the workspace description to the local meta area. This method is
-	 * synchronized to prevent multiple current write attempts.
-	 *
-	 * @deprecated should not be called any more - workspace preferences are
-	 *                     now maintained in the plug-in's preferences
-	 */
-	@Deprecated
-	public synchronized void write(WorkspaceDescription description) throws CoreException {
-		IPath path = getOldWorkspaceDescriptionLocation();
-		path.toFile().getParentFile().mkdirs();
-		IPath tempPath = getBackupLocationFor(path);
-		try {
-			new ModelObjectWriter().write(description, path, tempPath, System.lineSeparator());
-		} catch (IOException e) {
-			String message = NLS.bind(Messages.resources_writeWorkspaceMeta, path);
-			throw new ResourceException(IResourceStatus.FAILED_WRITE_METADATA, null, message, e);
 		}
 	}
 

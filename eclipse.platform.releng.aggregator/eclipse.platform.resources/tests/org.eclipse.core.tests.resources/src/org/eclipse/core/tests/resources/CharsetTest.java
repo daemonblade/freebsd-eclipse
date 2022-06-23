@@ -17,11 +17,11 @@ package org.eclipse.core.tests.resources;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.*;
 import org.eclipse.core.internal.events.NotificationManager;
 import org.eclipse.core.internal.preferences.EclipsePreferences;
-import org.eclipse.core.internal.resources.CharsetDeltaJob;
-import org.eclipse.core.internal.resources.CharsetManager;
+import org.eclipse.core.internal.resources.*;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.content.*;
@@ -178,6 +178,7 @@ public class CharsetTest extends ResourceTest {
 			return true;
 		};
 		root.accept(visitor);
+		waitForEncodingRelatedJobs();
 	}
 
 	private IFile getResourcesPreferenceFile(IProject project, boolean forDerivedResources) {
@@ -241,6 +242,7 @@ public class CharsetTest extends ResourceTest {
 		ResourcesPlugin.getPlugin().getPluginPreferences().setValue(ResourcesPlugin.PREF_ENCODING, savedWorkspaceCharset);
 		// Reset the PREF_LIGHTWEIGHT_AUTO_REFRESH preference to its default value.
 		getResourcesPreferences().remove(ResourcesPlugin.PREF_LIGHTWEIGHT_AUTO_REFRESH);
+		waitForEncodingRelatedJobs();
 		super.tearDown();
 	}
 
@@ -322,6 +324,9 @@ public class CharsetTest extends ResourceTest {
 		String originalUserCharset = root.getDefaultCharset(false);
 		try {
 			root.setDefaultCharset(null);
+			assertNull("1.0", root.getDefaultCharset(false));
+
+			root.setDefaultCharset(null, new NullProgressMonitor());
 			assertNull("1.0", root.getDefaultCharset(false));
 		} finally {
 			if (originalUserCharset != null) {
@@ -481,13 +486,13 @@ public class CharsetTest extends ResourceTest {
 			}
 			IFile regularPrefs = getResourcesPreferenceFile(project1, false);
 			IFile derivedPrefs = getResourcesPreferenceFile(project1, true);
-			assertDoesNotExistInWorkspace("0.2", regularPrefs);
+			assertExistsInWorkspace("0.2", regularPrefs);
 			assertDoesNotExistInWorkspace("0.3", derivedPrefs);
 
 			//1 - setting preference on project
 			verifier.reset();
-			verifier.addExpectedChange(regularPrefs.getParent(), IResourceDelta.ADDED, 0);
-			verifier.addExpectedChange(regularPrefs, IResourceDelta.ADDED, 0);
+			verifier.addExpectedChange(regularPrefs.getParent(), IResourceDelta.CHANGED, 0);
+			verifier.addExpectedChange(regularPrefs, IResourceDelta.CHANGED, IResourceDelta.CONTENT);
 			setDerivedEncodingStoredSeparately("1.0", project1, true);
 			assertTrue("1.1", verifier.waitForEvent(10000));
 			assertTrue("1.2 " + verifier.getMessage(), verifier.isDeltaValid());
@@ -910,16 +915,41 @@ public class CharsetTest extends ResourceTest {
 			IFile file1 = project.getFile("file1.txt");
 			IFile file2 = folder1.getFile("file2.txt");
 			IFile file3 = folder2.getFile("file3.txt");
+
+			ensureExistsInWorkspace(new IResource[] { project }, true);
+			assertEquals(ResourcesPlugin.getEncoding(), project.getDefaultCharset(false));
+
+			IMarker[] markers = project.findMarkers(ValidateProjectEncoding.MARKER_TYPE, false, IResource.DEPTH_ONE);
+			assertEquals("No missing encoding marker should be set", 0, markers.length);
+
+			project.setDefaultCharset(null, getMonitor());
+			assertEquals(null, project.getDefaultCharset(false));
+
+			waitForEncodingRelatedJobs();
+
+			markers = project.findMarkers(ValidateProjectEncoding.MARKER_TYPE, false, IResource.DEPTH_ONE);
+			assertEquals("Missing encoding marker should be set", 1, markers.length);
+
 			ensureExistsInWorkspace(new IResource[] {file1, file2, file3}, true);
 			// project and children should be using the workspace's default now
 			assertCharsetIs("1.0", ResourcesPlugin.getEncoding(), new IResource[] {workspace.getRoot(), project, file1, folder1, file2, folder2, file3}, true);
 			assertCharsetIs("1.1", null, new IResource[] {project, file1, folder1, file2, folder2, file3}, false);
+
 			// sets workspace default charset
 			workspace.getRoot().setDefaultCharset("FOO", getMonitor());
+			markers = project.findMarkers(ValidateProjectEncoding.MARKER_TYPE, false, IResource.DEPTH_ONE);
+			assertEquals("Missing encoding marker should be still set", 1, markers.length);
+
 			assertCharsetIs("2.0", "FOO", new IResource[] {workspace.getRoot(), project, file1, folder1, file2, folder2, file3}, true);
 			assertCharsetIs("2.1", null, new IResource[] {project, file1, folder1, file2, folder2, file3}, false);
+
 			// sets project default charset
 			project.setDefaultCharset("BAR", getMonitor());
+			waitForEncodingRelatedJobs();
+
+			markers = project.findMarkers(ValidateProjectEncoding.MARKER_TYPE, false, IResource.DEPTH_ONE);
+			assertEquals("No missing encoding marker should be set", 0, markers.length);
+
 			assertCharsetIs("3.0", "BAR", new IResource[] {project, file1, folder1, file2, folder2, file3}, true);
 			assertCharsetIs("3.1", null, new IResource[] {file1, folder1, file2, folder2, file3}, false);
 			assertCharsetIs("3.2", "FOO", new IResource[] {workspace.getRoot()}, true);
@@ -1051,7 +1081,7 @@ public class CharsetTest extends ResourceTest {
 
 	// check preference change events are reflected in the charset settings
 	// temporarily disabled
-	public void testDeltaOnPreferenceChanges() {
+	public void testDeltaOnPreferenceChanges() throws Exception {
 
 		CharsetVerifier backgroundVerifier = new CharsetVerifier(CharsetVerifier.IGNORE_CREATION_THREAD);
 		getWorkspace().addResourceChangeListener(backgroundVerifier, IResourceChangeEvent.POST_CHANGE);
@@ -1063,37 +1093,55 @@ public class CharsetTest extends ResourceTest {
 			ensureExistsInWorkspace(new IResource[] {file1, file2}, true);
 
 			IFile resourcesPrefs = getResourcesPreferenceFile(project, false);
-			assertTrue("0.9", !resourcesPrefs.exists());
-
+			assertTrue("0.9", resourcesPrefs.exists());
+			String prefsContent = Files.readString(resourcesPrefs.getLocation().toFile().toPath());
+			assertTrue(prefsContent.contains(ResourcesPlugin.getEncoding()));
 			try {
 				file1.setCharset("CHARSET1", getMonitor());
 			} catch (CoreException e) {
 				fail("1.0", e);
 			}
 			assertTrue("1.1", resourcesPrefs.exists());
+			waitForCharsetManagerJob();
+
+			prefsContent = Files.readString(resourcesPrefs.getLocation().toFile().toPath());
+			assertTrue(prefsContent.contains(ResourcesPlugin.getEncoding()));
 
 			backgroundVerifier.reset();
 			backgroundVerifier.addExpectedChange(new IResource[] {project, folder1, file1, file2, resourcesPrefs, resourcesPrefs.getParent()}, IResourceDelta.CHANGED, IResourceDelta.ENCODING);
 			// cause a resource change event without actually changing contents
+			InputStream contents = new ByteArrayInputStream(prefsContent.getBytes());
 			try {
-				resourcesPrefs.setContents(resourcesPrefs.getContents(), 0, getMonitor());
+				resourcesPrefs.setContents(contents, 0, getMonitor());
 			} catch (CoreException e) {
 				fail("2.0", e);
 			}
 			assertTrue("2.1", backgroundVerifier.waitForEvent(10000));
 			assertTrue("2.2 " + backgroundVerifier.getMessage(), backgroundVerifier.isDeltaValid());
 
+			IMarker[] markers = project.findMarkers(ValidateProjectEncoding.MARKER_TYPE, false, IResource.DEPTH_ONE);
+			assertEquals("No missing encoding marker should be set", 0, markers.length);
+
 			backgroundVerifier.reset();
-			backgroundVerifier.addExpectedChange(new IResource[] {project, folder1, file1, file2, resourcesPrefs.getParent()}, IResourceDelta.CHANGED, IResourceDelta.ENCODING);
+			backgroundVerifier.addExpectedChange(
+					new IResource[] { project }, IResourceDelta.CHANGED,
+					IResourceDelta.ENCODING | IResourceDelta.MARKERS);
+			backgroundVerifier.addExpectedChange(new IResource[] { folder1, file1, file2, resourcesPrefs.getParent() },
+					IResourceDelta.CHANGED, IResourceDelta.ENCODING);
 			try {
 				// delete the preferences file
 				resourcesPrefs.delete(true, getMonitor());
 			} catch (CoreException e) {
 				fail("3.0", e);
 			}
+			waitForCharsetManagerJob();
+			waitForEncodingRelatedJobs();
+
 			assertTrue("3.1", backgroundVerifier.waitForEvent(10000));
 			assertTrue("3.2 " + backgroundVerifier.getMessage(), backgroundVerifier.isDeltaValid());
 
+			markers = project.findMarkers(ValidateProjectEncoding.MARKER_TYPE, false, IResource.DEPTH_ONE);
+			assertEquals("Missing encoding marker should be set", 1, markers.length);
 		} finally {
 			getWorkspace().removeResourceChangeListener(backgroundVerifier);
 			try {
@@ -1119,7 +1167,8 @@ public class CharsetTest extends ResourceTest {
 			ensureExistsInWorkspace(new IResource[] {project, folder1}, true);
 			verifier.reset();
 			verifier.addExpectedChange(folder1, IResourceDelta.CHANGED, IResourceDelta.ENCODING);
-			verifier.addExpectedChange(new IResource[] {prefs, prefs.getParent()}, IResourceDelta.ADDED, 0);
+			verifier.addExpectedChange(new IResource[] { prefs.getParent() }, IResourceDelta.CHANGED, 0);
+			verifier.addExpectedChange(new IResource[] { prefs }, IResourceDelta.CHANGED, IResourceDelta.CONTENT);
 			try {
 				folder1.setDefaultCharset("new_charset", getMonitor());
 			} catch (CoreException e) {
@@ -1211,6 +1260,7 @@ public class CharsetTest extends ResourceTest {
 			} catch (CoreException e) {
 				fail("7.1", e);
 			}
+			waitForEncodingRelatedJobs();
 			verifier.assertExpectedDeltasWereReceived("7.2.");
 
 			// clear all the encoding info before we start working with the root
@@ -1226,6 +1276,7 @@ public class CharsetTest extends ResourceTest {
 			} catch (CoreException e) {
 				fail("8.1", e);
 			}
+			waitForEncodingRelatedJobs();
 			verifier.assertExpectedDeltasWereReceived("8.2.");
 		} finally {
 			verifier.removeResourceChangeListeners();
@@ -1257,7 +1308,8 @@ public class CharsetTest extends ResourceTest {
 			// change from default
 			verifier.reset();
 			verifier.addExpectedChange(file1, IResourceDelta.CHANGED, IResourceDelta.ENCODING);
-			verifier.addExpectedChange(new IResource[] {prefs, prefs.getParent()}, IResourceDelta.ADDED, 0);
+			verifier.addExpectedChange(new IResource[] { prefs.getParent() }, IResourceDelta.CHANGED, 0);
+			verifier.addExpectedChange(new IResource[] { prefs }, IResourceDelta.CHANGED, IResourceDelta.CONTENT);
 			try {
 				file1.setCharset("FOO", getMonitor());
 			} catch (CoreException e) {
@@ -1267,9 +1319,8 @@ public class CharsetTest extends ResourceTest {
 
 			// change to default (clear it)
 			verifier.reset();
+			verifier.addExpectedChange(prefs, IResourceDelta.CHANGED, IResourceDelta.CONTENT);
 			verifier.addExpectedChange(file1, IResourceDelta.CHANGED, IResourceDelta.ENCODING);
-			verifier.addExpectedChange(prefs.getParent(), IResourceDelta.CHANGED, 0);
-			verifier.addExpectedChange(prefs, IResourceDelta.REMOVED, 0);
 			try {
 				file1.setCharset(null, getMonitor());
 			} catch (CoreException e) {
@@ -1279,11 +1330,10 @@ public class CharsetTest extends ResourceTest {
 
 			// change to default (equal to it but it doesn't inherit)
 			verifier.reset();
+			verifier.addExpectedChange(prefs, IResourceDelta.CHANGED, IResourceDelta.CONTENT);
 			verifier.addExpectedChange(file1, IResourceDelta.CHANGED, IResourceDelta.ENCODING);
-			verifier.addExpectedChange(prefs.getParent(), IResourceDelta.CHANGED, 0);
-			verifier.addExpectedChange(prefs, IResourceDelta.ADDED, 0);
 			try {
-				file1.setCharset(file1.getCharset(), getMonitor());
+				file1.setCharset(project.getDefaultCharset(), getMonitor());
 			} catch (CoreException e) {
 				fail("1.2.0", e);
 			}
@@ -1342,7 +1392,7 @@ public class CharsetTest extends ResourceTest {
 			IFile file1 = project.getFile("file1.txt");
 			IFile file2 = folder.getFile("file2.txt");
 			ensureExistsInWorkspace(new IResource[] {file1, file2}, true);
-			assertDoesNotExistInWorkspace("1.0", getResourcesPreferenceFile(project, false));
+			assertExistsInWorkspace("1.0", getResourcesPreferenceFile(project, false));
 			project.setDefaultCharset("FOO", getMonitor());
 			assertExistsInWorkspace("2.0", getResourcesPreferenceFile(project, false));
 			project.setDefaultCharset(null, getMonitor());
@@ -1546,11 +1596,7 @@ public class CharsetTest extends ResourceTest {
 	}
 
 	private static void waitForJobFamily(Object family) {
-		try {
-			Job.getJobManager().join(family, null);
-		} catch (Exception e) {
-			fail("Exception occurred while waiting on jobs from family: " + family, e);
-		}
+		TestUtil.waitForJobs("Waiting for " + family, 100, 10_000, family);
 	}
 
 	private class CharsetVerifierWithExtraInfo extends CharsetVerifier {

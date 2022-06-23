@@ -16,10 +16,13 @@ package org.eclipse.core.tests.internal.builders;
 
 import java.io.ByteArrayInputStream;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import org.eclipse.core.internal.events.ResourceDelta;
+import org.eclipse.core.internal.resources.Workspace;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.*;
-import org.eclipse.core.tests.harness.TestBarrier;
+import org.eclipse.core.tests.harness.TestBarrier2;
 import org.eclipse.core.tests.internal.builders.TestBuilder.BuilderRuleCallback;
 
 /**
@@ -72,7 +75,7 @@ public class RelaxedSchedRuleBuilderTest extends AbstractBuilderTest {
 		// Ensure the builder is instantiated
 		project.build(IncrementalProjectBuilder.CLEAN_BUILD, getMonitor());
 
-		final TestBarrier tb = new TestBarrier(TestBarrier.STATUS_WAIT_FOR_START);
+		final TestBarrier2 tb = new TestBarrier2(TestBarrier2.STATUS_WAIT_FOR_START);
 
 		// Create a builder set a null scheduling rule
 		EmptyDeltaBuilder builder = EmptyDeltaBuilder.getInstance();
@@ -85,7 +88,7 @@ public class RelaxedSchedRuleBuilderTest extends AbstractBuilderTest {
 			@Override
 			public IProject[] build(int kind, Map<String, String> args, IProgressMonitor monitor) throws CoreException {
 				assertTrue(Job.getJobManager().currentRule() == null);
-				tb.setStatus(TestBarrier.STATUS_START);
+				tb.setStatus(TestBarrier2.STATUS_START);
 				while (!monitor.isCanceled()) {
 					try {
 						Thread.sleep(10);
@@ -93,7 +96,7 @@ public class RelaxedSchedRuleBuilderTest extends AbstractBuilderTest {
 						// Don't care
 					}
 				}
-				tb.setStatus(TestBarrier.STATUS_DONE);
+				tb.setStatus(TestBarrier2.STATUS_DONE);
 				return super.build(kind, args, monitor);
 			}
 		});
@@ -112,7 +115,7 @@ public class RelaxedSchedRuleBuilderTest extends AbstractBuilderTest {
 		j.schedule();
 
 		// wait for build to be called
-		tb.waitForStatus(TestBarrier.STATUS_START);
+		tb.waitForStatus(TestBarrier2.STATUS_START);
 
 		// Should be able to write a file in the project
 		create(project.getFile("foo.c"), false);
@@ -120,7 +123,7 @@ public class RelaxedSchedRuleBuilderTest extends AbstractBuilderTest {
 
 		// Cancel the builder
 		j.cancel();
-		tb.waitForStatus(TestBarrier.STATUS_DONE);
+		tb.waitForStatus(TestBarrier2.STATUS_DONE);
 	}
 
 	/**
@@ -144,8 +147,8 @@ public class RelaxedSchedRuleBuilderTest extends AbstractBuilderTest {
 		// Ensure the builder is instantiated
 		project.build(IncrementalProjectBuilder.CLEAN_BUILD, getMonitor());
 
-		final TestBarrier tb1 = new TestBarrier(TestBarrier.STATUS_WAIT_FOR_START);
-		final TestBarrier tb2 = new TestBarrier(TestBarrier.STATUS_WAIT_FOR_START);
+		final TestBarrier2 tb1 = new TestBarrier2(TestBarrier2.STATUS_WAIT_FOR_START);
+		final TestBarrier2 tb2 = new TestBarrier2(TestBarrier2.STATUS_WAIT_FOR_START);
 
 		// Create a builder set a null scheduling rule
 		EmptyDeltaBuilder builder = EmptyDeltaBuilder.getInstance();
@@ -155,7 +158,7 @@ public class RelaxedSchedRuleBuilderTest extends AbstractBuilderTest {
 		builder.setRuleCallback(new BuilderRuleCallback() {
 			@Override
 			public ISchedulingRule getRule(String name, IncrementalProjectBuilder builder, int trigger, Map<String, String> args) {
-				tb1.setStatus(TestBarrier.STATUS_START);
+				tb1.setStatus(TestBarrier2.STATUS_START);
 				return project;
 			}
 
@@ -163,9 +166,9 @@ public class RelaxedSchedRuleBuilderTest extends AbstractBuilderTest {
 			public IProject[] build(int kind, Map<String, String> args, IProgressMonitor monitor) throws CoreException {
 				// shared scheduling rule
 				assertTrue(Job.getJobManager().currentRule().contains(project));
-				tb1.setStatus(TestBarrier.STATUS_RUNNING);
-				tb1.waitForStatus(TestBarrier.STATUS_WAIT_FOR_DONE);
-				tb1.setStatus(TestBarrier.STATUS_DONE);
+				tb1.setStatus(TestBarrier2.STATUS_RUNNING);
+				tb1.waitForStatus(TestBarrier2.STATUS_WAIT_FOR_DONE);
+				tb1.setStatus(TestBarrier2.STATUS_DONE);
 				return super.build(kind, args, monitor);
 			}
 		});
@@ -174,7 +177,7 @@ public class RelaxedSchedRuleBuilderTest extends AbstractBuilderTest {
 			@Override
 			public ISchedulingRule getRule(String name, IncrementalProjectBuilder builder, int trigger, Map<String, String> args) {
 				// get rule is called before starting
-				tb2.setStatus(TestBarrier.STATUS_START);
+				tb2.setStatus(TestBarrier2.STATUS_START);
 				return null;
 			}
 
@@ -182,9 +185,9 @@ public class RelaxedSchedRuleBuilderTest extends AbstractBuilderTest {
 			public IProject[] build(int kind, Map<String, String> args, IProgressMonitor monitor) throws CoreException {
 				// shared scheduling rule
 				assertTrue(Job.getJobManager().currentRule() == null || Job.getJobManager().currentRule().contains(getWorkspace().getRoot()));
-				tb2.setStatus(TestBarrier.STATUS_RUNNING);
-				tb2.waitForStatus(TestBarrier.STATUS_WAIT_FOR_DONE);
-				tb2.setStatus(TestBarrier.STATUS_DONE);
+				tb2.setStatus(TestBarrier2.STATUS_RUNNING);
+				tb2.waitForStatus(TestBarrier2.STATUS_WAIT_FOR_DONE);
+				tb2.setStatus(TestBarrier2.STATUS_DONE);
 				return super.build(kind, args, monitor);
 			}
 		});
@@ -205,13 +208,13 @@ public class RelaxedSchedRuleBuilderTest extends AbstractBuilderTest {
 
 		// Wait for the build to transition
 
-		tb1.waitForStatus(TestBarrier.STATUS_RUNNING);
-		tb1.setStatus(TestBarrier.STATUS_WAIT_FOR_DONE);
-		tb1.waitForStatus(TestBarrier.STATUS_DONE);
+		tb1.waitForStatus(TestBarrier2.STATUS_RUNNING);
+		tb1.setStatus(TestBarrier2.STATUS_WAIT_FOR_DONE);
+		tb1.waitForStatus(TestBarrier2.STATUS_DONE);
 
-		tb2.waitForStatus(TestBarrier.STATUS_RUNNING);
-		tb2.setStatus(TestBarrier.STATUS_WAIT_FOR_DONE);
-		tb2.waitForStatus(TestBarrier.STATUS_DONE);
+		tb2.waitForStatus(TestBarrier2.STATUS_RUNNING);
+		tb2.setStatus(TestBarrier2.STATUS_WAIT_FOR_DONE);
+		tb2.waitForStatus(TestBarrier2.STATUS_DONE);
 	}
 
 	HashSet<ISchedulingRule> getRulesAsSet(ISchedulingRule rule) {
@@ -242,14 +245,19 @@ public class RelaxedSchedRuleBuilderTest extends AbstractBuilderTest {
 		final IFile foo = project.getFile("foo");
 		create(project, false);
 
+		waitForEncodingRelatedJobs();
+		waitForContentDescriptionUpdate();
+		// wait for noBuildJob so POST_BUILD will fire
+		((Workspace) getWorkspace()).getBuildManager().waitForAutoBuildOff();
+
 		IProjectDescription desc = project.getDescription();
-		desc.setBuildSpec(new ICommand[] {createCommand(desc, EmptyDeltaBuilder.BUILDER_NAME, "Project1Build1")});
+		desc.setBuildSpec(new ICommand[] { createCommand(desc, EmptyDeltaBuilder.BUILDER_NAME, "Project1Build1") });
 		project.setDescription(desc, getMonitor());
 
 		// Ensure the builder is instantiated
 		project.build(IncrementalProjectBuilder.FULL_BUILD, getMonitor());
 
-		final TestBarrier tb1 = new TestBarrier(TestBarrier.STATUS_WAIT_FOR_START);
+		final TestBarrier2 tb = new TestBarrier2(TestBarrier2.STATUS_WAIT_FOR_START);
 
 		// Create a builder set a null scheduling rule
 		EmptyDeltaBuilder builder = EmptyDeltaBuilder.getInstance();
@@ -270,11 +278,11 @@ public class RelaxedSchedRuleBuilderTest extends AbstractBuilderTest {
 					return project;
 				}
 				// REMOVE
-				tb1.setStatus(TestBarrier.STATUS_START);
-				tb1.waitForStatus(TestBarrier.STATUS_WAIT_FOR_RUN);
+				tb.setStatus(TestBarrier2.STATUS_START);
+				tb.waitForStatus(TestBarrier2.STATUS_WAIT_FOR_RUN);
 				try {
 					// Give the resource modification time be queued
-					Thread.sleep(10);
+					Thread.sleep(20);
 				} catch (InterruptedException e) {
 					fail();
 				}
@@ -288,40 +296,64 @@ public class RelaxedSchedRuleBuilderTest extends AbstractBuilderTest {
 				// assert that the delta contains the file foo
 				IResourceDelta delta = getDelta(project);
 				assertNotNull("1.1", delta);
-				assertTrue("1.2", delta.getAffectedChildren().length == 1);
-				assertTrue("1.3", delta.getAffectedChildren()[0].getResource().equals(foo));
-				tb1.setStatus(TestBarrier.STATUS_DONE);
+				assertEquals("1.2: " + ((ResourceDelta) delta).toDeepDebugString(), 1,
+						delta.getAffectedChildren().length);
+				assertEquals("1.3.", foo, delta.getAffectedChildren()[0].getResource());
+				tb.setStatus(TestBarrier2.STATUS_DONE);
 				return super.build(kind, args, monitor);
 			}
 		});
 
+		AtomicReference<Throwable> error1 = new AtomicReference<>();
 		// Run the incremental build
-		Job j = new Job("IProject.build()") {
+		Job j1 = new Job("IProject.build(1)") {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				try {
 					getWorkspace().build(new IBuildConfiguration[] {project.getActiveBuildConfig()}, IncrementalProjectBuilder.INCREMENTAL_BUILD, true, monitor);
 				} catch (CoreException e) {
-					fail();
+					IStatus status = e.getStatus();
+					IStatus[] children = status.getChildren();
+					if (children.length > 0) {
+						error1.set(children[0].getException());
+					} else {
+						error1.set(e);
+					}
+					throw new AssertionError("build failed", e);
 				}
 				return Status.OK_STATUS;
 			}
 		};
-		j.schedule();
+		Job.getJobManager().wakeUp(null);
+		j1.schedule();
+		// now j1 runs, builds, calls BuilderRuleCallback, that waits for
+		// TestBarrier2.STATUS_WAIT_FOR_RUN, but that will enter only with job2
+
+		Job.getJobManager().wakeUp(null);
 
 		// Wait for the build to transition to getRule
-		tb1.waitForStatus(TestBarrier.STATUS_START);
+		tb.waitForStatus(TestBarrier2.STATUS_START);
 		// Modify a file in the project
-		j = new Job("IProject.build()") {
+		AtomicReference<Throwable> error2 = new AtomicReference<>();
+		Job j2 = new Job("IProject.build(2)") {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
-				tb1.setStatus(TestBarrier.STATUS_WAIT_FOR_RUN);
+				tb.setStatus(TestBarrier2.STATUS_WAIT_FOR_RUN);
 				ensureExistsInWorkspace(foo, new ByteArrayInputStream(new byte[0]));
 				return Status.OK_STATUS;
 			}
 		};
-		j.schedule();
-		tb1.waitForStatus(TestBarrier.STATUS_DONE);
+		j2.schedule();
+		j2.join();
+		if (error2.get() != null) {
+			fail("Error observed", error2.get());
+		}
+		j1.join();
+		if (error1.get() != null) {
+			fail("Error observed", error1.get());
+		}
+		tb.waitForStatus(TestBarrier2.STATUS_DONE);
+		assertNoErrorsLogged();
 	}
 
 	/**
@@ -341,8 +373,8 @@ public class RelaxedSchedRuleBuilderTest extends AbstractBuilderTest {
 		// Ensure the builder is instantiated
 		project.build(IncrementalProjectBuilder.CLEAN_BUILD, getMonitor());
 
-		final TestBarrier tb1 = new TestBarrier(TestBarrier.STATUS_WAIT_FOR_START);
-		final TestBarrier tb2 = new TestBarrier(TestBarrier.STATUS_WAIT_FOR_START);
+		final TestBarrier2 tb1 = new TestBarrier2(TestBarrier2.STATUS_WAIT_FOR_START);
+		final TestBarrier2 tb2 = new TestBarrier2(TestBarrier2.STATUS_WAIT_FOR_START);
 
 		// Scheduling rules to returng from #getRule
 		final ISchedulingRule[] getRules = new ISchedulingRule[2];
@@ -356,7 +388,7 @@ public class RelaxedSchedRuleBuilderTest extends AbstractBuilderTest {
 		builder.setRuleCallback(new BuilderRuleCallback() {
 			@Override
 			public ISchedulingRule getRule(String name, IncrementalProjectBuilder builder, int trigger, Map<String, String> args) {
-				tb1.waitForStatus(TestBarrier.STATUS_START);
+				tb1.waitForStatus(TestBarrier2.STATUS_START);
 				return getRules[0];
 			}
 
@@ -366,7 +398,7 @@ public class RelaxedSchedRuleBuilderTest extends AbstractBuilderTest {
 				HashSet<ISchedulingRule> h2 = getRulesAsSet(buildRules[0]);
 				// shared scheduling rule
 				assertTrue(h1.equals(h2));
-				tb1.setStatus(TestBarrier.STATUS_DONE);
+				tb1.setStatus(TestBarrier2.STATUS_DONE);
 				return super.build(kind, args, monitor);
 			}
 		});
@@ -374,7 +406,7 @@ public class RelaxedSchedRuleBuilderTest extends AbstractBuilderTest {
 		builder2.setRuleCallback(new BuilderRuleCallback() {
 			@Override
 			public ISchedulingRule getRule(String name, IncrementalProjectBuilder builder, int trigger, Map<String, String> args) {
-				tb2.waitForStatus(TestBarrier.STATUS_START);
+				tb2.waitForStatus(TestBarrier2.STATUS_START);
 				return getRules[1];
 			}
 
@@ -383,7 +415,7 @@ public class RelaxedSchedRuleBuilderTest extends AbstractBuilderTest {
 				HashSet<ISchedulingRule> h1 = getRulesAsSet(Job.getJobManager().currentRule());
 				HashSet<ISchedulingRule> h2 = getRulesAsSet(buildRules[1]);
 				assertTrue(h1.equals(h2));
-				tb2.setStatus(TestBarrier.STATUS_DONE);
+				tb2.setStatus(TestBarrier2.STATUS_DONE);
 				return super.build(kind, args, monitor);
 			}
 		});
@@ -451,43 +483,43 @@ public class RelaxedSchedRuleBuilderTest extends AbstractBuilderTest {
 	/**
 	 * Helper method do invoke a set of tests on Bug343256 using the different sets of builder API
 	 */
-	private void invokeTestBug343256(IProject project, ISchedulingRule[] getRules, ISchedulingRule[] buildRules, TestBarrier tb1, TestBarrier tb2, Job j) {
+	private void invokeTestBug343256(IProject project, ISchedulingRule[] getRules, ISchedulingRule[] buildRules, TestBarrier2 tb1, TestBarrier2 tb2, Job j) {
 		// Test 1 - build project sched rule
 		getRules[0] = getRules[1] = project;
 		buildRules[0] = buildRules[1] = new MultiRule(new ISchedulingRule[] {getRules[0]});
-		tb1.setStatus(TestBarrier.STATUS_START);
-		tb2.setStatus(TestBarrier.STATUS_START);
+		tb1.setStatus(TestBarrier2.STATUS_START);
+		tb2.setStatus(TestBarrier2.STATUS_START);
 		j.schedule();
-		tb1.waitForStatus(TestBarrier.STATUS_DONE);
-		tb2.waitForStatus(TestBarrier.STATUS_DONE);
+		tb1.waitForStatus(TestBarrier2.STATUS_DONE);
+		tb2.waitForStatus(TestBarrier2.STATUS_DONE);
 
 		// Test 2 - build null rule
 		getRules[0] = getRules[1] = null;
 		buildRules[0] = buildRules[1] = null;
-		tb1.setStatus(TestBarrier.STATUS_START);
-		tb2.setStatus(TestBarrier.STATUS_START);
+		tb1.setStatus(TestBarrier2.STATUS_START);
+		tb2.setStatus(TestBarrier2.STATUS_START);
 		j.schedule();
-		tb1.waitForStatus(TestBarrier.STATUS_DONE);
-		tb2.waitForStatus(TestBarrier.STATUS_DONE);
+		tb1.waitForStatus(TestBarrier2.STATUS_DONE);
+		tb2.waitForStatus(TestBarrier2.STATUS_DONE);
 
 		// Test 3 - build mixed projects
 		getRules[0] = buildRules[0] = project;
 		getRules[1] = buildRules[1] = getWorkspace().getRoot().getProject("other");
-		tb1.setStatus(TestBarrier.STATUS_START);
-		tb2.setStatus(TestBarrier.STATUS_START);
+		tb1.setStatus(TestBarrier2.STATUS_START);
+		tb2.setStatus(TestBarrier2.STATUS_START);
 		j.schedule();
-		tb1.waitForStatus(TestBarrier.STATUS_DONE);
-		tb2.waitForStatus(TestBarrier.STATUS_DONE);
+		tb1.waitForStatus(TestBarrier2.STATUS_DONE);
+		tb2.waitForStatus(TestBarrier2.STATUS_DONE);
 
 		// Test 4 - build project + null
 		getRules[0] = buildRules[0] = project;
 		getRules[1] = buildRules[1] = null;
 		// TODO: Fixed in Bug 331187 ; BuildManager#getRule is pessimistic when there's a mixed resource and null rule
 		buildRules[0] = buildRules[1] = getWorkspace().getRoot();
-		tb1.setStatus(TestBarrier.STATUS_START);
-		tb2.setStatus(TestBarrier.STATUS_START);
+		tb1.setStatus(TestBarrier2.STATUS_START);
+		tb2.setStatus(TestBarrier2.STATUS_START);
 		j.schedule();
-		tb1.waitForStatus(TestBarrier.STATUS_DONE);
-		tb2.waitForStatus(TestBarrier.STATUS_DONE);
+		tb1.waitForStatus(TestBarrier2.STATUS_DONE);
+		tb2.waitForStatus(TestBarrier2.STATUS_DONE);
 	}
 }

@@ -15,14 +15,16 @@
 package org.eclipse.core.tests.resources;
 
 import java.io.*;
+import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.attribute.FileTime;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 import org.eclipse.core.filesystem.*;
-import org.eclipse.core.internal.resources.Resource;
+import org.eclipse.core.internal.resources.*;
 import org.eclipse.core.internal.utils.FileUtil;
 import org.eclipse.core.internal.utils.UniversalUniqueIdentifier;
 import org.eclipse.core.resources.*;
@@ -70,6 +72,18 @@ public abstract class ResourceTest extends CoreTest {
 	protected static final String SET_OTHER = "org.eclipse.core.tests.resources.otherSet";
 	//constants for nature sets
 	protected static final String SET_STATE = "org.eclipse.core.tests.resources.stateSet";
+	/**
+	 * Number of received log messages with severity error while running a single
+	 * test method.
+	 */
+	private final Queue<IStatus> loggedErrors = new ConcurrentLinkedQueue<>();
+
+	/** Listener to count error messages while testing. */
+	private final ILogListener errorLogListener = (IStatus status, String plugin) -> {
+		if (status.matches(IStatus.ERROR)) {
+			loggedErrors.add(status);
+		}
+	};
 
 	/**
 	 * Set of FileStore instances that must be deleted when the
@@ -582,14 +596,15 @@ public abstract class ResourceTest extends CoreTest {
 		if (resource == null) {
 			return;
 		}
-		IWorkspaceRunnable body = monitor -> {
-			if (resource.exists()) {
-				resource.setContents(contents, true, false, null);
-			} else {
-				ensureExistsInWorkspace(resource.getParent(), true);
+		IWorkspaceRunnable body;
+		if (resource.exists()) {
+			body = monitor -> resource.setContents(contents, true, false, null);
+		} else {
+			body = monitor -> {
+				create(resource.getParent(), true);
 				resource.create(contents, true, null);
-			}
-		};
+			};
+		}
 		try {
 			getWorkspace().run(body, null);
 		} catch (CoreException e) {
@@ -657,16 +672,18 @@ public abstract class ResourceTest extends CoreTest {
 		// with the java.io.File last modified. #isSynchronized() will schedule
 		// out-of-sync resources for refresh, so we don't use that here.
 		for (int count = 0; count < 30 && isInSync(resource); count++) {
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				// ignore
-			}
-			FileTime now = FileTime.fromMillis(System.currentTimeMillis());
+			FileTime now = FileTime.fromMillis(resource.getLocalTimeStamp() + 1000);
 			try {
 				Files.setLastModifiedTime(location.toFile().toPath(), now);
 			} catch (IOException e) {
 				fail("#touchInFilesystem(IResource)", e);
+			}
+			if (!isInSync(resource)) {
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					// ignore
+				}
 			}
 		}
 		assertTrue("File not out of sync: " + location.toOSString(), getLastModifiedTime(location) != resource.getLocalTimeStamp());
@@ -978,26 +995,44 @@ public abstract class ResourceTest extends CoreTest {
 	 */
 	@Override
 	protected void setUp() throws Exception {
+		super.setUp();
+		TestUtil.log(IStatus.INFO, getName(), "setUp");
+		FreezeMonitor.expectCompletionInAMinute();
 		assertNotNull("Workspace was not setup", getWorkspace());
+		loggedErrors.clear();
+		Platform.addLogListener(errorLogListener);
 	}
 
 	@Override
 	protected void tearDown() throws Exception {
-		super.tearDown();
+		Platform.removeLogListener(errorLogListener);
+		TestUtil.log(IStatus.INFO, getName(), "tearDown");
 		// Ensure everything is in a clean state for next one.
 		// Session tests should overwrite it.
 		cleanup();
+		super.tearDown();
+		FreezeMonitor.done();
+	}
+
+	protected void assertNoErrorsLogged() {
+		List<IStatus> errorlist = new ArrayList<>();
+		loggedErrors.removeIf(errorlist::add);
+		errorlist.forEach(status -> {
+			if (status.getException() != null) {
+				throw new AssertionError("Test logged exception", status.getException());
+			}
+		});
+		assertTrue(
+				"Test logged errors: "
+						+ errorlist.stream().map(IStatus::toString).collect(Collectors.joining(", ")),
+				errorlist.isEmpty());
 	}
 
 	/**
 	 * Blocks the calling thread until autobuild completes.
 	 */
 	protected void waitForBuild() {
-		try {
-			Job.getJobManager().join(ResourcesPlugin.FAMILY_AUTO_BUILD, null);
-		} catch (OperationCanceledException | InterruptedException e) {
-			//ignore
-		}
+		((Workspace) getWorkspace()).getBuildManager().waitForAutoBuild();
 	}
 
 	/**
@@ -1036,5 +1071,14 @@ public abstract class ResourceTest extends CoreTest {
 			}
 		}
 		return devices;
+	}
+
+	protected void waitForEncodingRelatedJobs() {
+		TestUtil.waitForJobs(getName(), 10, 5_000, ValidateProjectEncoding.class);
+		TestUtil.waitForJobs(getName(), 10, 5_000, CharsetDeltaJob.FAMILY_CHARSET_DELTA);
+	}
+
+	protected void waitForContentDescriptionUpdate() {
+		TestUtil.waitForJobs(getName(), 10, 5_000, ContentDescriptionManager.FAMILY_DESCRIPTION_CACHE_FLUSH);
 	}
 }

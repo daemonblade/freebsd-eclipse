@@ -17,6 +17,7 @@
  *     Sergey Prigogin (Google) - [437005] Out-of-date .snap file prevents Eclipse from running
  *     Lars Vogel <Lars.Vogel@vogella.com> - Bug 473427
  *     Mickael Istria (Red Hat Inc.) - Bug 488937
+ *     Christoph Läubrich - Issue #77 - SaveManager access the ResourcesPlugin.getWorkspace at init phase
  *******************************************************************************/
 package org.eclipse.core.internal.resources;
 
@@ -27,6 +28,10 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
+import java.util.stream.Collectors;
 import java.util.zip.*;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
@@ -84,7 +89,7 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 	protected static final String SAVE_NUMBER_PREFIX = "saveNumber_"; //$NON-NLS-1$
 	protected static final int SAVING = 2;
 	protected ElementTree lastSnap;
-	protected MasterTable masterTable;
+	protected final MasterTable masterTable;
 
 	/**
 	 * A flag indicating that a save operation is occurring.  This is a signal
@@ -127,6 +132,7 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 	protected volatile boolean snapshotRequested;
 	private IStatus snapshotRequestor;
 	protected Workspace workspace;
+	private Set<Entry<Object, Object>> savedState;
 	//declare debug messages as fields to get sharing
 	private static final String DEBUG_START = " starting..."; //$NON-NLS-1$
 	private static final String DEBUG_FULL_SAVE = "Full save on workspace: "; //$NON-NLS-1$
@@ -137,7 +143,7 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 	public SaveManager(Workspace workspace) {
 		this.workspace = workspace;
 		this.masterTable = new MasterTable();
-		this.snapshotJob = new DelayedSnapshotJob(this);
+		this.snapshotJob = new DelayedSnapshotJob(this, workspace);
 		snapshotRequested = false;
 		snapshotRequestor = null;
 		saveParticipants = Collections.synchronizedMap(new HashMap<>(10));
@@ -234,6 +240,7 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 			if (!project.exists() || project.isOpen())
 				it.remove();
 		}
+		savedState = null;
 		IPath location = workspace.getMetaArea().getSafeTableLocationFor(ResourcesPlugin.PI_RESOURCES);
 		IPath backup = workspace.getMetaArea().getBackupLocationFor(location);
 		try {
@@ -340,7 +347,7 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 		HashMap<String, SaveContext> result = new HashMap<>(pluginIds.length);
 		for (String pluginId : pluginIds) {
 			try {
-				SaveContext context = new SaveContext(pluginId, kind, project);
+				SaveContext context = new SaveContext(pluginId, kind, project, workspace);
 				result.put(pluginId, context);
 			} catch (CoreException e) {
 				// FIXME: should return a status to the user and not just log it
@@ -1036,7 +1043,7 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 		}
 		try (DataInputStream input = new DataInputStream(new SafeFileInputStream(treeLocation.toOSString(), tempLocation.toOSString(), TREE_BUFFER_SIZE))) {
 			WorkspaceTreeReader.getReader(workspace, input.readInt()).readTree(input, monitor);
-		} catch (IOException e) {
+		} catch (Exception e) { // "Unknown format" is passed as ResourceException
 			String msg = NLS.bind(Messages.resources_readMeta, treeLocation.toOSString());
 			throw new ResourceException(IResourceStatus.FAILED_READ_METADATA, treeLocation, msg, e);
 		}
@@ -1252,7 +1259,12 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 	}
 
 	protected void saveMasterTable(int kind) throws CoreException {
+		Set<Entry<Object, Object>> state = Set.copyOf(getMasterTable().entrySet());
+		if (Objects.equals(state, savedState)) {
+			return;
+		}
 		saveMasterTable(kind, workspace.getMetaArea().getSafeTableLocationFor(ResourcesPlugin.PI_RESOURCES));
+		savedState = state;
 	}
 
 	protected void saveMasterTable(int kind, IPath location) throws CoreException {
@@ -1493,27 +1505,30 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 	}
 
 	/**
-	 * Sorts the given array of trees so that the following rules are true:
-	 * 	 - The first tree has no parent
-	 * 	 - No tree has an ancestor with a greater index in the array.
-	 * If there are no missing parents in the given trees array, this means
-	 * that in the resulting array, the i'th tree's parent will be tree i-1.
-	 * The input tree array may contain duplicate trees.
+	 * Returns a sorted copy of a chain of trees.
+	 *
+	 * @param trees an unordered array of ElementTrees that should be immutable. The
+	 *              array may contain duplicates. The ElementTrees should have been
+	 *              created by repeated calls to Workspace.newWorkingTree() such
+	 *              that the getParent() relationship forms an unambiguous sequence
+	 *              (except of duplicates) from newest ElementTree to oldest. I.e.
+	 *              the newest ElementTree (and its duplicates) has no parent (or at
+	 *              least no ancestor within the given array), while all other
+	 *              ElementTreess have the newest ElementTree as ancestor
+	 *              (transitive parent). The given trees do not need to contain all
+	 *              ElementTrees from the getParent() relationship.
+	 * @return null or trees ordered by ElementTree.treeStamp descending. i.e.
+	 *         newest ElementTree (without ancestor within the trees) first. Returns
+	 *         null when the preconditions for sorting are not met.
 	 */
-	protected ElementTree[] sortTrees(ElementTree[] trees) {
-		/* the sorted list */
+	public static ElementTree[] sortTrees(ElementTree[] trees) {
 		int numTrees = trees.length;
 		ElementTree[] sorted = new ElementTree[numTrees];
 
-		/* first build a table of ElementTree -> List of Integers(indices in trees array) */
-		Map<ElementTree, List<Integer>> table = new HashMap<>(numTrees * 2 + 1);
-		for (int i = 0; i < trees.length; i++) {
-			List<Integer> indices = table.get(trees[i]);
-			if (indices == null) {
-				indices = new ArrayList<>(10);
-				table.put(trees[i], indices);
-			}
-			indices.add(i);
+		/* first build a table of ElementTree -> Number of duplicates */
+		Map<ElementTree, Integer> duplicateCount = new LinkedHashMap<>(numTrees * 2 + 1);
+		for (ElementTree tree : trees) {
+			duplicateCount.compute(tree, (k, duplicates) -> (duplicates == null ? 0 : duplicates) + 1);
 		}
 
 		/* find the oldest tree (a descendent of all other trees) */
@@ -1524,30 +1539,47 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 		 * adding them to the sorted list as we go.
 		 */
 		int i = numTrees - 1;
-		while (i >= 0) {
-			/* add all instances of the current oldest tree to the sorted list */
-			List<Integer> indices = table.remove(oldest);
-			for (Enumeration<Integer> e = Collections.enumeration(indices); e.hasMoreElements();) {
-				e.nextElement();
+		while (oldest != null) {
+			/* add "oldest" and its duplicates at the end of the sorted list: */
+			Integer duplicates = duplicateCount.remove(oldest);
+			for (int j = 0; j < duplicates; j++) {
 				sorted[i] = oldest;
 				i--;
 			}
-			if (i >= 0) {
-				/* find the next tree in the list */
-				ElementTree parent = oldest.getParent();
-				while (parent != null && table.get(parent) == null) {
-					parent = parent.getParent();
-				}
-				if (parent == null) {
-					Exception e = new NullPointerException("null parent found while collapsing trees"); //$NON-NLS-1$
-					IStatus status = new Status(IStatus.WARNING, ResourcesPlugin.PI_RESOURCES, IResourceStatus.INTERNAL_ERROR, e.getMessage(), e);
-					Policy.log(status);
-					return null;
-				}
-				oldest = parent;
+			/* find the next tree in the list */
+			oldest = oldest.getParent();
+			while (oldest != null && duplicateCount.get(oldest) == null) {
+				/* skip elements that are not elements of "trees" */
+				oldest = oldest.getParent();
 			}
 		}
+		if (!duplicateCount.isEmpty()) {
+			// could happen if trees contains elements t3,t2,t1 where the parent relations
+			// are t3->t1, t2->t1, t1->null
+			// either t2 or t3 is not found
+			// because it's not unambiguous defined if t3 or t2 is the "older"
+			// t3 should have parent t2 instead.
+			// happens while trees are mutable.
+			String s = List.of(trees).stream().distinct().sorted(Comparator.comparing(ElementTree::getTreeStamp))
+					.map(t -> (t.isImmutable() ? "" : "mutable! ") + parentChain(t)) //$NON-NLS-1$ //$NON-NLS-2$
+					.collect(Collectors.joining(", ")); //$NON-NLS-1$
+			Exception e = new NullPointerException("Given trees not in unambiguous order (Bug 352867): " + s); //$NON-NLS-1$
+			IStatus status = new Status(IStatus.WARNING, ResourcesPlugin.PI_RESOURCES, IResourceStatus.INTERNAL_ERROR,
+					e.getMessage(), e);
+			Policy.log(status);
+			return null;
+		}
 		return sorted;
+	}
+
+	static String parentChain(ElementTree e) {
+		ArrayList<ElementTree> chain = new ArrayList<>();
+		ElementTree el = e;
+		while (el != null) {
+			chain.add(el);
+			el = el.getParent();
+		}
+		return chain.stream().map(t -> "" + t.getTreeStamp()).collect(Collectors.joining("->")); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
 	@Override
@@ -1587,7 +1619,7 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 					// new master table must provide greater or equal sequence number for root
 					// throw exception if new value is lower than previous one - we cannot allow to desynchronize master table on disk
 					if (valueInMemory < valueInFile) {
-						String message = getBadSequenceNumberErrorMessage(target, valueInFile, valueInMemory, masterTable, previousMasterTable);
+						String message = getBadSequenceNumberErrorMessage(target, valueInFile, valueInMemory);
 						Assert.isLegal(false, message);
 					}
 				}
@@ -1595,7 +1627,7 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 		}
 	}
 
-	private static String getBadSequenceNumberErrorMessage(java.io.File target, int valueInFile, int valueInMemory, MasterTable currentMasterTable, MasterTable previousMasterTable) {
+	private static String getBadSequenceNumberErrorMessage(java.io.File target, int valueInFile, int valueInMemory) {
 		StringBuilder messageBuffer = new StringBuilder();
 		messageBuffer.append("Cannot set lower sequence number for root (previous: "); //$NON-NLS-1$
 		messageBuffer.append(valueInFile);
@@ -1732,8 +1764,27 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 		if (root.getType() == IResource.PROJECT)
 			return;
 		IProject[] projects = ((IWorkspaceRoot) root).getProjects(IContainer.INCLUDE_HIDDEN);
-		for (IProject project : projects)
-			visitAndSave(project);
+		// never use a shared ForkJoinPool.commonPool() as it may be busy with other tasks, which might deadlock:
+		ForkJoinPool forkJoinPool =  new ForkJoinPool(ForkJoinPool.getCommonPoolParallelism());
+		IStatus[] stats;
+		try {
+			stats = forkJoinPool.submit(() -> Arrays.stream(projects).parallel().map(project -> {
+				try {
+					visitAndSave(project);
+				} catch (CoreException e) {
+					return e.getStatus();
+				}
+				return null;
+			}).filter(Objects::nonNull).toArray(IStatus[]::new)).get();
+		} catch (InterruptedException | ExecutionException e) {
+			throw new CoreException(Status.error(Messages.resources_saveProblem, e));
+		} finally {
+			forkJoinPool.shutdown();
+		}
+		if (stats.length > 0) {
+			throw new CoreException(new MultiStatus(ResourcesPlugin.PI_RESOURCES, IStatus.ERROR, stats,
+					Messages.resources_saveProblem, null));
+		}
 	}
 
 	/**
@@ -1857,7 +1908,7 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 	 *    For each interesting project:
 	 *       UTF - interesting project name
 	 */
-	private void writeBuilderPersistentInfo(DataOutputStream output, List<BuilderPersistentInfo> builders, IProgressMonitor monitor) throws IOException {
+	private void writeBuilderPersistentInfo(DataOutputStream output, List<BuilderPersistentInfo> builders) throws IOException {
 		// write the number of builders we are saving
 		int numBuilders = builders.size();
 		output.writeInt(numBuilders);
@@ -1985,7 +2036,7 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 						additionalConfigNames);
 
 			// Save the version 2 builders info
-			writeBuilderPersistentInfo(output, builderInfos, subMonitor.newChild(1));
+			writeBuilderPersistentInfo(output, builderInfos);
 
 			// Builder infos of non-active configurations are persisted after the active
 			// configuration's builder infos. So, their trees have to follow the same order.
@@ -2002,7 +2053,7 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 			subMonitor.worked(4);
 
 			// Since 3.7: Save the additional builders info
-			writeBuilderPersistentInfo(output, additionalBuilderInfos, subMonitor.newChild(1));
+			writeBuilderPersistentInfo(output, additionalBuilderInfos);
 
 			// Save the configuration names for the builders in the order they were saved
 			for (String string : configNames)
@@ -2057,7 +2108,7 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 					additionalConfigNames);
 
 			// Save the version 2 builders info
-			writeBuilderPersistentInfo(output, builderInfos, subMonitor.newChild(2));
+			writeBuilderPersistentInfo(output, builderInfos);
 
 			// Builder infos of non-active configurations are persisted after the active
 			// configuration's builder infos. So, their trees have to follow the same order.
@@ -2075,7 +2126,7 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 
 			// Since 3.7: Save the builders info and get the workspace trees associated with
 			// those builders
-			writeBuilderPersistentInfo(output, additionalBuilderInfos, subMonitor.newChild(2));
+			writeBuilderPersistentInfo(output, additionalBuilderInfos);
 
 			// Save configuration names for the builders in the order they were saved
 			for (String string : configNames)
@@ -2111,11 +2162,11 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 
 	protected void writeWorkspaceFields(DataOutputStream output, IProgressMonitor monitor) throws IOException {
 		// save the next node id
-		output.writeLong(workspace.nextNodeId);
+		output.writeLong(workspace.nextNodeId.get());
 		// save the modification stamp (no longer used)
 		output.writeLong(0L);
 		// save the marker id counter
-		output.writeLong(workspace.nextMarkerId);
+		output.writeLong(workspace.nextMarkerId.get());
 		// save the registered sync partners in the synchronizer
 		((Synchronizer) workspace.getSynchronizer()).savePartners(output);
 	}

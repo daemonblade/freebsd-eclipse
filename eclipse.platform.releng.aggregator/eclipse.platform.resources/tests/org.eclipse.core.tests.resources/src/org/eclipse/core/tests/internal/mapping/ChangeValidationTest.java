@@ -150,6 +150,9 @@ public class ChangeValidationTest extends ResourceTest {
 		factory.delete(project.findMember("c/b/y"));
 		IStatus status = validateChange(factory);
 		assertStatusEqual(status, new String[] {ChangeDescription.getMessageFor(ChangeDescription.REMOVED, project.findMember("c/x")), ChangeDescription.getMessageFor(ChangeDescription.REMOVED, project.findMember("c/b/y"))});
+
+		// Check if the given delta also indicates contents deletion
+		assertContentDeletionFlag("Validation should return error status on contents deletion.", true);
 	}
 
 	public void testFileMoves() {
@@ -171,6 +174,9 @@ public class ChangeValidationTest extends ResourceTest {
 		factory.delete(folder);
 		IStatus status = validateChange(factory);
 		assertStatusEqual(status, new String[] {ChangeDescription.getMessageFor(ChangeDescription.REMOVED, project.findMember("c/b")),});
+
+		// Check if the given delta also indicates contents deletion
+		assertContentDeletionFlag("Validation should return error status on contents deletion.", true);
 	}
 
 	public void testFolderMove() {
@@ -194,6 +200,9 @@ public class ChangeValidationTest extends ResourceTest {
 		factory.close(project);
 		IStatus status = validateChange(factory);
 		assertStatusEqual(status, new String[] {ChangeDescription.getMessageFor(ChangeDescription.CLOSED, project)});
+
+		// Check if the given delta does not indicate contents removal
+		assertContentDeletionFlag("Validation should return warning status on project close.", false);
 	}
 
 	public void testProjectCopy() {
@@ -208,6 +217,25 @@ public class ChangeValidationTest extends ResourceTest {
 		factory.delete(project);
 		IStatus status = validateChange(factory);
 		assertStatusEqual(status, new String[] {ChangeDescription.getMessageFor(ChangeDescription.REMOVED, project)});
+
+		// Check if the given delta does not indicate contents removal on project deletion without arguments
+		assertContentDeletionFlag("Validation should return warning status on simple deletion.", false);
+	}
+
+	public void testProjectDeletionWithContents() {
+		factory.delete(project, true);
+		IStatus status = validateChange(factory);
+		assertStatusEqual(status, new String[] { ChangeDescription.getMessageFor(ChangeDescription.REMOVED, project) });
+		// Check if the given delta also indicates contents deletion
+		assertContentDeletionFlag("Validation should return error status on contents deletion.", true);
+	}
+
+	public void testProjectDeletionWithoutContents() {
+		factory.delete(project, false);
+		IStatus status = validateChange(factory);
+		assertStatusEqual(status, new String[] { ChangeDescription.getMessageFor(ChangeDescription.REMOVED, project) });
+		// Check if the given delta does not indicate contents removal
+		assertContentDeletionFlag("Validation should return warning status on project removal from workspace.", false);
 	}
 
 	public void testProjectMove() {
@@ -216,8 +244,19 @@ public class ChangeValidationTest extends ResourceTest {
 		assertStatusEqual(status, new String[] {ChangeDescription.getMessageFor(ChangeDescription.MOVED, project)});
 	}
 
-	private IStatus validateChange(IResourceChangeDescriptionFactory factory) {
-		return ResourceChangeValidator.getValidator().validateChange(factory.getDelta(), getMonitor());
+	private void assertContentDeletionFlag(String assertMessage, boolean expectFlag) {
+		int expectedStatus = expectFlag ? IStatus.ERROR : IStatus.WARNING;
+		try {
+			TestModelProvider.checkContentsDeletion = true;
+			IStatus status = validateChange(factory);
+			assertEquals(assertMessage, expectedStatus, status.getSeverity());
+		} finally {
+			TestModelProvider.checkContentsDeletion = false;
+		}
+	}
+
+	private IStatus validateChange(IResourceChangeDescriptionFactory f) {
+		return ResourceChangeValidator.getValidator().validateChange(f.getDelta(), getMonitor());
 	}
 
 }

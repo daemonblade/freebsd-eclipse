@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2017 Red Hat Inc. and others.
+ * Copyright (c) 2016-2022 Red Hat Inc. and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -10,6 +10,9 @@
  *
  * Contributors:
  *     Mickael Istria (Red Hat Inc.) - initial API and implementation
+ *     Christoph Läubrich 	- Issue #52 - Make ResourcesPlugin more dynamic and better handling early start-up
+ *     						- Issue #68 - Use DS for CheckMissingNaturesListener
+ *     						- Issue #75 - Use ILog service reference in CheckMissingNaturesListener
  *******************************************************************************/
 package org.eclipse.core.internal.resources;
 
@@ -22,16 +25,40 @@ import org.eclipse.core.internal.utils.Messages;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences.IPreferenceChangeListener;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences.PreferenceChangeEvent;
-import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.osgi.util.NLS;
+import org.osgi.service.component.annotations.*;
 
+@Component(service = IResourceChangeListener.class, property = IResourceChangeListener.PROPERTY_EVENT_MASK + ":Integer="
+		+ IResourceChangeEvent.POST_CHANGE)
 public class CheckMissingNaturesListener implements IResourceChangeListener, IPreferenceChangeListener {
 
 	public static final String MARKER_TYPE = ResourcesPlugin.getPlugin().getBundle().getSymbolicName() + ".unknownNature"; //$NON-NLS-1$
 	public static final String NATURE_ID_ATTRIBUTE = "natureId"; //$NON-NLS-1$
+	@Reference
+	private IWorkspace workspace;
+
+	@Reference
+	private ILog log;
+
+	@Reference(target = IScopeContext.BUNDLE_SCOPE_FILTER)
+	IScopeContext bundleScope;
+
+	private IEclipsePreferences eclipsePreferences;
+
+	@Activate
+	public void register() {
+		eclipsePreferences = bundleScope.getNode(""); //$NON-NLS-1$
+		eclipsePreferences.addPreferenceChangeListener(this);
+	}
+
+	@Deactivate
+	public void unregister() {
+
+		eclipsePreferences.removePreferenceChangeListener(this);
+	}
 
 	@Override
 	public void resourceChanged(IResourceChangeEvent event) {
@@ -48,7 +75,8 @@ public class CheckMissingNaturesListener implements IResourceChangeListener, IPr
 			});
 			updateMarkers(modifiedProjects);
 		} catch (CoreException e) {
-			ResourcesPlugin.getPlugin().getLog().log(new Status(IStatus.ERROR, ResourcesPlugin.getPlugin().getBundle().getSymbolicName(), e.getMessage(), e));
+			log.log(new Status(IStatus.ERROR, ResourcesPlugin.getPlugin().getBundle().getSymbolicName(), e.getMessage(),
+					e));
 		}
 	}
 
@@ -67,11 +95,11 @@ public class CheckMissingNaturesListener implements IResourceChangeListener, IPr
 			final int newSeverity = event.getNewValue() != null ? Integer.parseInt((String) event.getNewValue()) : PreferenceInitializer.PREF_MISSING_NATURE_MARKER_SEVERITY_DEFAULT;
 			final int oldSeverity = event.getOldValue() != null ? Integer.parseInt((String) event.getOldValue()) : PreferenceInitializer.PREF_MISSING_NATURE_MARKER_SEVERITY_DEFAULT;
 			if (newSeverity < 0) {
-				removeAllMarkers(ResourcesPlugin.getWorkspace().getRoot());
+				removeAllMarkers(workspace.getRoot());
 			} else if (oldSeverity < 0 && newSeverity >= 0) {
-				updateMarkers(Arrays.asList(ResourcesPlugin.getWorkspace().getRoot().getProjects()));
+				updateMarkers(Arrays.asList(workspace.getRoot().getProjects()));
 			} else {
-				updateExistingMarkersSeverity(ResourcesPlugin.getWorkspace().getRoot(), newSeverity);
+				updateExistingMarkersSeverity(workspace.getRoot(), newSeverity);
 			}
 		}
 	}
@@ -199,7 +227,7 @@ public class CheckMissingNaturesListener implements IResourceChangeListener, IPr
 					workspaceJob.schedule();
 				}
 			} catch (CoreException e) {
-				ResourcesPlugin.getPlugin().getLog().log(new Status(IStatus.ERROR, ResourcesPlugin.PI_RESOURCES, e.getMessage(), e));
+				log.log(new Status(IStatus.ERROR, ResourcesPlugin.PI_RESOURCES, e.getMessage(), e));
 			}
 		}
 	}
@@ -226,7 +254,7 @@ public class CheckMissingNaturesListener implements IResourceChangeListener, IPr
 				marker.setAttribute(IMarker.CHAR_END, matcher.end(1));
 			}
 		} catch (IOException | CoreException e) {
-			ResourcesPlugin.getPlugin().getLog().log(new Status(IStatus.ERROR, ResourcesPlugin.PI_RESOURCES, e.getMessage(), e));
+			log.log(new Status(IStatus.ERROR, ResourcesPlugin.PI_RESOURCES, e.getMessage(), e));
 		}
 	}
 
@@ -258,7 +286,7 @@ public class CheckMissingNaturesListener implements IResourceChangeListener, IPr
 		try {
 			return Arrays.asList(project.findMarkers(MARKER_TYPE, true, IResource.DEPTH_ONE));
 		} catch (CoreException e) {
-			ResourcesPlugin.getPlugin().getLog().log(new Status(IStatus.ERROR, ResourcesPlugin.PI_RESOURCES, e.getMessage(), e));
+			log.log(new Status(IStatus.ERROR, ResourcesPlugin.PI_RESOURCES, e.getMessage(), e));
 			return Collections.emptyList();
 		}
 	}

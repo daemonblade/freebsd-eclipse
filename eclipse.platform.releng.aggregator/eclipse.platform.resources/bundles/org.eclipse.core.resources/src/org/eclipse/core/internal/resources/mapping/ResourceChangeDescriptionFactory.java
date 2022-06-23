@@ -25,13 +25,17 @@ import org.eclipse.core.runtime.IPath;
 public class ResourceChangeDescriptionFactory implements IResourceChangeDescriptionFactory {
 	private ProposedResourceDelta root = new ProposedResourceDelta(ResourcesPlugin.getWorkspace().getRoot());
 
+
 	/**
-	 * Creates and a delta representing a deleted resource, and adds it to the provided
+	 * Creates a delta representing a deleted resource, and adds it to the provided
 	 * parent delta.
-	 * @param parentDelta The parent of the deletion delta to create
-	 * @param resource The deleted resource to create a delta for
+	 * @param parentDelta     The parent of the deletion delta to create
+	 * @param resource        The deleted resource to create a delta for
+	 * @param deleteContent <code>true</code> if resource should be also deleted
+	 *                        from the disk
 	 */
-	private ProposedResourceDelta buildDeleteDelta(ProposedResourceDelta parentDelta, IResource resource) {
+	private ProposedResourceDelta buildDeleteDelta(ProposedResourceDelta parentDelta, IResource resource,
+			boolean deleteContent) {
 		//start with the existing delta for this resource, if any, to preserve other flags
 		ProposedResourceDelta delta = parentDelta.getChild(resource.getName());
 		if (delta == null) {
@@ -39,6 +43,8 @@ public class ResourceChangeDescriptionFactory implements IResourceChangeDescript
 			parentDelta.add(delta);
 		}
 		delta.setKind(IResourceDelta.REMOVED);
+		if (deleteContent)
+			delta.addFlags(IResourceDelta.DELETE_CONTENT_PROPOSED);
 		if (resource.getType() == IResource.FILE)
 			return delta;
 		//recurse to build deletion deltas for children
@@ -48,7 +54,7 @@ public class ResourceChangeDescriptionFactory implements IResourceChangeDescript
 			if (childCount > 0) {
 				ProposedResourceDelta[] childDeltas = new ProposedResourceDelta[childCount];
 				for (int i = 0; i < childCount; i++)
-					childDeltas[i] = buildDeleteDelta(delta, members[i]);
+					childDeltas[i] = buildDeleteDelta(delta, members[i], deleteContent);
 			}
 		} catch (CoreException e) {
 			//don't need to create deletion deltas for children of inaccessible resources
@@ -88,11 +94,20 @@ public class ResourceChangeDescriptionFactory implements IResourceChangeDescript
 		if (resource.getType() == IResource.ROOT) {
 			//the root itself cannot be deleted, so create deletions for each project
 			IProject[] projects = ((IWorkspaceRoot) resource).getProjects(IContainer.INCLUDE_HIDDEN);
-			for (IProject project : projects)
-				buildDeleteDelta(root, project);
+			for (IProject project : projects) {
+				buildDeleteDelta(root, project, false);
+			}
+		} else if (resource.getType() == IResource.PROJECT) {
+			buildDeleteDelta(root, resource, false);
 		} else {
-			buildDeleteDelta(getDelta(resource.getParent()), resource);
+			// Files and folders are always deleted from disk
+			buildDeleteDelta(getDelta(resource.getParent()), resource, true);
 		}
+	}
+
+	@Override
+	public void delete(IProject project, boolean deleteContent) {
+		buildDeleteDelta(root, project, deleteContent);
 	}
 
 	private void fail(CoreException e) {

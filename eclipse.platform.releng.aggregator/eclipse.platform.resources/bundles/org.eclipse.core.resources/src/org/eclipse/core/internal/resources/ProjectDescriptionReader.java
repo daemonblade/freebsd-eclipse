@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -15,6 +15,7 @@
  *     James Blackburn (Broadcom Corp.) - ongoing development
  *     Lars Vogel <Lars.Vogel@vogella.com> - Bug 473427
  *     Mickael Istria (Red Hat Inc.) - Bug 488937
+ *     Christoph Läubrich - Issue #77 - SaveManager access the ResourcesPlugin.getWorkspace at init phase
  *******************************************************************************/
 package org.eclipse.core.internal.resources;
 
@@ -106,15 +107,17 @@ public class ProjectDescriptionReader extends DefaultHandler implements IModelOb
 	ProjectDescription projectDescription = null;
 
 	protected int state = S_INITIAL;
+	private Workspace workspace;
 
 	/**
 	 * Returns the SAXParser to use when parsing project description files.
 	 * @throws ParserConfigurationException
 	 * @throws SAXException
 	 */
-	private static synchronized SAXParser createParser() throws ParserConfigurationException, SAXException {
+	private static synchronized SAXParser createParser(Workspace workspace)
+			throws ParserConfigurationException, SAXException {
 		//the parser can't be used concurrently, so only use singleton when workspace is locked
-		if (!isWorkspaceLocked())
+		if (workspace == null || !isWorkspaceLocked(workspace))
 			return createParserFactory().newSAXParser();
 		if (singletonParser == null) {
 			singletonParser = createParserFactory().newSAXParser();
@@ -139,20 +142,22 @@ public class ProjectDescriptionReader extends DefaultHandler implements IModelOb
 		return singletonParserFactory;
 	}
 
-	private static boolean isWorkspaceLocked() {
+	private static boolean isWorkspaceLocked(Workspace workspace) {
 		try {
-			return ((Workspace) ResourcesPlugin.getWorkspace()).getWorkManager().isLockAlreadyAcquired();
+			return workspace.getWorkManager().isLockAlreadyAcquired();
 		} catch (CoreException e) {
 			return false;
 		}
 	}
 
-	public ProjectDescriptionReader() {
+	public ProjectDescriptionReader(IWorkspace workspace) {
+		this.workspace = (Workspace) workspace;
 		this.project = null;
 	}
 
 	public ProjectDescriptionReader(IProject project) {
 		this.project = project;
+		this.workspace = (Workspace) project.getWorkspace();
 	}
 
 	/**
@@ -296,7 +301,7 @@ public class ProjectDescriptionReader extends DefaultHandler implements IModelOb
 				break;
 			case S_PROJECTS :
 				if (elementName.equals(PROJECTS)) {
-					endProjectsElement(elementName);
+					endProjectsElement();
 					state = S_PROJECT_DESC;
 				}
 				break;
@@ -804,14 +809,14 @@ public class ProjectDescriptionReader extends DefaultHandler implements IModelOb
 	/**
 	 * End of an element that is part of a project references list
 	 */
-	private void endProjectsElement(String elementName) {
+	private void endProjectsElement() {
 		// Pop the array list that contains all the referenced project names
 		ArrayList<String> referencedProjects = (ArrayList<String>) objectStack.pop();
 		if (referencedProjects.isEmpty())
 			// Don't bother adding an empty group of referenced projects to the
 			// project descriptor.
 			return;
-		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+		IWorkspaceRoot root = workspace.getRoot();
 		IProject[] projects = new IProject[referencedProjects.size()];
 		for (int i = 0; i < projects.length; i++) {
 			projects[i] = root.getProject(referencedProjects.get(i));
@@ -927,7 +932,7 @@ public class ProjectDescriptionReader extends DefaultHandler implements IModelOb
 		objectStack = new ArrayDeque<>();
 		state = S_INITIAL;
 		try {
-			createParser().parse(input, this);
+			createParser(workspace).parse(input, this);
 		} catch (ParserConfigurationException | IOException | SAXException e) {
 			log(e);
 		}

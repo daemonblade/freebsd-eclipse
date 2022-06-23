@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2015 IBM Corporation and others.
+ * Copyright (c) 2004, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,12 +13,12 @@
  *     James Blackburn (Broadcom Corp.) - ongoing development
  *     Sergey Prigogin (Google) - [464072] Refresh on Access ignored during text search
  *     Lars Vogel <Lars.Vogel@vogella.com> - Bug 473427
+ *     Christoph Läubrich - Issue  #82 - ContentDescriptionManager access ResourcesPlugin.getWorkspace in the init phase
  *******************************************************************************/
 package org.eclipse.core.internal.resources;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.internal.events.ILifecycleListener;
@@ -45,17 +45,17 @@ public class ContentDescriptionManager implements IManager, IRegistryChangeListe
 	 * This job causes the content description cache and the related flags
 	 * in the resource tree to be flushed.
 	 */
-	private class FlushJob extends WorkspaceJob {
-		private final List<IPath> toFlush;
+	private class FlushJob extends InternalWorkspaceJob {
+		private final Set<IPath> toFlush;
 		private boolean fullFlush;
 
-		public FlushJob() {
-			super(Messages.resources_flushingContentDescriptionCache);
+		public FlushJob(Workspace workspace) {
+			super(Messages.resources_flushingContentDescriptionCache, workspace);
 			setSystem(true);
 			setUser(false);
 			setPriority(LONG);
 			setRule(workspace.getRoot());
-			toFlush = new ArrayList<>(5);
+			toFlush = new LinkedHashSet<>(5);
 		}
 
 		@Override
@@ -92,13 +92,13 @@ public class ContentDescriptionManager implements IManager, IRegistryChangeListe
 			return Status.OK_STATUS;
 		}
 
-		private IPath[] getPathsToFlush() {
+		private Set<IPath> getPathsToFlush() {
 			synchronized (toFlush) {
 				try {
-					if (fullFlush)
-						return null;
-					int size = toFlush.size();
-					return (size == 0) ? null : toFlush.toArray(new IPath[size]);
+					if (fullFlush) {
+						return Collections.EMPTY_SET;
+					}
+					return new LinkedHashSet<>(toFlush);
 				} finally {
 					fullFlush = false;
 					toFlush.clear();
@@ -203,13 +203,17 @@ public class ContentDescriptionManager implements IManager, IRegistryChangeListe
 
 	private Cache cache;
 
-	private byte cacheState;
+	private volatile byte cacheState;
 
 	private FlushJob flushJob;
 	private ProjectContentTypes projectContentTypes;
 
-	Workspace workspace;
+	private final Workspace workspace;
 	protected final Bundle systemBundle = Platform.getBundle("org.eclipse.osgi"); //$NON-NLS-1$
+
+	public ContentDescriptionManager(Workspace workspace) {
+		this.workspace = workspace;
+	}
 
 	/**
 	 * @see org.eclipse.core.runtime.content.IContentTypeManager.IContentTypeChangeListener#contentTypeChanged(IContentTypeManager.ContentTypeChangeEvent)
@@ -221,7 +225,7 @@ public class ContentDescriptionManager implements IManager, IRegistryChangeListe
 		invalidateCache(true, null);
 	}
 
-	synchronized void doFlushCache(final IProgressMonitor monitor, IPath[] toClean) throws CoreException {
+	synchronized void doFlushCache(final IProgressMonitor monitor, Set<IPath> toClean) throws CoreException {
 		// nothing to be done if no information cached
 		if (getCacheState() != INVALID_CACHE && getCacheState() != ABOUT_TO_FLUSH) {
 			if (Policy.DEBUG_CONTENT_TYPE_CACHE)
@@ -232,13 +236,17 @@ public class ContentDescriptionManager implements IManager, IRegistryChangeListe
 			setCacheState(FLUSHING_CACHE);
 			// flush the MRU cache
 			cache.discardAll();
-			if (toClean == null || toClean.length == 0)
+			SubMonitor subMonitor = SubMonitor.convert(monitor);
+			if (toClean.isEmpty()) {
 				// no project was added, must be a global flush
-				clearContentFlags(Path.ROOT, monitor);
-			else {
+				clearContentFlags(Path.ROOT, subMonitor.split(1));
+			} else {
+				subMonitor.setWorkRemaining(toClean.size());
 				// flush a project at a time
-				for (IPath element : toClean)
-					clearContentFlags(element, monitor);
+				for (IPath element : toClean) {
+					subMonitor.subTask("Clear content flags for project '" + element.lastSegment() + "'"); //$NON-NLS-1$ //$NON-NLS-2$
+					clearContentFlags(element, subMonitor.split(1));
+				}
 			}
 		} catch (CoreException ce) {
 			setCacheState(INVALID_CACHE);
@@ -280,19 +288,26 @@ public class ContentDescriptionManager implements IManager, IRegistryChangeListe
 	}
 
 	/** Public so tests can examine it. */
-	public synchronized byte getCacheState() {
-		if (cacheState != 0)
-			// we have read/set it before, no nead to read property
+	public byte getCacheState() {
+		if (cacheState != 0) {
+			// we have read/set it before, no need to read property
 			return cacheState;
-		String persisted;
-		try {
-			persisted = workspace.getRoot().getPersistentProperty(CACHE_STATE);
-			cacheState = persisted != null ? Byte.parseByte(persisted) : INVALID_CACHE;
-		} catch (NumberFormatException e) {
-			cacheState = INVALID_CACHE;
-		} catch (CoreException e) {
-			Policy.log(e.getStatus());
-			cacheState = INVALID_CACHE;
+		}
+		synchronized (this) {
+			if (cacheState != 0) {
+				// we have read/set it before, no need to read property
+				return cacheState;
+			}
+			String persisted;
+			try {
+				persisted = workspace.getRoot().getPersistentProperty(CACHE_STATE);
+				cacheState = persisted != null ? Byte.parseByte(persisted) : INVALID_CACHE;
+			} catch (NumberFormatException e) {
+				cacheState = INVALID_CACHE;
+			} catch (CoreException e) {
+				Policy.log(e.getStatus());
+				cacheState = INVALID_CACHE;
+			}
 		}
 		return cacheState;
 	}
@@ -414,7 +429,7 @@ public class ContentDescriptionManager implements IManager, IRegistryChangeListe
 	 * Optionally causes the cached information to be actually flushed.
 	 *
 	 * @param flush whether the cached information should be flushed
-	 * @see #doFlushCache(IProgressMonitor, IPath[])
+	 * @see #doFlushCache(IProgressMonitor, Set)
 	 */
 	public synchronized void invalidateCache(boolean flush, IProject project) {
 		if (getCacheState() == EMPTY_CACHE)
@@ -522,14 +537,13 @@ public class ContentDescriptionManager implements IManager, IRegistryChangeListe
 
 	@Override
 	public void startup(IProgressMonitor monitor) throws CoreException {
-		workspace = (Workspace) ResourcesPlugin.getWorkspace();
 		cache = new Cache(100, 1000, 0.1);
 		projectContentTypes = new ProjectContentTypes(workspace);
 		getCacheState();
 		if (cacheState == FLUSHING_CACHE || cacheState == ABOUT_TO_FLUSH)
 			// in case we died before completing the last flushing
 			setCacheState(INVALID_CACHE);
-		flushJob = new FlushJob();
+		flushJob = new FlushJob(workspace);
 		// the cache is stale (plug-ins that might be contributing content types were added/removed)
 		if (getCacheTimestamp() != Platform.getStateStamp())
 			invalidateCache(false, null);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright (c) 2004, 2015 IBM Corporation and others.
+ *  Copyright (c) 2004, 2022 IBM Corporation and others.
  *
  *  This program and the accompanying materials
  *  are made available under the terms of the Eclipse Public License 2.0
@@ -12,15 +12,20 @@
  *     IBM - Initial API and implementation
  *     James Blackburn (Broadcom Corp.) - ongoing development
  *     Lars Vogel <Lars.Vogel@vogella.com> - Bug 473427, 483862
+ *     Christoph Läubrich - Issue #84 - RefreshManager access ResourcesPlugin.getWorkspace in the init phase
  *******************************************************************************/
 package org.eclipse.core.internal.refresh;
 
 import java.util.*;
 import org.eclipse.core.internal.localstore.PrefixPool;
+import org.eclipse.core.internal.resources.InternalWorkspaceJob;
+import org.eclipse.core.internal.resources.Workspace;
 import org.eclipse.core.internal.utils.Messages;
 import org.eclipse.core.internal.utils.Policy;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.jobs.ISchedulingRule;
+import org.eclipse.core.runtime.jobs.Job;
 
 /**
  * The <code>RefreshJob</code> class maintains a list of resources that
@@ -29,8 +34,34 @@ import org.eclipse.core.runtime.*;
  *
  * @since 3.0
  */
-public class RefreshJob extends WorkspaceJob {
-	private static final long UPDATE_DELAY = 200;
+public class RefreshJob extends InternalWorkspaceJob {
+
+	/**
+	 * Max refresh recursion deep
+	 */
+	public static final int MAX_RECURSION = 2 << 29; // 1073741824
+
+	/**
+	 * Threshold (in milliseconds) at which the refresh operation is considered to
+	 * be fast enough to increase refresh depth
+	 */
+	public static final int FAST_REFRESH_THRESHOLD = 1000;
+
+	/**
+	 * Threshold (in milliseconds) at which the refresh operation is considered to
+	 * be slow enough to decrease refresh depth
+	 */
+	public static final int SLOW_REFRESH_THRESHOLD = 2000;
+
+	/** Base depth used for refresh */
+	public static final int BASE_REFRESH_DEPTH = 1000;
+
+	/** Number of refresh rounds before updating refresh depth */
+	public static final int DEPTH_INCREASE_STEP = 1000;
+
+	/** Default refresh job delay (in milliseconds) */
+	public static final int UPDATE_DELAY = 200;
+
 	/**
 	 * List of refresh requests. Requests are processed in order from
 	 * the end of the list. Requests can be added to either the beginning
@@ -45,9 +76,34 @@ public class RefreshJob extends WorkspaceJob {
 	 */
 	private PrefixPool pathPrefixHistory, rootPathHistory;
 
-	public RefreshJob() {
-		super(Messages.refresh_jobName);
-		fRequests = new ArrayList<>(1);
+	private final int fastRefreshThreshold;
+	private final int slowRefreshThreshold;
+	private final int baseRefreshDepth;
+	private final int depthIncreaseStep;
+	private final int updateDelay;
+	private final int maxRecursionDeep;
+	private final Workspace workspace;
+	private volatile boolean disabled;
+
+	public RefreshJob(Workspace workspace) {
+		this(FAST_REFRESH_THRESHOLD, SLOW_REFRESH_THRESHOLD, BASE_REFRESH_DEPTH, DEPTH_INCREASE_STEP, UPDATE_DELAY,
+				MAX_RECURSION, workspace);
+	}
+
+	/**
+	 * This method is protected for tests
+	 */
+	protected RefreshJob(int fastRefreshThreshold, int slowRefreshThreshold, int baseRefreshDepth,
+			int depthIncreaseStep, int updateDelay, int maxRecursionDeep, Workspace workspace) {
+		super(Messages.refresh_jobName, workspace);
+		this.fRequests = new ArrayList<>(1);
+		this.fastRefreshThreshold = fastRefreshThreshold;
+		this.slowRefreshThreshold = slowRefreshThreshold;
+		this.baseRefreshDepth = baseRefreshDepth;
+		this.depthIncreaseStep = depthIncreaseStep;
+		this.updateDelay = updateDelay;
+		this.maxRecursionDeep = maxRecursionDeep;
+		this.workspace = workspace;
 	}
 
 	/**
@@ -72,7 +128,9 @@ public class RefreshJob extends WorkspaceJob {
 
 	private synchronized void addRequests(List<IResource> list) {
 		//add requests to the end of the queue
-		fRequests.addAll(0, list);
+		if (!list.isEmpty()) {
+			fRequests.addAll(0, list);
+		}
 	}
 
 	@Override
@@ -84,7 +142,7 @@ public class RefreshJob extends WorkspaceJob {
 	 * This method adds all members at the specified depth from the resource
 	 * to the provided list.
 	 */
-	private List<IResource> collectChildrenToDepth(IResource resource, ArrayList<IResource> children, int depth) {
+	protected List<IResource> collectChildrenToDepth(IResource resource, ArrayList<IResource> children, int depth) {
 		if (resource.getType() == IResource.FILE)
 			return children;
 		IResource[] members;
@@ -138,10 +196,11 @@ public class RefreshJob extends WorkspaceJob {
 	 * @see org.eclipse.core.resources.refresh.IRefreshResult#refresh
 	 */
 	public void refresh(IResource resource) {
-		if (resource == null)
+		if (resource == null || disabled) {
 			return;
+		}
 		addRequest(resource);
-		schedule(UPDATE_DELAY);
+		schedule(updateDelay);
 	}
 
 	@Override
@@ -157,32 +216,47 @@ public class RefreshJob extends WorkspaceJob {
 			int refreshCount = 0;
 			int depth = 2;
 
+			IResourceRuleFactory ruleFactory = workspace.getRuleFactory();
 			IResource toRefresh;
 			while ((toRefresh = nextRequest()) != null) {
+				ISchedulingRule refreshRule = ruleFactory.refreshRule(toRefresh);
 				try {
 					subMonitor.setWorkRemaining(Math.max(fRequests.size(), 100));
+					Job.getJobManager().beginRule(refreshRule, subMonitor);
 					refreshCount++;
 					long refreshTime = -System.currentTimeMillis();
-					toRefresh.refreshLocal(1000 + depth, subMonitor.split(1));
+					toRefresh.refreshLocal(baseRefreshDepth + depth, subMonitor.split(1));
 					refreshTime += System.currentTimeMillis();
 					if (refreshTime > longestRefresh)
 						longestRefresh = refreshTime;
 					//show occasional progress
-					if (refreshCount % 1000 == 0) {
+					if (refreshCount % depthIncreaseStep == 0) {
 						//be polite to other threads (no effect on some platforms)
 						Thread.yield();
 						//throttle depth if it takes too long
-						if (longestRefresh > 2000 && depth > 1) {
+						if (longestRefresh > slowRefreshThreshold && depth > 1) {
 							depth = 1;
+							if (Policy.DEBUG_AUTO_REFRESH) {
+								Policy.debug(RefreshManager.DEBUG_PREFIX + " decreased refresh depth to: " + depth); //$NON-NLS-1$
+							}
 						}
-						if (longestRefresh < 1000) {
+						if (longestRefresh < fastRefreshThreshold) {
 							depth *= 2;
+							if (depth <= 0 || depth > maxRecursionDeep) {
+								// avoid integer overflow
+								depth = maxRecursionDeep;
+							}
+							if (Policy.DEBUG_AUTO_REFRESH) {
+								Policy.debug(RefreshManager.DEBUG_PREFIX + " increased refresh depth to: " + depth); //$NON-NLS-1$
+							}
 						}
 						longestRefresh = 0;
 					}
 					addRequests(collectChildrenToDepth(toRefresh, new ArrayList<>(), depth));
 				} catch (CoreException e) {
 					errors.merge(new Status(IStatus.ERROR, ResourcesPlugin.PI_RESOURCES, 1, errors.getMessage(), e));
+				} finally {
+					Job.getJobManager().endRule(refreshRule);
 				}
 			}
 		} finally {
@@ -205,16 +279,20 @@ public class RefreshJob extends WorkspaceJob {
 	 * Starts the refresh job
 	 */
 	public void start() {
-		if (Policy.DEBUG_AUTO_REFRESH)
+		if (Policy.DEBUG_AUTO_REFRESH) {
 			Policy.debug(RefreshManager.DEBUG_PREFIX + " enabling auto-refresh"); //$NON-NLS-1$
+		}
+		disabled = false;
 	}
 
 	/**
 	 * Stops the refresh job
 	 */
 	public void stop() {
-		if (Policy.DEBUG_AUTO_REFRESH)
+		if (Policy.DEBUG_AUTO_REFRESH) {
 			Policy.debug(RefreshManager.DEBUG_PREFIX + " disabling auto-refresh"); //$NON-NLS-1$
+		}
+		disabled = true;
 		cancel();
 	}
 }

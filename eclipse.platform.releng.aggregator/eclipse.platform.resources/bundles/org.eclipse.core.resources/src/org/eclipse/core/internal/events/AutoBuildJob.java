@@ -44,7 +44,7 @@ class AutoBuildJob extends Job implements Preferences.IPropertyChangeListener {
 	private Preferences preferences = ResourcesPlugin.getPlugin().getPluginPreferences();
 	private final Bundle systemBundle = Platform.getBundle("org.eclipse.osgi"); //$NON-NLS-1$
 	private Workspace workspace;
-	private final Job noBuildJob;
+	final Job noBuildJob;
 
 	AutoBuildJob(Workspace workspace) {
 		super(Messages.events_building_0);
@@ -149,8 +149,9 @@ class AutoBuildJob extends Job implements Preferences.IPropertyChangeListener {
 	private void doBuild(IProgressMonitor monitor) throws CoreException, OperationCanceledException {
 		SubMonitor subMonitor = SubMonitor.convert(monitor, Policy.opWork + 1);
 		final ISchedulingRule rule = workspace.getRuleFactory().buildRule();
+		SubMonitor split = subMonitor.split(1); // will throw OperationCanceledException if autobuild canceled
 		try {
-			workspace.prepareOperation(rule, subMonitor.split(1));
+			workspace.prepareOperation(rule, split);
 			workspace.beginOperation(true);
 			final int trigger = IncrementalProjectBuilder.AUTO_BUILD;
 			workspace.broadcastBuildEvent(workspace, IResourceChangeEvent.PRE_BUILD, trigger);
@@ -228,8 +229,11 @@ class AutoBuildJob extends Job implements Preferences.IPropertyChangeListener {
 		// get the new value of auto-build directly from the preferences
 		boolean wasAutoBuilding = isAutoBuilding;
 		isAutoBuilding = preferences.getBoolean(ResourcesPlugin.PREF_AUTO_BUILDING);
-		//force a build if autobuild has been turned on
-		if (!wasAutoBuilding && isAutoBuilding) {
+		if (wasAutoBuilding && !isAutoBuilding) {
+			// stop the current autobuild when autobuild has been turned off
+			interrupt();
+		} else if (!wasAutoBuilding && isAutoBuilding) {
+			// force a build when autobuild has been turned on
 			noBuildJob.cancel();
 			forceBuild = true;
 			build(false);
@@ -240,7 +244,7 @@ class AutoBuildJob extends Job implements Preferences.IPropertyChangeListener {
 	public IStatus run(IProgressMonitor monitor) {
 		SubMonitor subMonitor = SubMonitor.convert(monitor, 1);
 		synchronized (this) {
-			if (subMonitor.isCanceled()) {
+			if (subMonitor.isCanceled() || isInterrupted()) {
 				return canceled();
 			}
 		}
@@ -265,6 +269,10 @@ class AutoBuildJob extends Job implements Preferences.IPropertyChangeListener {
 	 */
 	private synchronized void setInterrupted(boolean value) {
 		interrupted = value;
+		// we do not "cancel" in case of interrupt but let the builder decide because
+		// for example JDT builder can not resume from canceled autobuild but requires full build
+		// cancel = explicit user request
+		// interrupt = automatic conflict solving
 		if (interrupted && Policy.DEBUG_BUILD_INTERRUPT)
 			Policy.debug(new RuntimeException("Autobuild was interrupted")); //$NON-NLS-1$
 	}

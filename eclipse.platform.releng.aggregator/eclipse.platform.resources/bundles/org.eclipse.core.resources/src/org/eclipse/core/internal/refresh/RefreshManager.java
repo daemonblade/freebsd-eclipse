@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2015 IBM Corporation and others.
+ * Copyright (c) 2004, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -10,12 +10,16 @@
  *
  * Contributors:
  *     IBM - Initial API and implementation
+ *     Christoph Läubrich 	- Issue #84 - RefreshManager access ResourcesPlugin.getWorkspace in the init phase
+ *     						- Issue #97 - RefreshManager.manageAutoRefresh calls ResourcesPlugin.getWorkspace before the Workspace is fully open
  *******************************************************************************/
 package org.eclipse.core.internal.refresh;
 
 import org.eclipse.core.internal.resources.IManager;
+import org.eclipse.core.internal.resources.Workspace;
 import org.eclipse.core.internal.utils.Messages;
-import org.eclipse.core.resources.*;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.refresh.IRefreshMonitor;
 import org.eclipse.core.resources.refresh.IRefreshResult;
 import org.eclipse.core.runtime.*;
@@ -30,15 +34,15 @@ import org.eclipse.core.runtime.Preferences.PropertyChangeEvent;
  */
 public class RefreshManager implements IRefreshResult, IManager, Preferences.IPropertyChangeListener {
 	public static final String DEBUG_PREFIX = "Auto-refresh: "; //$NON-NLS-1$
-	MonitorManager monitors;
-	private RefreshJob refreshJob;
+	volatile MonitorManager monitors;
+	private volatile RefreshJob refreshJob;
 
 	/**
 	 * The workspace.
 	 */
-	private IWorkspace workspace;
+	private Workspace workspace;
 
-	public RefreshManager(IWorkspace workspace) {
+	public RefreshManager(Workspace workspace) {
 		this.workspace = workspace;
 	}
 
@@ -52,17 +56,22 @@ public class RefreshManager implements IRefreshResult, IManager, Preferences.IPr
 		}
 		SubMonitor subMonitor = SubMonitor.convert(progressMonitor, 1);
 		if (enabled) {
-			refreshJob.start();
 			monitors.start(subMonitor.split(1));
 		} else {
-			refreshJob.stop();
+			refreshJob.cancel();
 			monitors.stop();
 		}
 	}
 
+	Workspace getWorkspace() {
+		return workspace;
+	}
+
 	@Override
 	public void monitorFailed(IRefreshMonitor monitor, IResource resource) {
-		monitors.monitorFailed(monitor, resource);
+		if (monitors != null) {
+			monitors.monitorFailed(monitor, resource);
+		}
 	}
 
 	/**
@@ -77,15 +86,17 @@ public class RefreshManager implements IRefreshResult, IManager, Preferences.IPr
 			Preferences preferences = ResourcesPlugin.getPlugin().getPluginPreferences();
 			final boolean autoRefresh = preferences.getBoolean(ResourcesPlugin.PREF_AUTO_REFRESH);
 			String jobName = autoRefresh ? Messages.refresh_installMonitorsOnWorkspace : Messages.refresh_uninstallMonitorsOnWorkspace;
-			MonitorJob.createSystem(jobName, ResourcesPlugin.getWorkspace().getRoot(), (ICoreRunnable) monitor -> manageAutoRefresh(autoRefresh, monitor)).schedule();
+			MonitorJob.createSystem(jobName, getWorkspace().getRoot(),
+					(ICoreRunnable) monitor -> manageAutoRefresh(autoRefresh, monitor)).schedule();
 		}
 	}
 
 	@Override
 	public void refresh(IResource resource) {
 		//do nothing if we have already shutdown
-		if (refreshJob != null)
+		if (refreshJob != null) {
 			refreshJob.refresh(resource);
+		}
 	}
 
 	/**
@@ -94,6 +105,10 @@ public class RefreshManager implements IRefreshResult, IManager, Preferences.IPr
 	 */
 	@Override
 	public void shutdown(IProgressMonitor monitor) {
+		if (refreshJob == null) {
+			// do nothing if we have already shutdown
+			return;
+		}
 		ResourcesPlugin.getPlugin().getPluginPreferences().removePropertyChangeListener(this);
 		if (monitors != null) {
 			monitors.stop();
@@ -111,14 +126,15 @@ public class RefreshManager implements IRefreshResult, IManager, Preferences.IPr
 	 */
 	@Override
 	public void startup(IProgressMonitor monitor) {
-		SubMonitor subMonitor = SubMonitor.convert(monitor, 1);
+		refreshJob = new RefreshJob(workspace);
+		monitors = new MonitorManager(workspace, this);
+
 		Preferences preferences = ResourcesPlugin.getPlugin().getPluginPreferences();
 		preferences.addPropertyChangeListener(this);
-
-		refreshJob = new RefreshJob();
-		monitors = new MonitorManager(workspace, this);
 		boolean autoRefresh = preferences.getBoolean(ResourcesPlugin.PREF_AUTO_REFRESH);
-		if (autoRefresh)
+		if (autoRefresh) {
+			SubMonitor subMonitor = SubMonitor.convert(monitor, 1);
 			manageAutoRefresh(autoRefresh, subMonitor.split(1));
+		}
 	}
 }
