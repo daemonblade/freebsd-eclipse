@@ -318,28 +318,37 @@ diff -ru eclipse.platform.swt/pom.xml eclipse.platform.swt/pom.xml
  	  </modules>
  	  <build>
  	      <plugins>
-@@ -123,14 +124,20 @@
+@@ -122,17 +123,22 @@
+ 	          <version>${tycho.version}</version>
  	          <configuration>
  	            <environments>
- 	            	<environment>
+-	            	<environment>
 -						<os>linux</os>
-+						<os>freebsd</os>
- 						<ws>gtk</ws>
+-						<ws>gtk</ws>
 -						<arch>x86_64</arch>
-+						<arch>amd64</arch>
- 					</environment>
- 					<environment>
+-					</environment>
+-					<environment>
 -			            <os>linux</os>
-+			            <os>freebsd</os>
- 			            <ws>gtk</ws>
+-			            <ws>gtk</ws>
 -			            <arch>ppc64le</arch>
-+			            <arch>powerpc64</arch>
-+			          </environment>
-+	            	</environments>
-+					<environment>
-+			            <os>freebsd</os>
-+			            <ws>gtk</ws>
-+			            <arch>powerpc64le</arch>
- 			          </environment>
- 	            	</environments>
+-			          </environment>
+-	            	</environments>
++				  <environment>
++					<os>freebsd</os>
++					<ws>gtk</ws>
++					<arch>amd64</arch>
++				  </environment>
++				  <environment>
++					<os>freebsd</os>
++					<ws>gtk</ws>
++					<arch>powerpc64</arch>
++				  </environment>
++				  <environment>
++					<os>freebsd</os>
++					<ws>gtk</ws>
++					<arch>powerpc64le</arch>
++				  </environment>
++				</environments>
  	          </configuration>
+ 	        </plugin>
+ 	      </plugins>
