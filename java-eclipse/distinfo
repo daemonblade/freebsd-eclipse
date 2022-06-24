@@ -1,6 +1,6 @@
-TIMESTAMP = 1656036043
-SHA256 (eclipse/daemonblade-eclipse-maven-repo-4.24_GH0.tar.gz) = 0949c61359f48aacc0a6c7c03b94cf94ebd0f73726144e616cfe59630d2a3d57
-SIZE (eclipse/daemonblade-eclipse-maven-repo-4.24_GH0.tar.gz) = 441108883
+TIMESTAMP = 1656038535
+SHA256 (eclipse/eclipse-platform-eclipse.platform.releng.aggregator-4.24-R4_24_GH0.tar.gz) = 8adf38e43f12548a905bc04ca4991e144dcefc074b8484019f982e8473258b02
+SIZE (eclipse/eclipse-platform-eclipse.platform.releng.aggregator-4.24-R4_24_GH0.tar.gz) = 689841
 SHA256 (eclipse/eclipse-jdt-eclipse.jdt-R4_24_GH0.tar.gz) = a39673bfde615e257d7e038ef66800dd5946f042b18ddf44abcaf37010daa57a
 SIZE (eclipse/eclipse-jdt-eclipse.jdt-R4_24_GH0.tar.gz) = 39265
 SHA256 (eclipse/eclipse-jdt-eclipse.jdt.core-R4_24_GH0.tar.gz) = 65ca38c7c9ec833c8a0a09147a3a64a7741323222607d6048d5c6397e7359f5f
@@ -47,3 +47,5 @@ SHA256 (eclipse/eclipse-equinox-equinox.framework-R4_24_GH0.tar.gz) = 98ecb20567
 SIZE (eclipse/eclipse-equinox-equinox.framework-R4_24_GH0.tar.gz) = 1937236
 SHA256 (eclipse/eclipse-equinox-p2-R4_24_GH0.tar.gz) = 9730ef8f4807b0fd82e9115f56f30dba0aaf46f0e4b4df98f1406c30ca794f2b
 SIZE (eclipse/eclipse-equinox-p2-R4_24_GH0.tar.gz) = 54122344
+SHA256 (eclipse/daemonblade-eclipse-maven-repo-4.24_GH0.tar.gz) = 0949c61359f48aacc0a6c7c03b94cf94ebd0f73726144e616cfe59630d2a3d57
+SIZE (eclipse/daemonblade-eclipse-maven-repo-4.24_GH0.tar.gz) = 441108883

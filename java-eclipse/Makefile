@@ -27,7 +27,7 @@ USES=		compiler:c++11-lang gmake pkgconfig gnome
 USE_GNOME=	gtk30
 
 USE_GITHUB=	yes
-GH_TUPLE=	daemonblade:eclipse-maven-repo:${PORTVERSION} \
+GH_TUPLE=	eclipse-platform:eclipse.platform.releng.aggregator:${ECLIPSE_TAG} \
 		eclipse-jdt:eclipse.jdt:${ECLIPSE_TAG}:a/eclipse.jdt \
 		eclipse-jdt:eclipse.jdt.core:${ECLIPSE_TAG}:b/eclipse.jdt.core \
 		eclipse-jdt:eclipse.jdt.core.binaries:${ECLIPSE_TAG}:c/eclipse.jdt.core.binaries \
@@ -50,7 +50,8 @@ GH_TUPLE=	daemonblade:eclipse-maven-repo:${PORTVERSION} \
 		eclipse-equinox:equinox.binaries:${ECLIPSE_TAG}:t/rt.equinox.binaries \
 		eclipse-equinox:equinox.bundles:${ECLIPSE_TAG}:u/rt.equinox.bundles \
 		eclipse-equinox:equinox.framework:${ECLIPSE_TAG}:v/rt.equinox.framework \
-		eclipse-equinox:p2:${ECLIPSE_TAG}:w/rt.equinox.p2
+		eclipse-equinox:p2:${ECLIPSE_TAG}:w/rt.equinox.p2 \
+		daemonblade:eclipse-maven-repo:${PORTVERSION}:x
 
 USE_JAVA=	11+
 
