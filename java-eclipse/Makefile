@@ -65,7 +65,7 @@ DESKTOP_ENTRIES="Eclipse" \
 SUB_FILES=	${PORTNAME}
 
 MAVEN_ENV=	MAVEN_OPTS=-Xmx1024m CC=${CC} JAVA_HOME=${JAVA_HOME} HOME=${WRKDIR}/githome
-MAVEN_ECLIPSE=	-Dmaven.repo.local=${WRKDIR}/${GH_PROJECT}-${PORTVERSION} \
+MAVEN_ECLIPSE=	-Dmaven.repo.local=${WRKDIR}/eclipse-maven-repo-${PORTVERSION} \
 		-Dnative=gtk.freebsd.${ARCH} \
 		-DforceContextQualifier=v${ECLIPSE_TSTAMP}
 
