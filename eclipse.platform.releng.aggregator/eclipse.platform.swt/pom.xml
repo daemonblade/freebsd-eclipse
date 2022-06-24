@@ -123,23 +123,22 @@
 	          <version>${tycho.version}</version>
 	          <configuration>
 	            <environments>
-	            	<environment>
-						<os>freebsd</os>
-						<ws>gtk</ws>
-						<arch>amd64</arch>
-					</environment>
-					<environment>
-			            <os>freebsd</os>
-			            <ws>gtk</ws>
-			            <arch>powerpc64</arch>
-			          </environment>
-	            	</environments>
-					<environment>
-			            <os>freebsd</os>
-			            <ws>gtk</ws>
-			            <arch>powerpc64le</arch>
-			          </environment>
-	            	</environments>
+				  <environment>
+					<os>freebsd</os>
+					<ws>gtk</ws>
+					<arch>amd64</arch>
+				  </environment>
+				  <environment>
+					<os>freebsd</os>
+					<ws>gtk</ws>
+					<arch>powerpc64</arch>
+				  </environment>
+				  <environment>
+					<os>freebsd</os>
+					<ws>gtk</ws>
+					<arch>powerpc64le</arch>
+				  </environment>
+				</environments>
 	          </configuration>
 	        </plugin>
 	      </plugins>
