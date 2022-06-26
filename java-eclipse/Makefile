@@ -23,7 +23,7 @@ BUILD_DEPENDS=	git:devel/git@lite \
 		zip:archivers/zip
 LIB_DEPENDS=	libsecret-1.so:security/libsecret \
 		libwebkit2gtk-4.0.so:www/webkit2-gtk3
-USES=		compiler:c++11-lang gmake pkgconfig gnome
+USES=		gmake pkgconfig gnome
 USE_GNOME=	gtk30
 
 USE_GITHUB=	yes
@@ -54,6 +54,8 @@ GH_TUPLE=	eclipse-platform:eclipse.platform.releng.aggregator:${ECLIPSE_TAG} \
 		daemonblade:eclipse-maven-repo:${PORTVERSION}:x
 
 USE_JAVA=	11+
+
+PORTSCOUT=	ignore:1
 
 DESKTOP_ENTRIES="Eclipse" \
 		"${COMMENT}" \
