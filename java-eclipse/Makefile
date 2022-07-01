@@ -73,9 +73,6 @@ MAVEN_ECLIPSE=	-Dmaven.repo.local=${WRKDIR}/eclipse-maven-repo-${PORTVERSION} \
 
 ECLIPSE_RESULT=	eclipse.platform.releng.tychoeclipsebuilder/eclipse.platform.repository/target/products/org.eclipse.sdk.ide-freebsd.gtk.${ARCH}.tar.gz
 
-# Let's abuse this to get to the right place.
-WRKSRC_SUBDIR=	../eclipse.platform.releng.aggregator-${ECLIPSE_TAG}
-
 do-build:
 	cd ${WRKSRC} && ${SETENV} ${MAVEN_ENV} mvn --offline ${MAVEN_ECLIPSE} -DskipTests clean verify
 
