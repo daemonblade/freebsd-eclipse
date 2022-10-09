@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
-      id="org.eclipse.jdt.java18patch"
+      id="org.eclipse.jdt.java19patch"
       label="%featureName"
       version="1.2.300.qualifier"
       provider-name="%providerName"
@@ -20,7 +20,7 @@
    </license>
 
    <requires>
-      <import feature="org.eclipse.jdt" version="3.18.1100.v20220223-1800" patch="true"/>
+      <import feature="org.eclipse.jdt" version="3.18.1300.v20220817-1800" patch="true"/>
    </requires>
 
    <plugin
@@ -30,13 +30,7 @@
          version="0.0.0"
          unpack="false"/>
    <plugin
-         id="org.eclipse.jdt.compiler.apt"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-   <plugin
-         id="org.eclipse.jdt.compiler.tool"
+         id="org.eclipse.jdt.ui"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -46,18 +40,18 @@
          download-size="0"
          install-size="0"
          version="0.0.0"
-         unpack="false"/>  
+         unpack="false"/>
    <plugin
-         id="org.eclipse.jdt.ui"
+         id="org.eclipse.jdt.debug"
          download-size="0"
          install-size="0"
          version="0.0.0"
-         unpack="false"/> 
+         unpack="false"/>
    <plugin
          id="org.eclipse.jdt.launching"
          download-size="0"
          install-size="0"
          version="0.0.0"
-         unpack="false"/> 
-
+         unpack="false"/>
+   
 </feature>

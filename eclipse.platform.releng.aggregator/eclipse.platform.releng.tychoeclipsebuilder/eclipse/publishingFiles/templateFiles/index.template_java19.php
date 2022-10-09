@@ -105,10 +105,6 @@ if (isset($testbuildonly) && ($testbuildonly)) {
 if (isset ($NEWS_ID)) {
   echo "<a href=\"https://www.eclipse.org/eclipse/news/${NEWS_ID}/\">New and Noteworthy</a><br>\n";
 }
-else {
-// Show N&N link on the I-Build download page
-  echo "<a href=\"https://www.eclipse.org/eclipse/news/${STREAMMajor}.${STREAMMinor}/\">New and Noteworthy</a><br>\n";
-}
 // Similar for $ACK_ID and $README_ID, but they are added only for 'R builds',
 // And, are added by the promotion scripts, as long as we keep same conventions.
 if (isset ($ACK_ID)) {
@@ -117,7 +113,6 @@ if (isset ($ACK_ID)) {
 if (isset ($README_ID)) {
   echo "<a href=\"https://www.eclipse.org/eclipse/development/readme_eclipse_${README_ID}.php\">Eclipse Project ${BUILD_ID} Readme</a><br>\n";
 }
-echo "<a href=\"https://www.eclipse.org/projects/project-plan.php?planurl=https://www.eclipse.org/eclipse/development/plans/eclipse_project_plan_${STREAMMajor}_${STREAMMinor}.xml\">Eclipse Project Plan</a><br>\n";
 
 if (isset ($BUILD_FAILED) ) {
   echo "<h2>Build Failed</h2><p>See <a href=\"buildlogs.php\">logs</a>.</p>\n";
@@ -224,8 +219,8 @@ else {
   }
 
   /* performance tests line item */
-  $generated=file_exists("performance/global_fp.php");
-  if (file_exists("performance/performance.php") && $generated) {
+  //$generated=file_exists("performance/global_fp.php");
+  if (file_exists("performance/performance.php")) {
     echo "<li>View the <a href=\"performance/performance.php\">performance test results</a> for the current build.</li>\n";
   } else {
     echo "<li>Performance tests are pending.</li>\n";
@@ -386,17 +381,6 @@ else {
 </tr>
 %tests%
 </table>
-
-<!--
-<h3 id="DeltaPack">DeltaPack&nbsp;<a href="details.html#DeltaPack"><i class="fa fa-info-circle">&nbsp;</i></a>
-</h3>
-<?php startTable(); ?>
-<tr>
-  <?php columnHeads(); ?>
-</tr>
-%deltapack%
-</table>
--->
 
 <h3 id="PlatformRuntime">Platform Runtime Binary&nbsp;<a href="details.html#PlatformRuntime"><i class="fa fa-info-circle">&nbsp;</i></a>
 </h3>
