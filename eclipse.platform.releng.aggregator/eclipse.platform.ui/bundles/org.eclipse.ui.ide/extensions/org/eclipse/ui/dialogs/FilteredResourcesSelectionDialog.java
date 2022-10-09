@@ -21,15 +21,14 @@ package org.eclipse.ui.dialogs;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.text.CollationKey;
 import java.text.Collator;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
@@ -137,6 +136,22 @@ public class FilteredResourcesSelectionDialog extends FilteredItemsSelectionDial
 	private int typeMask;
 
 	private boolean isDerived;
+
+	/**
+	 * Cache for Collator used by sorting. The allocated memory is reclaimed as soon
+	 * as the Dialog is closed.
+	 */
+	private final Map<String, CollationKey> collationKeyCache = new HashMap<>();
+	private final java.util.Comparator<String> collator = new Comparator<>() {
+		Collator c = Collator.getInstance();
+
+		@Override
+		public int compare(String s1, String s2) {
+			CollationKey ck1 = collationKeyCache.computeIfAbsent(s1, c::getCollationKey);
+			CollationKey ck2 = collationKeyCache.computeIfAbsent(s2, c::getCollationKey);
+			return ck1.compareTo(ck2);
+		}
+	};
 
 	/**
 	 * Creates a new instance of the class
@@ -381,6 +396,12 @@ public class FilteredResourcesSelectionDialog extends FilteredItemsSelectionDial
 	}
 
 	@Override
+	public boolean close() {
+		collationKeyCache.clear();
+		return super.close();
+	}
+
+	@Override
 	public String getElementName(Object item) {
 		IResource resource = (IResource) item;
 		return resource.getName();
@@ -403,17 +424,14 @@ public class FilteredResourcesSelectionDialog extends FilteredItemsSelectionDial
 	}
 
 	@Override
-	protected Comparator getItemsComparator() {
+	protected Comparator<IResource> getItemsComparator() {
 		final String pattern;
 		if (latestFilter != null) {
 			pattern = latestFilter.getPattern();
 		} else {
 			pattern = null;
 		}
-		return (o1, o2) -> {
-			Collator collator = Collator.getInstance();
-			IResource resource1 = (IResource) o1;
-			IResource resource2 = (IResource) o2;
+		return (resource1, resource2) -> {
 			String s1 = resource1.getName();
 			String s2 = resource2.getName();
 
@@ -645,7 +663,9 @@ public class FilteredResourcesSelectionDialog extends FilteredItemsSelectionDial
 			}
 
 			IResource resource = (IResource) element;
-			String searchFieldString = escapeRegexCharacters(((Text) getPatternControl()).getText());
+			String searchFieldString = ((Text) getPatternControl()).getText();
+
+			// We highlight just the matches in resource name, so cut off path if any
 			int fileNameIndex = searchFieldString.lastIndexOf('/');
 			if (fileNameIndex != -1 && fileNameIndex != searchFieldString.length() - 1) {
 				searchFieldString = searchFieldString.substring(fileNameIndex + 1);
@@ -657,9 +677,11 @@ public class FilteredResourcesSelectionDialog extends FilteredItemsSelectionDial
 					textStyle.font = JFaceResources.getFontRegistry().getBold(JFaceResources.DEFAULT_FONT);
 				}
 			};
+
+			// Firstly style the extension part (if any), then style the rest
 			StyledString str = styleResourceExtensionMatch(resource, searchFieldString, boldStyler);
-			if (str.getStyleRanges().length != 0 && searchFieldString.lastIndexOf('.') != -1) {
-				resourceName = resourceName.substring(0, resourceName.lastIndexOf('.' + resource.getFileExtension()));
+			if (str.getStyleRanges().length > 0) {
+				resourceName = resourceName.substring(0, resourceName.lastIndexOf('.'));
 				searchFieldString = searchFieldString.substring(0, searchFieldString.lastIndexOf('.'));
 			}
 			getMatchPositions(resourceName, searchFieldString).stream()
@@ -676,13 +698,17 @@ public class FilteredResourcesSelectionDialog extends FilteredItemsSelectionDial
 		private StyledString styleResourceExtensionMatch(IResource resource, String matchingString, Styler styler) {
 			StyledString str = new StyledString(resource.getName());
 			String resourceExtension = resource.getFileExtension();
-			int lastDotIndex = matchingString.lastIndexOf('.');
-			if (lastDotIndex == -1 || resourceExtension == null) {
+			if (resourceExtension == null) {
 				return str;
 			}
+			int matchingExtensionIndex = matchingString.lastIndexOf('.');
+			if (matchingExtensionIndex == -1) {
+				return str;
+			}
+
 			resourceExtension = '.' + resourceExtension;
-			int resourceExtensionIndex = resource.getName().lastIndexOf(resourceExtension);
-			String matchingExtension = matchingString.substring(lastDotIndex, matchingString.length());
+			int resourceExtensionIndex = resource.getName().length() - resourceExtension.length();
+			String matchingExtension = matchingString.substring(matchingExtensionIndex, matchingString.length());
 			for (Position markPosition : getMatchPositions(resourceExtension, matchingExtension)) {
 				str.setStyle(resourceExtensionIndex + markPosition.offset, markPosition.length, styler);
 			}
@@ -690,79 +716,51 @@ public class FilteredResourcesSelectionDialog extends FilteredItemsSelectionDial
 		}
 
 		private List<Position> getMatchPositions(String string, String matching) {
-			final String originalMatching = matching;
 			List<Position> positions = new ArrayList<>();
 			if (matching.isEmpty() || string.isEmpty()) {
 				return positions;
 			}
 
+			// Pre-process the matching pattern
 			char lastChar = matching.charAt(matching.length() - 1);
-			if (lastChar == ' ') {
+			if (lastChar == ' ' || lastChar == '<') {
 				matching = matching.substring(0, matching.length() - 1);
-			} else if (lastChar == '<') {
-				matching = matching.substring(0, matching.length() - 2);
 			}
+
+			String[] regions;
 			if (matching.indexOf('?') == -1 && matching.indexOf('*') == -1) {
-				matching = String.join("*", matching.split("(?=[A-Z0-9])")) + "*"; //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$
+				// Expect that CamelCase search was possibly performed
+				regions = matching.split("(?=[A-Z0-9])"); //$NON-NLS-1$
 			} else {
-				matching = matching.toLowerCase().replaceAll("\\\\\\\\", "\\\\"); //$NON-NLS-1$ //$NON-NLS-2$
+				regions = matching.toLowerCase().split("[?*]"); //$NON-NLS-1$
 				string = string.toLowerCase();
 			}
 
-			int startingIndex = 0;
+			// Try to match string parts against the pattern regions firstly
 			int currentIndex = 0;
-			String[] regions = matching.replaceAll("\\.", "\\\\.").split("(\\?)|\\*"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-			int usedRegions = 0;
-			boolean restart = false;
-
-			do {
-				for (String region : regions) {
-					if (region == null || region.isEmpty()) {
-						usedRegions++;
-						continue;
-					}
-					if (region.equals("?")) { //$NON-NLS-1$
-						currentIndex++;
-						usedRegions++;
-						continue;
-					}
-					int startlocation = indexOf(Pattern.compile(region), string.substring(currentIndex));
-					if (startlocation == -1) {
-						currentIndex = ++startingIndex;
-						positions = new ArrayList<>();
-						restart = true;
-						break;
-					}
-					int regionIndex = region.replace("\\\\", "1").replace("\\", "").length(); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-					currentIndex += startlocation;
-					positions.add(new Position(currentIndex, regionIndex));
-					currentIndex += regionIndex;
-					usedRegions++;
+			boolean regionsDontMatch = false;
+			for (String region : regions) {
+				if (region.isEmpty()) {
+					continue;
 				}
-			} while (restart && currentIndex < string.length());
-			if (usedRegions != regions.length && string.toLowerCase().startsWith(originalMatching.toLowerCase())) {
-				positions = new ArrayList<>();
-				positions.add(new Position(0, originalMatching.length()));
+				int startlocation = string.substring(currentIndex).indexOf(region);
+				if (startlocation == -1) {
+					regionsDontMatch = true;
+					break;
+				}
+				currentIndex += startlocation;
+				positions.add(new Position(currentIndex, region.length()));
+				currentIndex += region.length();
+			}
+
+			if (regionsDontMatch) {
+				// We should get here only when CamelCase nor wildcard matching succeeded
+				// A simple comparison of the whole strings should succeed instead
+				if (string.toLowerCase().startsWith(matching.toLowerCase())) {
+					positions.add(new Position(0, matching.length()));
+				}
 			}
 			return positions;
-		}
-
-		private int indexOf(Pattern pattern, String s) {
-			Matcher matcher = pattern.matcher(s);
-			return matcher.find() ? matcher.start() : -1;
-		}
-
-		private String escapeRegexCharacters(String inputString) {
-			final List<Character> metaCharacters = Arrays.asList('\\', '^', '$', '{', '}', '[', ']', '(', ')', '+', '|',
-					'<', '>', '-', '&');
-			StringBuilder output = new StringBuilder();
-			for (char character : inputString.toCharArray()) {
-				if (metaCharacters.contains(character)) {
-					output.append('\\');
-				}
-				output.append(character);
-			}
-			return output.toString();
 		}
 
 		@Override

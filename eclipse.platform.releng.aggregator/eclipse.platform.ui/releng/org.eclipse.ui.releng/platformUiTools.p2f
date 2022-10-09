@@ -122,11 +122,6 @@
         <repository location='https://download.eclipse.org/tools/orbit/downloads/latest-I'/>
       </repositories>
     </iu>
-    <iu id='org.eclipse.pde.api.tools.ee.feature.feature.group' name='API Tools Execution Environment Descriptions' >
-      <repositories size='2'>
-        <repository location='https://download.eclipse.org/releases/latest/'/>
-      </repositories>
-    </iu>
     <iu id='org.eclipse.egit.feature.group' name='Eclipse Git Team Provider' >
       <repositories size='1'>
         <repository location='https://download.eclipse.org/egit/updates-nightly'/>
@@ -234,7 +229,7 @@
     </iu>
     <iu id='org.eclipse.wst.xml_ui.feature.feature.group' name='XML Editor UI' version='0.0.0'>
         <repositories size='1'>
-            <repository location='https://download.eclipse.org/webtools/downloads/drops/R3.25.0/S-3.25.0.M1-20220106092734/repository/'/>
+            <repository location='https://download.eclipse.org/webtools/CI/3.27.0/I-latest/repository/'/>
         </repositories>
     </iu>
     <iu id='zipeditor.feature.group' name='ZipEditor' version='0.0.0'>
@@ -244,7 +239,7 @@
     </iu>
     <iu id='com.yourkit.profiler.feature.group' name='Yourkit' version='0.0.0'>
         <repositories size='1'>
-            <repository location='https://www.yourkit.com/download/yjp2021_11_for_eclipse/'/>
+            <repository location='https://www.yourkit.com/download/yjp2022_3_for_eclipse/'/>
         </repositories>
     </iu>
     <iu id='com.sun.xml.bind' name='com.sun.xml.bind' version='0.0.0'>
@@ -269,12 +264,12 @@
     </iu>
     <iu id='org.eclipse.swt.tools.feature.feature.group' name='SWT Tools' version='0.0.0'>
         <repositories size='1'>
-            <repository location='https://download.eclipse.org/eclipse/updates/4.24-I-builds'/>
+            <repository location='https://download.eclipse.org/eclipse/updates/4.25-I-builds'/>
         </repositories>
     </iu>
     <iu id='org.eclipse.equinox.executable.feature.group' name='Eclipse platform launcher executables' version='0.0.0'>
         <repositories size='1'>
-            <repository location='https://download.eclipse.org/eclipse/updates/4.24-I-builds'/>
+            <repository location='https://download.eclipse.org/eclipse/updates/4.25-I-builds'/>
         </repositories>
     </iu>
   </ius>
