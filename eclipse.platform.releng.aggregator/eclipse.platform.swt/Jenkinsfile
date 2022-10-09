@@ -22,7 +22,7 @@ spec:
         memory: "512Mi"
         cpu: "500m"  
   - name: container
-    image: akurtakov/swtbuild@sha256:fca953c5f0fa9fadb92b1875c1942f6042f4bd51327d1e1e8e40f39923103fe1
+    image: akurtakov/swtbuild@sha256:43085feb91b1703e019a282188d996607385dcd746a7441cb7d2ca453a0adcc9
     tty: true
     command: [ "uid_entrypoint", "cat" ]
     resources:
@@ -37,9 +37,9 @@ spec:
       mountPath: "/home/jenkins/.m2/settings.xml"
       subPath: "settings.xml"
       readOnly: true
-    - name: "toolchains-xml"
-      mountPath: "/home/jenkins/.m2/toolchains.xml"
-      subPath: "toolchains.xml"
+    - name: toolchains-xml
+      mountPath: /home/jenkins/.m2/toolchains.xml
+      subPath: toolchains.xml
       readOnly: true
     - name: "settings-security-xml"
       mountPath: "/home/jenkins/.m2/settings-security.xml"
@@ -97,7 +97,7 @@ spec:
 			steps {
 				container('container') {
 					wrap([$class: 'Xvnc', useXauthority: true]) {
-					    withEnv(["JAVA_HOME=${ tool 'openjdk-jdk11-latest' }"]) {
+					    withEnv(["JAVA_HOME=${ tool 'openjdk-jdk17-latest' }"]) {
 					        dir ('eclipse.platform.swt.binaries') {
 					    	    sh '/opt/tools/apache-maven/latest/bin/mvn --batch-mode -Pbuild-individual-bundles -DforceContextQualifier=zzz -Dnative=gtk.linux.x86_64 -DskipJni -DskipRust -Dcompare-version-with-baselines.skip=true -Dmaven.compiler.failOnWarning=true install '
 					        }

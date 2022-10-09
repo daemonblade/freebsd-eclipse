@@ -997,7 +997,7 @@ private NSBitmapImageRep createRepresentation(ImageData imageData, AlphaInfo alp
 	NSBitmapImageRep rep = (NSBitmapImageRep)new NSBitmapImageRep().alloc();
 
 	PaletteData palette = imageData.palette;
-	if (!(((imageData.depth == 1 || imageData.depth == 2 || imageData.depth == 4 || imageData.depth == 8) && !palette.isDirect) ||
+	if (!(((imageData.depth == 1 || imageData.depth == 2 || imageData.depth == 4 || imageData.depth == 8 || imageData.depth == 16) && !palette.isDirect) ||
 			((imageData.depth == 8) || (imageData.depth == 16 || imageData.depth == 24 || imageData.depth == 32) && palette.isDirect)))
 				SWT.error(SWT.ERROR_UNSUPPORTED_DEPTH);
 
@@ -1008,10 +1008,9 @@ private NSBitmapImageRep createRepresentation(ImageData imageData, AlphaInfo alp
 	int bpr = imageData.width * 4;
 	byte[] buffer = new byte[dataSize];
 	if (palette.isDirect) {
-		ImageData.blit(ImageData.BLIT_SRC,
-			imageData.data, imageData.depth, imageData.bytesPerLine, imageData.getByteOrder(), 0, 0, imageData.width, imageData.height, palette.redMask, palette.greenMask, palette.blueMask,
-			ImageData.ALPHA_OPAQUE, null, 0, 0, 0,
-			buffer, 32, bpr, ImageData.MSB_FIRST, 0, 0, imageData.width, imageData.height, 0xFF0000, 0xFF00, 0xFF,
+		ImageData.blit(
+			imageData.data, imageData.depth, imageData.bytesPerLine, imageData.getByteOrder(), imageData.width, imageData.height, palette.redMask, palette.greenMask, palette.blueMask,
+			buffer, 32, bpr, ImageData.MSB_FIRST, imageData.width, imageData.height, 0xFF0000, 0xFF00, 0xFF,
 			false, false);
 	} else {
 		RGB[] rgbs = palette.getRGBs();
@@ -1026,11 +1025,10 @@ private NSBitmapImageRep createRepresentation(ImageData imageData, AlphaInfo alp
 			srcGreens[i] = (byte)rgb.green;
 			srcBlues[i] = (byte)rgb.blue;
 		}
-		ImageData.blit(ImageData.BLIT_SRC,
-			imageData.data, imageData.depth, imageData.bytesPerLine, imageData.getByteOrder(), 0, 0, imageData.width, imageData.height, srcReds, srcGreens, srcBlues,
-			ImageData.ALPHA_OPAQUE, null, 0, 0, 0,
-			buffer, 32, bpr, ImageData.MSB_FIRST, 0, 0, imageData.width, imageData.height, 0xFF0000, 0xFF00, 0xFF,
-			false, false);
+		ImageData.blit(
+			imageData.width, imageData.height,
+			imageData.data, imageData.depth, imageData.bytesPerLine, imageData.getByteOrder(), srcReds, srcGreens, srcBlues,
+			buffer, 32, bpr, ImageData.MSB_FIRST, 0xFF0000, 0xFF00, 0xFF);
 	}
 
 	/* Initialize transparency */
@@ -1167,7 +1165,7 @@ NSBitmapImageRep getRepresentation (int scaleFactor) {
  * color of the widget to paint the transparent pixels of the image.
  * Use this method to check which color will be used in these cases
  * in place of transparency. This value may be set with setBackground().
- * <p>
+ * </p>
  *
  * @return the background color of the image, or null if there is no transparency in the image
  *

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Paul Pazderski and others.
+ * Copyright (c) 2019, 2022 Paul Pazderski and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -89,7 +89,7 @@ public class SnippetExplorer {
 	 */
 	private static final int SHUTDOWN_GRACE_TIME_MS = 5000;
 	/** Link to online snippet source. Used if no local source is available. */
-	private static final String SNIPPET_SOURCE_LINK_TEMPLATE = "https://git.eclipse.org/c/platform/"
+	private static final String SNIPPET_SOURCE_LINK_TEMPLATE = "https://github.com/eclipse-platform/"
 			+ "eclipse.platform.swt.git/tree/examples/org.eclipse.swt.snippets/src/org/eclipse/swt/snippets/%s.java";
 
 	/**
@@ -1024,7 +1024,7 @@ public class SnippetExplorer {
 				final Display d = Display.findDisplay(t);
 				if (d != null) {
 					d.asyncExec(
-							() -> Arrays.stream(d.getShells()).filter(s -> !s.isDisposed()).forEach(s -> s.close()));
+							() -> Arrays.stream(d.getShells()).filter(s -> !s.isDisposed()).forEach(Shell::close));
 				}
 			}
 			final long start = System.currentTimeMillis();
@@ -1044,7 +1044,7 @@ public class SnippetExplorer {
 						System.err.println("    " + t.getName() + " (ThreadId: " + t.getId() + ")");
 						final Display d = Display.findDisplay(t);
 						if (d != null && !d.isDisposed()) {
-							d.syncExec(() -> d.dispose());
+							d.syncExec(d::dispose);
 						}
 					}
 				}

@@ -224,7 +224,6 @@ public final class ImageData implements Cloneable {
 			for (int v = 0, p = 0; v < 0x10000; v+= inc) data[p++] = (byte)(v >> 8);
 		}
 	}
-	static final byte[] ONE_TO_ONE_MAPPING = ANY_TO_EIGHT[8];
 
 	/**
 	 * Scaled 8x8 Bayer dither matrix.
@@ -1143,15 +1142,13 @@ public ImageData scaledTo(int width, int height) {
 		x, y, disposalMethod, delayTime);
 
 	/* Scale the image contents */
-	if (palette.isDirect) blit(BLIT_SRC,
-		this.data, this.depth, this.bytesPerLine, this.getByteOrder(), 0, 0, this.width, this.height, 0, 0, 0,
-		ALPHA_OPAQUE, null, 0, 0, 0,
-		dest.data, dest.depth, dest.bytesPerLine, dest.getByteOrder(), 0, 0, dest.width, dest.height, 0, 0, 0,
+	if (palette.isDirect) blit(
+		this.data, this.depth, this.bytesPerLine, this.getByteOrder(), this.width, this.height, 0, 0, 0,
+		dest.data, dest.depth, dest.bytesPerLine, dest.getByteOrder(), dest.width, dest.height, 0, 0, 0,
 		flipX, flipY);
-	else blit(BLIT_SRC,
-		this.data, this.depth, this.bytesPerLine, this.getByteOrder(), 0, 0, this.width, this.height, null, null, null,
-		ALPHA_OPAQUE, null, 0, 0, 0,
-		dest.data, dest.depth, dest.bytesPerLine, dest.getByteOrder(), 0, 0, dest.width, dest.height, null, null, null,
+	else blit(
+		this.data, this.depth, this.bytesPerLine, this.getByteOrder(), this.width, this.height,
+		dest.data, dest.depth, dest.bytesPerLine, dest.getByteOrder(), dest.width, dest.height,
 		flipX, flipY);
 
 	/* Scale the image mask or alpha */
@@ -1162,19 +1159,17 @@ public ImageData scaledTo(int width, int height) {
 		dest.maskData = new byte[destBpl * dest.height];
 		int srcBpl = (this.width + 7) / 8;
 		srcBpl = (srcBpl + (this.maskPad - 1)) / this.maskPad * this.maskPad;
-		blit(BLIT_SRC,
-			this.maskData, 1, srcBpl, MSB_FIRST, 0, 0, this.width, this.height, null, null, null,
-			ALPHA_OPAQUE, null, 0, 0, 0,
-			dest.maskData, 1, destBpl, MSB_FIRST, 0, 0, dest.width, dest.height, null, null, null,
+		blit(
+			this.maskData, 1, srcBpl,  MSB_FIRST, this.width, this.height,
+			dest.maskData, 1, destBpl, MSB_FIRST, dest.width, dest.height,
 			flipX, flipY);
 	} else if (alpha != -1) {
 		dest.alpha = this.alpha;
 	} else if (alphaData != null) {
 		dest.alphaData = new byte[dest.width * dest.height];
-		blit(BLIT_SRC,
-			this.alphaData, 8, this.width, MSB_FIRST, 0, 0, this.width, this.height, null, null, null,
-			ALPHA_OPAQUE, null, 0, 0, 0,
-			dest.alphaData, 8, dest.width, MSB_FIRST, 0, 0, dest.width, dest.height, null, null, null,
+		blit(
+			this.alphaData, 8, this.width, MSB_FIRST, this.width, this.height,
+			dest.alphaData, 8, dest.width, MSB_FIRST, dest.width, dest.height,
 			flipX, flipY);
 	}
 	return dest;
@@ -1615,47 +1610,6 @@ static PaletteData bwPalette() {
 	return new PaletteData(new RGB(0, 0, 0), new RGB(255, 255, 255));
 }
 
-/**
- * Gets the offset of the most significant bit for
- * the given mask.
- */
-static int getMSBOffset(int mask) {
-	for (int i = 31; i >= 0; i--) {
-		if (((mask >> i) & 0x1) != 0) return i + 1;
-	}
-	return 0;
-}
-
-/**
- * Finds the closest match.
- */
-static int closestMatch(int depth, byte red, byte green, byte blue, int redMask, int greenMask, int blueMask, byte[] reds, byte[] greens, byte[] blues) {
-	if (depth > 8) {
-		int rshift = 32 - getMSBOffset(redMask);
-		int gshift = 32 - getMSBOffset(greenMask);
-		int bshift = 32 - getMSBOffset(blueMask);
-		return (((red << 24) >>> rshift) & redMask) |
-			(((green << 24) >>> gshift) & greenMask) |
-			(((blue << 24) >>> bshift) & blueMask);
-	}
-	int r, g, b;
-	int minDistance = 0x7fffffff;
-	int nearestPixel = 0;
-	int n = reds.length;
-	for (int j = 0; j < n; j++) {
-		r = (reds[j] & 0xFF) - (red & 0xFF);
-		g = (greens[j] & 0xFF) - (green & 0xFF);
-		b = (blues[j] & 0xFF) - (blue & 0xFF);
-		int distance = r*r + g*g + b*b;
-		if (distance < minDistance) {
-			nearestPixel = j;
-			if (distance == 0) break;
-			minDistance = distance;
-		}
-	}
-	return nearestPixel;
-}
-
 static ImageData convertMask(ImageData mask) {
 	if (mask.depth == 1) return mask;
 	PaletteData palette = new PaletteData(new RGB(0, 0, 0), new RGB(255,255,255));
@@ -1700,27 +1654,6 @@ static byte[] convertPad(byte[] data, int width, int height, int depth, int pad,
 }
 
 /**
- * Blit operation bits to be OR'ed together to specify the desired operation.
- */
-static final int
-	BLIT_SRC = 1,     // copy source directly, else applies logic operations
-	BLIT_ALPHA = 2,   // enable alpha blending
-	BLIT_DITHER = 4;  // enable dithering in low color modes
-
-/**
- * Alpha mode, values 0 - 255 specify global alpha level
- */
-static final int
-	ALPHA_OPAQUE = 255,           // Fully opaque (ignores any alpha data)
-	ALPHA_TRANSPARENT = 0,        // Fully transparent (ignores any alpha data)
-	ALPHA_CHANNEL_SEPARATE = -1,  // Use alpha channel from separate alphaData
-	ALPHA_CHANNEL_SOURCE = -2,    // Use alpha channel embedded in sourceData
-	ALPHA_MASK_UNPACKED = -3,     // Use transparency mask formed by bytes in alphaData (non-zero is opaque)
-	ALPHA_MASK_PACKED = -4,       // Use transparency mask formed by packed bits in alphaData
-	ALPHA_MASK_INDEX = -5,        // Consider source palette indices transparent if in alphaData array
-	ALPHA_MASK_RGB = -6;          // Consider source RGBs transparent if in RGB888 format alphaData array
-
-/**
  * Byte and bit order constants.
  */
 static final int LSB_FIRST = 0;
@@ -1738,6 +1671,7 @@ private static final int
 	TYPE_GENERIC_32_MSB = 4,
 	TYPE_GENERIC_32_LSB = 5,
 	// palette indexed color formats
+	TYPE_INDEX_16_LSB = 11,
 	TYPE_INDEX_8 = 6,
 	TYPE_INDEX_4 = 7,
 	TYPE_INDEX_2 = 8,
@@ -1753,36 +1687,21 @@ private static final int
  * data format, 0 may be specified for the masks.
  * </p>
  *
- * @param op the blitter operation: a combination of BLIT_xxx flags
- *        (see BLIT_xxx constants)
  * @param srcData the source byte array containing image data
  * @param srcDepth the source depth: one of 8, 16, 24, 32
  * @param srcStride the source number of bytes per line
  * @param srcOrder the source byte ordering: one of MSB_FIRST or LSB_FIRST;
  *        ignored if srcDepth is not 16 or 32
- * @param srcX the top-left x-coord of the source blit region
- * @param srcY the top-left y-coord of the source blit region
  * @param srcWidth the width of the source blit region
  * @param srcHeight the height of the source blit region
  * @param srcRedMask the source red channel mask
  * @param srcGreenMask the source green channel mask
  * @param srcBlueMask the source blue channel mask
- * @param alphaMode the alpha blending or mask mode, may be
- *        an integer 0-255 for global alpha; ignored if BLIT_ALPHA
- *        not specified in the blitter operations
- *        (see ALPHA_MODE_xxx constants)
- * @param alphaData the alpha blending or mask data, varies depending
- *        on the value of alphaMode and sometimes ignored
- * @param alphaStride the alpha data number of bytes per line
- * @param alphaX the top-left x-coord of the alpha blit region
- * @param alphaY the top-left y-coord of the alpha blit region
  * @param destData the destination byte array containing image data
  * @param destDepth the destination depth: one of 8, 16, 24, 32
  * @param destStride the destination number of bytes per line
  * @param destOrder the destination byte ordering: one of MSB_FIRST or LSB_FIRST;
  *        ignored if destDepth is not 16 or 32
- * @param destX the top-left x-coord of the destination blit region
- * @param destY the top-left y-coord of the destination blit region
  * @param destWidth the width of the destination blit region
  * @param destHeight the height of the destination blit region
  * @param destRedMask the destination red channel mask
@@ -1791,19 +1710,15 @@ private static final int
  * @param flipX if true the resulting image is flipped along the vertical axis
  * @param flipY if true the resulting image is flipped along the horizontal axis
  */
-static void blit(int op,
+static void blit(
 	byte[] srcData, int srcDepth, int srcStride, int srcOrder,
-	int srcX, int srcY, int srcWidth, int srcHeight,
+	int srcWidth, int srcHeight,
 	int srcRedMask, int srcGreenMask, int srcBlueMask,
-	int alphaMode, byte[] alphaData, int alphaStride, int alphaX, int alphaY,
 	byte[] destData, int destDepth, int destStride, int destOrder,
-	int destX, int destY, int destWidth, int destHeight,
+	int destWidth, int destHeight,
 	int destRedMask, int destGreenMask, int destBlueMask,
 	boolean flipX, boolean flipY) {
-	if ((destWidth <= 0) || (destHeight <= 0) || (alphaMode == ALPHA_TRANSPARENT)) return;
-
-	// these should be supplied as params later
-	int srcAlphaMask = 0, destAlphaMask = 0;
+	if ((destWidth <= 0) || (destHeight <= 0)) return;
 
 	/*** Prepare scaling data ***/
 	final int dwm1 = destWidth - 1;
@@ -1834,7 +1749,7 @@ static void blit(int op,
 			//throw new IllegalArgumentException("Invalid source type");
 			return;
 	}
-	int spr = srcY * srcStride + srcX * sbpp;
+	int spr = 0;
 
 	/*** Prepare destination-related data ***/
 	final int dbpp, dtype;
@@ -1859,48 +1774,17 @@ static void blit(int op,
 			//throw new IllegalArgumentException("Invalid destination type");
 			return;
 	}
-	int dpr = ((flipY) ? destY + dhm1 : destY) * destStride + ((flipX) ? destX + dwm1 : destX) * dbpp;
+	int dpr = ((flipY) ? dhm1 : 0) * destStride + ((flipX) ? dwm1 : 0) * dbpp;
 	final int dprxi = (flipX) ? -dbpp : dbpp;
 	final int dpryi = (flipY) ? -destStride : destStride;
-
-	/*** Prepare special processing data ***/
-	int apr;
-	if ((op & BLIT_ALPHA) != 0) {
-		switch (alphaMode) {
-			case ALPHA_MASK_UNPACKED:
-			case ALPHA_CHANNEL_SEPARATE:
-				if (alphaData == null) alphaMode = 0x10000;
-				apr = alphaY * alphaStride + alphaX;
-				break;
-			case ALPHA_MASK_PACKED:
-				if (alphaData == null) alphaMode = 0x10000;
-				alphaStride <<= 3;
-				apr = alphaY * alphaStride + alphaX;
-				break;
-			case ALPHA_MASK_INDEX:
-				//throw new IllegalArgumentException("Invalid alpha type");
-				return;
-			case ALPHA_MASK_RGB:
-				if (alphaData == null) alphaMode = 0x10000;
-				apr = 0;
-				break;
-			default:
-				alphaMode = (alphaMode << 16) / 255; // prescale
-			case ALPHA_CHANNEL_SOURCE:
-				apr = 0;
-				break;
-		}
-	} else {
-		alphaMode = 0x10000;
-		apr = 0;
-	}
 
 	/*** Blit ***/
 	int dp = dpr;
 	int sp = spr;
-	if ((alphaMode == 0x10000) && (stype == dtype) &&
-		(srcRedMask == destRedMask) && (srcGreenMask == destGreenMask) &&
-		(srcBlueMask == destBlueMask) && (srcAlphaMask == destAlphaMask)) {
+	if ((stype == dtype) &&
+		(srcRedMask == destRedMask) &&
+		(srcGreenMask == destGreenMask) &&
+		(srcBlueMask == destBlueMask)) {
 		/*** Fast blit (straight copy) ***/
 		switch (sbpp) {
 			case 1:
@@ -1945,7 +1829,7 @@ static void blit(int op,
 		return;
 	}
 	/*Fast 32 to 32 blit */
-	if (alphaMode == 0x10000 && stype == TYPE_GENERIC_32_MSB && dtype == TYPE_GENERIC_32_MSB) {
+	if (stype == TYPE_GENERIC_32_MSB && dtype == TYPE_GENERIC_32_MSB) {
 		if (srcRedMask == 0xFF00 && srcGreenMask == 0xff0000 && srcBlueMask == 0xff000000 && destRedMask == 0xFF0000 && destGreenMask == 0xff00 && destBlueMask == 0xff) {
 			for (int dy = destHeight, sfy = sfyi; dy > 0; --dy, sp = spr += (sfy >>> 16) * srcStride, sfy = (sfy & 0xffff) + sfyi, dp = dpr += dpryi) {
 				for (int dx = destWidth, sfx = sfxi; dx > 0; --dx, dp += dprxi, sfx = (sfx & 0xffff) + sfxi) {
@@ -1960,7 +1844,7 @@ static void blit(int op,
 		}
 	}
 	/*Fast 24 to 32 blit */
-	if (alphaMode == 0x10000 && stype == TYPE_GENERIC_24 && dtype == TYPE_GENERIC_32_MSB) {
+	if (stype == TYPE_GENERIC_24 && dtype == TYPE_GENERIC_32_MSB) {
 		if (srcRedMask == 0xFF && srcGreenMask == 0xff00 && srcBlueMask == 0xff0000 && destRedMask == 0xFF0000 && destGreenMask == 0xff00 && destBlueMask == 0xff) {
 			for (int dy = destHeight, sfy = sfyi; dy > 0; --dy, sp = spr += (sfy >>> 16) * srcStride, sfy = (sfy & 0xffff) + sfyi, dp = dpr += dpryi) {
 				for (int dx = destWidth, sfx = sfxi; dx > 0; --dx, dp += dprxi, sfx = (sfx & 0xffff) + sfxi) {
@@ -1982,32 +1866,20 @@ static void blit(int op,
 	final byte[] srcGreens = ANY_TO_EIGHT[getChannelWidth(srcGreenMask, srcGreenShift)];
 	final int srcBlueShift = getChannelShift(srcBlueMask);
 	final byte[] srcBlues = ANY_TO_EIGHT[getChannelWidth(srcBlueMask, srcBlueShift)];
-	final int srcAlphaShift = getChannelShift(srcAlphaMask);
-	final byte[] srcAlphas = ANY_TO_EIGHT[getChannelWidth(srcAlphaMask, srcAlphaShift)];
 
 	final int destRedShift = getChannelShift(destRedMask);
 	final int destRedWidth = getChannelWidth(destRedMask, destRedShift);
-	final byte[] destReds = ANY_TO_EIGHT[destRedWidth];
 	final int destRedPreShift = 8 - destRedWidth;
 	final int destGreenShift = getChannelShift(destGreenMask);
 	final int destGreenWidth = getChannelWidth(destGreenMask, destGreenShift);
-	final byte[] destGreens = ANY_TO_EIGHT[destGreenWidth];
 	final int destGreenPreShift = 8 - destGreenWidth;
 	final int destBlueShift = getChannelShift(destBlueMask);
 	final int destBlueWidth = getChannelWidth(destBlueMask, destBlueShift);
-	final byte[] destBlues = ANY_TO_EIGHT[destBlueWidth];
 	final int destBluePreShift = 8 - destBlueWidth;
-	final int destAlphaShift = getChannelShift(destAlphaMask);
-	final int destAlphaWidth = getChannelWidth(destAlphaMask, destAlphaShift);
-	final byte[] destAlphas = ANY_TO_EIGHT[destAlphaWidth];
-	final int destAlphaPreShift = 8 - destAlphaWidth;
 
-	int ap = apr, alpha = alphaMode;
-	int r = 0, g = 0, b = 0, a = 0;
-	int rq = 0, gq = 0, bq = 0, aq = 0;
+	int r = 0, g = 0, b = 0;
 	for (int dy = destHeight, sfy = sfyi; dy > 0; --dy,
 			sp = spr += (sfy >>> 16) * srcStride,
-			ap = apr += (sfy >>> 16) * alphaStride,
 			sfy = (sfy & 0xffff) + sfyi,
 			dp = dpr += dpryi) {
 		for (int dx = destWidth, sfx = sfxi; dx > 0; --dx,
@@ -2021,7 +1893,6 @@ static void blit(int op,
 					r = srcReds[(data & srcRedMask) >>> srcRedShift] & 0xff;
 					g = srcGreens[(data & srcGreenMask) >>> srcGreenShift] & 0xff;
 					b = srcBlues[(data & srcBlueMask) >>> srcBlueShift] & 0xff;
-					a = srcAlphas[(data & srcAlphaMask) >>> srcAlphaShift] & 0xff;
 				} break;
 				case TYPE_GENERIC_16_MSB: {
 					final int data = ((srcData[sp] & 0xff) << 8) | (srcData[sp + 1] & 0xff);
@@ -2029,7 +1900,6 @@ static void blit(int op,
 					r = srcReds[(data & srcRedMask) >>> srcRedShift] & 0xff;
 					g = srcGreens[(data & srcGreenMask) >>> srcGreenShift] & 0xff;
 					b = srcBlues[(data & srcBlueMask) >>> srcBlueShift] & 0xff;
-					a = srcAlphas[(data & srcAlphaMask) >>> srcAlphaShift] & 0xff;
 				} break;
 				case TYPE_GENERIC_16_LSB: {
 					final int data = ((srcData[sp + 1] & 0xff) << 8) | (srcData[sp] & 0xff);
@@ -2037,7 +1907,6 @@ static void blit(int op,
 					r = srcReds[(data & srcRedMask) >>> srcRedShift] & 0xff;
 					g = srcGreens[(data & srcGreenMask) >>> srcGreenShift] & 0xff;
 					b = srcBlues[(data & srcBlueMask) >>> srcBlueShift] & 0xff;
-					a = srcAlphas[(data & srcAlphaMask) >>> srcAlphaShift] & 0xff;
 				} break;
 				case TYPE_GENERIC_24: {
 					final int data = (( ((srcData[sp] & 0xff) << 8) |
@@ -2047,7 +1916,6 @@ static void blit(int op,
 					r = srcReds[(data & srcRedMask) >>> srcRedShift] & 0xff;
 					g = srcGreens[(data & srcGreenMask) >>> srcGreenShift] & 0xff;
 					b = srcBlues[(data & srcBlueMask) >>> srcBlueShift] & 0xff;
-					a = srcAlphas[(data & srcAlphaMask) >>> srcAlphaShift] & 0xff;
 				} break;
 				case TYPE_GENERIC_32_MSB: {
 					final int data = (( (( ((srcData[sp] & 0xff) << 8) |
@@ -2058,7 +1926,6 @@ static void blit(int op,
 					r = srcReds[(data & srcRedMask) >>> srcRedShift] & 0xff;
 					g = srcGreens[(data & srcGreenMask) >>> srcGreenShift] & 0xff;
 					b = srcBlues[(data & srcBlueMask) >>> srcBlueShift] & 0xff;
-					a = srcAlphas[(data & srcAlphaMask) >>> srcAlphaShift] & 0xff;
 				} break;
 				case TYPE_GENERIC_32_LSB: {
 					final int data = (( (( ((srcData[sp + 3] & 0xff) << 8) |
@@ -2069,104 +1936,14 @@ static void blit(int op,
 					r = srcReds[(data & srcRedMask) >>> srcRedShift] & 0xff;
 					g = srcGreens[(data & srcGreenMask) >>> srcGreenShift] & 0xff;
 					b = srcBlues[(data & srcBlueMask) >>> srcBlueShift] & 0xff;
-					a = srcAlphas[(data & srcAlphaMask) >>> srcAlphaShift] & 0xff;
 				} break;
-			}
-
-			/*** DO SPECIAL PROCESSING IF REQUIRED ***/
-			switch (alphaMode) {
-				case ALPHA_CHANNEL_SEPARATE:
-					alpha = ((alphaData[ap] & 0xff) << 16) / 255;
-					ap += (sfx >> 16);
-					break;
-				case ALPHA_CHANNEL_SOURCE:
-					alpha = (a << 16) / 255;
-					break;
-				case ALPHA_MASK_UNPACKED:
-					alpha = (alphaData[ap] != 0) ? 0x10000 : 0;
-					ap += (sfx >> 16);
-					break;
-				case ALPHA_MASK_PACKED:
-					alpha = (alphaData[ap >> 3] << ((ap & 7) + 9)) & 0x10000;
-					ap += (sfx >> 16);
-					break;
-				case ALPHA_MASK_RGB:
-					alpha = 0x10000;
-					for (int i = 0; i < alphaData.length; i += 3) {
-						if ((r == alphaData[i]) && (g == alphaData[i + 1]) && (b == alphaData[i + 2])) {
-							alpha = 0x0000;
-							break;
-						}
-					}
-					break;
-			}
-			if (alpha != 0x10000) {
-				if (alpha == 0x0000) continue;
-				switch (dtype) {
-					case TYPE_GENERIC_8: {
-						final int data = destData[dp] & 0xff;
-						rq = destReds[(data & destRedMask) >>> destRedShift] & 0xff;
-						gq = destGreens[(data & destGreenMask) >>> destGreenShift] & 0xff;
-						bq = destBlues[(data & destBlueMask) >>> destBlueShift] & 0xff;
-						aq = destAlphas[(data & destAlphaMask) >>> destAlphaShift] & 0xff;
-					} break;
-					case TYPE_GENERIC_16_MSB: {
-						final int data = ((destData[dp] & 0xff) << 8) | (destData[dp + 1] & 0xff);
-						rq = destReds[(data & destRedMask) >>> destRedShift] & 0xff;
-						gq = destGreens[(data & destGreenMask) >>> destGreenShift] & 0xff;
-						bq = destBlues[(data & destBlueMask) >>> destBlueShift] & 0xff;
-						aq = destAlphas[(data & destAlphaMask) >>> destAlphaShift] & 0xff;
-					} break;
-					case TYPE_GENERIC_16_LSB: {
-						final int data = ((destData[dp + 1] & 0xff) << 8) | (destData[dp] & 0xff);
-						rq = destReds[(data & destRedMask) >>> destRedShift] & 0xff;
-						gq = destGreens[(data & destGreenMask) >>> destGreenShift] & 0xff;
-						bq = destBlues[(data & destBlueMask) >>> destBlueShift] & 0xff;
-						aq = destAlphas[(data & destAlphaMask) >>> destAlphaShift] & 0xff;
-					} break;
-					case TYPE_GENERIC_24: {
-						final int data = (( ((destData[dp] & 0xff) << 8) |
-							(destData[dp + 1] & 0xff)) << 8) |
-							(destData[dp + 2] & 0xff);
-						rq = destReds[(data & destRedMask) >>> destRedShift] & 0xff;
-						gq = destGreens[(data & destGreenMask) >>> destGreenShift] & 0xff;
-						bq = destBlues[(data & destBlueMask) >>> destBlueShift] & 0xff;
-						aq = destAlphas[(data & destAlphaMask) >>> destAlphaShift] & 0xff;
-					} break;
-					case TYPE_GENERIC_32_MSB: {
-						final int data = (( (( ((destData[dp] & 0xff) << 8) |
-							(destData[dp + 1] & 0xff)) << 8) |
-							(destData[dp + 2] & 0xff)) << 8) |
-							(destData[dp + 3] & 0xff);
-						rq = destReds[(data & destRedMask) >>> destRedShift] & 0xff;
-						gq = destGreens[(data & destGreenMask) >>> destGreenShift] & 0xff;
-						bq = destBlues[(data & destBlueMask) >>> destBlueShift] & 0xff;
-						aq = destAlphas[(data & destAlphaMask) >>> destAlphaShift] & 0xff;
-					} break;
-					case TYPE_GENERIC_32_LSB: {
-						final int data = (( (( ((destData[dp + 3] & 0xff) << 8) |
-							(destData[dp + 2] & 0xff)) << 8) |
-							(destData[dp + 1] & 0xff)) << 8) |
-							(destData[dp] & 0xff);
-						rq = destReds[(data & destRedMask) >>> destRedShift] & 0xff;
-						gq = destGreens[(data & destGreenMask) >>> destGreenShift] & 0xff;
-						bq = destBlues[(data & destBlueMask) >>> destBlueShift] & 0xff;
-						aq = destAlphas[(data & destAlphaMask) >>> destAlphaShift] & 0xff;
-					} break;
-				}
-				// Perform alpha blending
-				a = aq + ((a - aq) * alpha >> 16);
-				r = rq + ((r - rq) * alpha >> 16);
-				g = gq + ((g - gq) * alpha >> 16);
-				b = bq + ((b - bq) * alpha >> 16);
 			}
 
 			/*** WRITE NEXT PIXEL ***/
 			final int data =
 				(r >>> destRedPreShift << destRedShift) |
 				(g >>> destGreenPreShift << destGreenShift) |
-				(b >>> destBluePreShift << destBlueShift) |
-				(a >>> destAlphaPreShift << destAlphaShift);
+				(b >>> destBluePreShift << destBlueShift);
 			switch (dtype) {
 				case TYPE_GENERIC_8: {
 					destData[dp] = (byte) data;
@@ -2209,54 +1986,36 @@ static void blit(int op,
  * performed.
  * </p>
  *
- * @param op the blitter operation: a combination of BLIT_xxx flags
- *        (see BLIT_xxx constants)
  * @param srcData the source byte array containing image data
  * @param srcDepth the source depth: one of 1, 2, 4, 8
  * @param srcStride the source number of bytes per line
  * @param srcOrder the source byte ordering: one of MSB_FIRST or LSB_FIRST;
  *        ignored if srcDepth is not 1
- * @param srcX the top-left x-coord of the source blit region
- * @param srcY the top-left y-coord of the source blit region
  * @param srcWidth the width of the source blit region
  * @param srcHeight the height of the source blit region
- * @param srcReds the source palette red component intensities
- * @param srcGreens the source palette green component intensities
- * @param srcBlues the source palette blue component intensities
- * @param alphaMode the alpha blending or mask mode, may be
- *        an integer 0-255 for global alpha; ignored if BLIT_ALPHA
- *        not specified in the blitter operations
- *        (see ALPHA_MODE_xxx constants)
- * @param alphaData the alpha blending or mask data, varies depending
- *        on the value of alphaMode and sometimes ignored
- * @param alphaStride the alpha data number of bytes per line
- * @param alphaX the top-left x-coord of the alpha blit region
- * @param alphaY the top-left y-coord of the alpha blit region
  * @param destData the destination byte array containing image data
  * @param destDepth the destination depth: one of 1, 2, 4, 8
  * @param destStride the destination number of bytes per line
  * @param destOrder the destination byte ordering: one of MSB_FIRST or LSB_FIRST;
  *        ignored if destDepth is not 1
- * @param destX the top-left x-coord of the destination blit region
- * @param destY the top-left y-coord of the destination blit region
  * @param destWidth the width of the destination blit region
  * @param destHeight the height of the destination blit region
- * @param destReds the destination palette red component intensities
- * @param destGreens the destination palette green component intensities
- * @param destBlues the destination palette blue component intensities
  * @param flipX if true the resulting image is flipped along the vertical axis
  * @param flipY if true the resulting image is flipped along the horizontal axis
  */
-static void blit(int op,
+static void blit(
 	byte[] srcData, int srcDepth, int srcStride, int srcOrder,
-	int srcX, int srcY, int srcWidth, int srcHeight,
-	byte[] srcReds, byte[] srcGreens, byte[] srcBlues,
-	int alphaMode, byte[] alphaData, int alphaStride, int alphaX, int alphaY,
+	int srcWidth, int srcHeight,
 	byte[] destData, int destDepth, int destStride, int destOrder,
-	int destX, int destY, int destWidth, int destHeight,
-	byte[] destReds, byte[] destGreens, byte[] destBlues,
+	int destWidth, int destHeight,
 	boolean flipX, boolean flipY) {
-	if ((destWidth <= 0) || (destHeight <= 0) || (alphaMode == ALPHA_TRANSPARENT)) return;
+	if ((destWidth <= 0) || (destHeight <= 0)) return;
+
+	if (srcDepth > destDepth) {
+		// This case doesn't really make sense - what to do when source palette index
+		// doesn't fit into new bits-per-pixel? Therefore, not supported.
+		return;
+	}
 
 	/*** Prepare scaling data ***/
 	final int dwm1 = destWidth - 1;
@@ -2267,463 +2026,196 @@ static void blit(int op,
 	/*** Prepare source-related data ***/
 	final int stype;
 	switch (srcDepth) {
+		case 16:
+			stype = TYPE_INDEX_16_LSB;
+			if ((srcStride % 2) != 0) {
+				// Such strides don't really make sense and are not expected to occur.
+				// Not supported at the moment.
+				return;
+			}
+			break;
 		case 8:
 			stype = TYPE_INDEX_8;
 			break;
 		case 4:
-			srcStride <<= 1;
 			stype = TYPE_INDEX_4;
 			break;
 		case 2:
-			srcStride <<= 2;
 			stype = TYPE_INDEX_2;
 			break;
 		case 1:
-			srcStride <<= 3;
 			stype = (srcOrder == MSB_FIRST) ? TYPE_INDEX_1_MSB : TYPE_INDEX_1_LSB;
 			break;
 		default:
 			//throw new IllegalArgumentException("Invalid source type");
 			return;
 	}
-	int spr = srcY * srcStride + srcX;
+	int spr = 0;
 
 	/*** Prepare destination-related data ***/
 	final int dtype;
 	switch (destDepth) {
+		case 16:
+			dtype = TYPE_INDEX_16_LSB;
+			if ((destStride % 2) != 0) {
+				// Such strides don't really make sense and are not expected to occur.
+				// Not supported at the moment.
+				return;
+			}
+			break;
 		case 8:
 			dtype = TYPE_INDEX_8;
 			break;
 		case 4:
-			destStride <<= 1;
 			dtype = TYPE_INDEX_4;
 			break;
 		case 2:
-			destStride <<= 2;
 			dtype = TYPE_INDEX_2;
 			break;
 		case 1:
-			destStride <<= 3;
 			dtype = (destOrder == MSB_FIRST) ? TYPE_INDEX_1_MSB : TYPE_INDEX_1_LSB;
 			break;
 		default:
 			//throw new IllegalArgumentException("Invalid source type");
 			return;
 	}
-	int dpr = ((flipY) ? destY + dhm1 : destY) * destStride + ((flipX) ? destX + dwm1 : destX);
-	final int dprxi = (flipX) ? -1 : 1;
-	final int dpryi = (flipY) ? -destStride : destStride;
 
-	/*** Prepare special processing data ***/
-	int apr;
-	if ((op & BLIT_ALPHA) != 0) {
-		switch (alphaMode) {
-			case ALPHA_MASK_UNPACKED:
-			case ALPHA_CHANNEL_SEPARATE:
-				if (alphaData == null) alphaMode = 0x10000;
-				apr = alphaY * alphaStride + alphaX;
-				break;
-			case ALPHA_MASK_PACKED:
-				if (alphaData == null) alphaMode = 0x10000;
-				alphaStride <<= 3;
-				apr = alphaY * alphaStride + alphaX;
-				break;
-			case ALPHA_MASK_INDEX:
-			case ALPHA_MASK_RGB:
-				if (alphaData == null) alphaMode = 0x10000;
-				apr = 0;
-				break;
-			default:
-				alphaMode = (alphaMode << 16) / 255; // prescale
-			case ALPHA_CHANNEL_SOURCE:
-				apr = 0;
-				break;
-		}
-	} else {
-		alphaMode = 0x10000;
-		apr = 0;
-	}
-	final boolean ditherEnabled = (op & BLIT_DITHER) != 0;
+	final int srcPixelsPerStride = srcStride * 8 / srcDepth;
+	final int dstPixelsPerStride = destStride * 8 / destDepth;
+
+	int dpr = ((flipY) ? dhm1 : 0) * dstPixelsPerStride + ((flipX) ? dwm1 : 0);
+	final int dprxi = (flipX) ? -1 : 1;
+	final int dpryi = (flipY) ? -dstPixelsPerStride : dstPixelsPerStride;
 
 	/*** Blit ***/
 	int dp = dpr;
 	int sp = spr;
-	int ap = apr;
-	int destPaletteSize = 1 << destDepth;
-	if ((destReds != null) && (destReds.length < destPaletteSize)) destPaletteSize = destReds.length;
-	byte[] paletteMapping = null;
-	boolean isExactPaletteMapping = true;
-	switch (alphaMode) {
-		case 0x10000:
-			/*** If the palettes and formats are equivalent use a one-to-one mapping ***/
-			if ((stype == dtype) &&
-				(srcReds == destReds) && (srcGreens == destGreens) && (srcBlues == destBlues)) {
-				paletteMapping = ONE_TO_ONE_MAPPING;
-				break;
-			/*** If palettes have not been supplied, supply a suitable mapping ***/
-			} else if ((srcReds == null) || (destReds == null)) {
-				if (srcDepth <= destDepth) {
-					paletteMapping = ONE_TO_ONE_MAPPING;
-				} else {
-					paletteMapping = new byte[1 << srcDepth];
-					int mask = (0xff << destDepth) >>> 8;
-					for (int i = 0; i < paletteMapping.length; ++i) paletteMapping[i] = (byte)(i & mask);
-				}
-				break;
-			}
-		case ALPHA_MASK_UNPACKED:
-		case ALPHA_MASK_PACKED:
-		case ALPHA_MASK_INDEX:
-		case ALPHA_MASK_RGB:
-			/*** Generate a palette mapping ***/
-			int srcPaletteSize = 1 << srcDepth;
-			paletteMapping = new byte[srcPaletteSize];
-			if ((srcReds != null) && (srcReds.length < srcPaletteSize)) srcPaletteSize = srcReds.length;
-			for (int i = 0, r, g, b, index; i < srcPaletteSize; ++i) {
-				r = srcReds[i] & 0xff;
-				g = srcGreens[i] & 0xff;
-				b = srcBlues[i] & 0xff;
-				index = 0;
-				int minDistance = 0x7fffffff;
-				for (int j = 0, dr, dg, db, distance; j < destPaletteSize; ++j) {
-					dr = (destReds[j] & 0xff) - r;
-					dg = (destGreens[j] & 0xff) - g;
-					db = (destBlues[j] & 0xff) - b;
-					distance = dr * dr + dg * dg + db * db;
-					if (distance < minDistance) {
-						index = j;
-						if (distance == 0) break;
-						minDistance = distance;
-					}
-				}
-				paletteMapping[i] = (byte)index;
-				if (minDistance != 0) isExactPaletteMapping = false;
-			}
-			break;
-	}
-	if ((paletteMapping != null) && (isExactPaletteMapping || ! ditherEnabled)) {
-		if ((stype == dtype) && (alphaMode == 0x10000)) {
-			/*** Fast blit (copy w/ mapping) ***/
-			switch (stype) {
-				case TYPE_INDEX_8:
-					for (int dy = destHeight, sfy = sfyi; dy > 0; --dy, sp = spr += (sfy >>> 16) * srcStride, sfy = (sfy & 0xffff) + sfyi, dp = dpr += dpryi) {
-						for (int dx = destWidth, sfx = sfxi; dx > 0; --dx, dp += dprxi, sfx = (sfx & 0xffff) + sfxi) {
-							destData[dp] = paletteMapping[srcData[sp] & 0xff];
-							sp += (sfx >>> 16);
-						}
-					}
-					break;
-				case TYPE_INDEX_4:
-					for (int dy = destHeight, sfy = sfyi; dy > 0; --dy, sp = spr += (sfy >>> 16) * srcStride, sfy = (sfy & 0xffff) + sfyi, dp = dpr += dpryi) {
-						for (int dx = destWidth, sfx = sfxi; dx > 0; --dx, dp += dprxi, sfx = (sfx & 0xffff) + sfxi) {
-							final int v;
-							if ((sp & 1) != 0) v = paletteMapping[srcData[sp >> 1] & 0x0f];
-							else v = (srcData[sp >> 1] >>> 4) & 0x0f;
-							sp += (sfx >>> 16);
-							if ((dp & 1) != 0) destData[dp >> 1] = (byte)((destData[dp >> 1] & 0xf0) | v);
-							else destData[dp >> 1] = (byte)((destData[dp >> 1] & 0x0f) | (v << 4));
-						}
-					}
-					break;
-				case TYPE_INDEX_2:
-					for (int dy = destHeight, sfy = sfyi; dy > 0; --dy, sp = spr += (sfy >>> 16) * srcStride, sfy = (sfy & 0xffff) + sfyi, dp = dpr += dpryi) {
-						for (int dx = destWidth, sfx = sfxi; dx > 0; --dx, dp += dprxi, sfx = (sfx & 0xffff) + sfxi) {
-							final int index = paletteMapping[(srcData[sp >> 2] >>> (6 - (sp & 3) * 2)) & 0x03];
-							sp += (sfx >>> 16);
-							final int shift = 6 - (dp & 3) * 2;
-							destData[dp >> 2] = (byte)(destData[dp >> 2] & ~(0x03 << shift) | (index << shift));
-						}
-					}
-					break;
-				case TYPE_INDEX_1_MSB:
-					for (int dy = destHeight, sfy = sfyi; dy > 0; --dy, sp = spr += (sfy >>> 16) * srcStride, sfy = (sfy & 0xffff) + sfyi, dp = dpr += dpryi) {
-						for (int dx = destWidth, sfx = sfxi; dx > 0; --dx, dp += dprxi, sfx = (sfx & 0xffff) + sfxi) {
-							final int index = paletteMapping[(srcData[sp >> 3] >>> (7 - (sp & 7))) & 0x01];
-							sp += (sfx >>> 16);
-							final int shift = 7 - (dp & 7);
-							destData[dp >> 3] = (byte)(destData[dp >> 3] & ~(0x01 << shift) | (index << shift));
-						}
-					}
-					break;
-				case TYPE_INDEX_1_LSB:
-					for (int dy = destHeight, sfy = sfyi; dy > 0; --dy, sp = spr += (sfy >>> 16) * srcStride, sfy = (sfy & 0xffff) + sfyi, dp = dpr += dpryi) {
-						for (int dx = destWidth, sfx = sfxi; dx > 0; --dx, dp += dprxi, sfx = (sfx & 0xffff) + sfxi) {
-							final int index = paletteMapping[(srcData[sp >> 3] >>> (sp & 7)) & 0x01];
-							sp += (sfx >>> 16);
-							final int shift = dp & 7;
-							destData[dp >> 3] = (byte)(destData[dp >> 3] & ~(0x01 << shift) | (index << shift));
-						}
-					}
-					break;
-			}
-		} else {
-			/*** Convert between indexed modes using mapping and mask ***/
-			for (int dy = destHeight, sfy = sfyi; dy > 0; --dy,
-					sp = spr += (sfy >>> 16) * srcStride,
-					sfy = (sfy & 0xffff) + sfyi,
-					dp = dpr += dpryi) {
-				for (int dx = destWidth, sfx = sfxi; dx > 0; --dx,
-						dp += dprxi,
-						sfx = (sfx & 0xffff) + sfxi) {
-					int index;
-					/*** READ NEXT PIXEL ***/
-					switch (stype) {
-						case TYPE_INDEX_8:
-							index = srcData[sp] & 0xff;
-							sp += (sfx >>> 16);
-							break;
-						case TYPE_INDEX_4:
-							if ((sp & 1) != 0) index = srcData[sp >> 1] & 0x0f;
-							else index = (srcData[sp >> 1] >>> 4) & 0x0f;
-							sp += (sfx >>> 16);
-							break;
-						case TYPE_INDEX_2:
-							index = (srcData[sp >> 2] >>> (6 - (sp & 3) * 2)) & 0x03;
-							sp += (sfx >>> 16);
-							break;
-						case TYPE_INDEX_1_MSB:
-							index = (srcData[sp >> 3] >>> (7 - (sp & 7))) & 0x01;
-							sp += (sfx >>> 16);
-							break;
-						case TYPE_INDEX_1_LSB:
-							index = (srcData[sp >> 3] >>> (sp & 7)) & 0x01;
-							sp += (sfx >>> 16);
-							break;
-						default:
-							return;
-					}
-					/*** APPLY MASK ***/
-					switch (alphaMode) {
-						case ALPHA_MASK_UNPACKED: {
-							final byte mask = alphaData[ap];
-							ap += (sfx >> 16);
-							if (mask == 0) continue;
-						} break;
-						case ALPHA_MASK_PACKED: {
-							final int mask = alphaData[ap >> 3] & (1 << (ap & 7));
-							ap += (sfx >> 16);
-							if (mask == 0) continue;
-						} break;
-						case ALPHA_MASK_INDEX: {
-							int i = 0;
-							while (i < alphaData.length) {
-								if (index == (alphaData[i] & 0xff)) break;
-							}
-							if (i < alphaData.length) continue;
-						} break;
-						case ALPHA_MASK_RGB: {
-							final byte r = srcReds[index], g = srcGreens[index], b = srcBlues[index];
-							int i = 0;
-							while (i < alphaData.length) {
-								if ((r == alphaData[i]) && (g == alphaData[i + 1]) && (b == alphaData[i + 2])) break;
-								i += 3;
-							}
-							if (i < alphaData.length) continue;
-						} break;
-					}
-					index = paletteMapping[index] & 0xff;
 
-					/*** WRITE NEXT PIXEL ***/
-					switch (dtype) {
-						case TYPE_INDEX_8:
-							destData[dp] = (byte) index;
-							break;
-						case TYPE_INDEX_4:
-							if ((dp & 1) != 0) destData[dp >> 1] = (byte)((destData[dp >> 1] & 0xf0) | index);
-							else destData[dp >> 1] = (byte)((destData[dp >> 1] & 0x0f) | (index << 4));
-							break;
-						case TYPE_INDEX_2: {
-							final int shift = 6 - (dp & 3) * 2;
-							destData[dp >> 2] = (byte)(destData[dp >> 2] & ~(0x03 << shift) | (index << shift));
-						} break;
-						case TYPE_INDEX_1_MSB: {
-							final int shift = 7 - (dp & 7);
-							destData[dp >> 3] = (byte)(destData[dp >> 3] & ~(0x01 << shift) | (index << shift));
-						} break;
-						case TYPE_INDEX_1_LSB: {
-							final int shift = dp & 7;
-							destData[dp >> 3] = (byte)(destData[dp >> 3] & ~(0x01 << shift) | (index << shift));
-						} break;
+	if (stype == dtype) {
+		/*** Fast blit (copy w/ mapping) ***/
+		switch (stype) {
+			case TYPE_INDEX_16_LSB:
+				for (int dy = destHeight, sfy = sfyi; dy > 0; --dy, sp = spr += (sfy >>> 16) * srcPixelsPerStride, sfy = (sfy & 0xffff) + sfyi, dp = dpr += dpryi) {
+					for (int dx = destWidth, sfx = sfxi; dx > 0; --dx, dp += dprxi, sfx = (sfx & 0xffff) + sfxi) {
+						destData[2*dp] = srcData[2*sp];
+						destData[2*dp+1] = srcData[2*sp+1];
+						sp += (sfx >>> 16);
 					}
 				}
-			}
+				break;
+			case TYPE_INDEX_8:
+				for (int dy = destHeight, sfy = sfyi; dy > 0; --dy, sp = spr += (sfy >>> 16) * srcPixelsPerStride, sfy = (sfy & 0xffff) + sfyi, dp = dpr += dpryi) {
+					for (int dx = destWidth, sfx = sfxi; dx > 0; --dx, dp += dprxi, sfx = (sfx & 0xffff) + sfxi) {
+						destData[dp] = srcData[sp];
+						sp += (sfx >>> 16);
+					}
+				}
+				break;
+			case TYPE_INDEX_4:
+				for (int dy = destHeight, sfy = sfyi; dy > 0; --dy, sp = spr += (sfy >>> 16) * srcPixelsPerStride, sfy = (sfy & 0xffff) + sfyi, dp = dpr += dpryi) {
+					for (int dx = destWidth, sfx = sfxi; dx > 0; --dx, dp += dprxi, sfx = (sfx & 0xffff) + sfxi) {
+						final int v;
+						if ((sp & 1) != 0) v = srcData[sp >> 1] & 0x0f;
+						else v = (srcData[sp >> 1] >>> 4) & 0x0f;
+						sp += (sfx >>> 16);
+						if ((dp & 1) != 0) destData[dp >> 1] = (byte)((destData[dp >> 1] & 0xf0) | v);
+						else destData[dp >> 1] = (byte)((destData[dp >> 1] & 0x0f) | (v << 4));
+					}
+				}
+				break;
+			case TYPE_INDEX_2:
+				for (int dy = destHeight, sfy = sfyi; dy > 0; --dy, sp = spr += (sfy >>> 16) * srcPixelsPerStride, sfy = (sfy & 0xffff) + sfyi, dp = dpr += dpryi) {
+					for (int dx = destWidth, sfx = sfxi; dx > 0; --dx, dp += dprxi, sfx = (sfx & 0xffff) + sfxi) {
+						final int index = (srcData[sp >> 2] >>> (6 - (sp & 3) * 2)) & 0x03;
+						sp += (sfx >>> 16);
+						final int shift = 6 - (dp & 3) * 2;
+						destData[dp >> 2] = (byte)(destData[dp >> 2] & ~(0x03 << shift) | (index << shift));
+					}
+				}
+				break;
+			case TYPE_INDEX_1_MSB:
+				for (int dy = destHeight, sfy = sfyi; dy > 0; --dy, sp = spr += (sfy >>> 16) * srcPixelsPerStride, sfy = (sfy & 0xffff) + sfyi, dp = dpr += dpryi) {
+					for (int dx = destWidth, sfx = sfxi; dx > 0; --dx, dp += dprxi, sfx = (sfx & 0xffff) + sfxi) {
+						final int index = (srcData[sp >> 3] >>> (7 - (sp & 7))) & 0x01;
+						sp += (sfx >>> 16);
+						final int shift = 7 - (dp & 7);
+						destData[dp >> 3] = (byte)(destData[dp >> 3] & ~(0x01 << shift) | (index << shift));
+					}
+				}
+				break;
+			case TYPE_INDEX_1_LSB:
+				for (int dy = destHeight, sfy = sfyi; dy > 0; --dy, sp = spr += (sfy >>> 16) * srcPixelsPerStride, sfy = (sfy & 0xffff) + sfyi, dp = dpr += dpryi) {
+					for (int dx = destWidth, sfx = sfxi; dx > 0; --dx, dp += dprxi, sfx = (sfx & 0xffff) + sfxi) {
+						final int index = (srcData[sp >> 3] >>> (sp & 7)) & 0x01;
+						sp += (sfx >>> 16);
+						final int shift = dp & 7;
+						destData[dp >> 3] = (byte)(destData[dp >> 3] & ~(0x01 << shift) | (index << shift));
+					}
+				}
+				break;
 		}
-		return;
-	}
-
-	/*** Comprehensive blit (apply transformations) ***/
-	int alpha = alphaMode;
-	int index = 0;
-	int indexq = 0;
-	int lastindex = 0, lastr = -1, lastg = -1, lastb = -1;
-	final int[] rerr, gerr, berr;
-	if (ditherEnabled) {
-		rerr = new int[destWidth + 2];
-		gerr = new int[destWidth + 2];
-		berr = new int[destWidth + 2];
 	} else {
-		rerr = null; gerr = null; berr = null;
-	}
-	for (int dy = destHeight, sfy = sfyi; dy > 0; --dy,
-			sp = spr += (sfy >>> 16) * srcStride,
-			ap = apr += (sfy >>> 16) * alphaStride,
-			sfy = (sfy & 0xffff) + sfyi,
-			dp = dpr += dpryi) {
-		int lrerr = 0, lgerr = 0, lberr = 0;
-		for (int dx = destWidth, sfx = sfxi; dx > 0; --dx,
-				dp += dprxi,
-				sfx = (sfx & 0xffff) + sfxi) {
-			/*** READ NEXT PIXEL ***/
-			switch (stype) {
-				case TYPE_INDEX_8:
-					index = srcData[sp] & 0xff;
-					sp += (sfx >>> 16);
-					break;
-				case TYPE_INDEX_4:
-					if ((sp & 1) != 0) index = srcData[sp >> 1] & 0x0f;
-					else index = (srcData[sp >> 1] >>> 4) & 0x0f;
-					sp += (sfx >>> 16);
-					break;
-				case TYPE_INDEX_2:
-					index = (srcData[sp >> 2] >>> (6 - (sp & 3) * 2)) & 0x03;
-					sp += (sfx >>> 16);
-					break;
-				case TYPE_INDEX_1_MSB:
-					index = (srcData[sp >> 3] >>> (7 - (sp & 7))) & 0x01;
-					sp += (sfx >>> 16);
-					break;
-				case TYPE_INDEX_1_LSB:
-					index = (srcData[sp >> 3] >>> (sp & 7)) & 0x01;
-					sp += (sfx >>> 16);
-					break;
-			}
-
-			/*** DO SPECIAL PROCESSING IF REQUIRED ***/
-			int r = srcReds[index] & 0xff, g = srcGreens[index] & 0xff, b = srcBlues[index] & 0xff;
-			switch (alphaMode) {
-				case ALPHA_CHANNEL_SEPARATE:
-					alpha = ((alphaData[ap] & 0xff) << 16) / 255;
-					ap += (sfx >> 16);
-					break;
-				case ALPHA_MASK_UNPACKED:
-					alpha = (alphaData[ap] != 0) ? 0x10000 : 0;
-					ap += (sfx >> 16);
-					break;
-				case ALPHA_MASK_PACKED:
-					alpha = (alphaData[ap >> 3] << ((ap & 7) + 9)) & 0x10000;
-					ap += (sfx >> 16);
-					break;
-				case ALPHA_MASK_INDEX: { // could speed up using binary search if we sorted the indices
-					int i = 0;
-					while (i < alphaData.length) {
-						if (index == (alphaData[i] & 0xff)) break;
-					}
-					if (i < alphaData.length) continue;
-				} break;
-				case ALPHA_MASK_RGB: {
-					int i = 0;
-					while (i < alphaData.length) {
-						if ((r == (alphaData[i] & 0xff)) &&
-							(g == (alphaData[i + 1] & 0xff)) &&
-							(b == (alphaData[i + 2] & 0xff))) break;
-						i += 3;
-					}
-					if (i < alphaData.length) continue;
-				} break;
-			}
-			if (alpha != 0x10000) {
-				if (alpha == 0x0000) continue;
-				switch (dtype) {
+		/*** Convert between indexed modes using mapping and mask ***/
+		for (int dy = destHeight, sfy = sfyi; dy > 0; --dy,
+				sp = spr += (sfy >>> 16) * srcPixelsPerStride,
+				sfy = (sfy & 0xffff) + sfyi,
+				dp = dpr += dpryi) {
+			for (int dx = destWidth, sfx = sfxi; dx > 0; --dx,
+					dp += dprxi,
+					sp += (sfx >>> 16),
+					sfx = (sfx & 0xffff) + sfxi) {
+				int index;
+				/*** READ NEXT PIXEL ***/
+				switch (stype) {
+					case TYPE_INDEX_16_LSB:
+						index = (((srcData[2*sp+1] & 0xff) << 8) | (srcData[2*sp] & 0xff)) & 0xffff;
+						break;
 					case TYPE_INDEX_8:
-						indexq = destData[dp] & 0xff;
+						index = srcData[sp] & 0xff;
 						break;
 					case TYPE_INDEX_4:
-						if ((dp & 1) != 0) indexq = destData[dp >> 1] & 0x0f;
-						else indexq = (destData[dp >> 1] >>> 4) & 0x0f;
+						if ((sp & 1) != 0) index = srcData[sp >> 1] & 0x0f;
+						else index = (srcData[sp >> 1] >>> 4) & 0x0f;
 						break;
 					case TYPE_INDEX_2:
-						indexq = (destData[dp >> 2] >>> (6 - (dp & 3) * 2)) & 0x03;
+						index = (srcData[sp >> 2] >>> (6 - (sp & 3) * 2)) & 0x03;
 						break;
 					case TYPE_INDEX_1_MSB:
-						indexq = (destData[dp >> 3] >>> (7 - (dp & 7))) & 0x01;
+						index = (srcData[sp >> 3] >>> (7 - (sp & 7))) & 0x01;
 						break;
 					case TYPE_INDEX_1_LSB:
-						indexq = (destData[dp >> 3] >>> (dp & 7)) & 0x01;
+						index = (srcData[sp >> 3] >>> (sp & 7)) & 0x01;
 						break;
+					default:
+						return;
 				}
-				// Perform alpha blending
-				final int rq = destReds[indexq] & 0xff;
-				final int gq = destGreens[indexq] & 0xff;
-				final int bq = destBlues[indexq] & 0xff;
-				r = rq + ((r - rq) * alpha >> 16);
-				g = gq + ((g - gq) * alpha >> 16);
-				b = bq + ((b - bq) * alpha >> 16);
-			}
 
-			/*** MAP COLOR TO THE PALETTE ***/
-			if (ditherEnabled) {
-				// Floyd-Steinberg error diffusion
-				r += rerr[dx] >> 4;
-				if (r < 0) r = 0; else if (r > 255) r = 255;
-				g += gerr[dx] >> 4;
-				if (g < 0) g = 0; else if (g > 255) g = 255;
-				b += berr[dx] >> 4;
-				if (b < 0) b = 0; else if (b > 255) b = 255;
-				rerr[dx] = lrerr;
-				gerr[dx] = lgerr;
-				berr[dx] = lberr;
-			}
-			if (r != lastr || g != lastg || b != lastb) {
-				// moving the variable declarations out seems to make the JDK JIT happier...
-				for (int j = 0, dr, dg, db, distance, minDistance = 0x7fffffff; j < destPaletteSize; ++j) {
-					dr = (destReds[j] & 0xff) - r;
-					dg = (destGreens[j] & 0xff) - g;
-					db = (destBlues[j] & 0xff) - b;
-					distance = dr * dr + dg * dg + db * db;
-					if (distance < minDistance) {
-						lastindex = j;
-						if (distance == 0) break;
-						minDistance = distance;
-					}
+				/*** WRITE NEXT PIXEL ***/
+				switch (dtype) {
+					case TYPE_INDEX_16_LSB:
+						destData[2*dp]   = (byte) (index & 0xff);
+						destData[2*dp+1] = (byte) (index >>> 8);
+						break;
+					case TYPE_INDEX_8:
+						destData[dp] = (byte) index;
+						break;
+					case TYPE_INDEX_4:
+						if ((dp & 1) != 0) destData[dp >> 1] = (byte)((destData[dp >> 1] & 0xf0) | index);
+						else destData[dp >> 1] = (byte)((destData[dp >> 1] & 0x0f) | (index << 4));
+						break;
+					case TYPE_INDEX_2: {
+						final int shift = 6 - (dp & 3) * 2;
+						destData[dp >> 2] = (byte)(destData[dp >> 2] & ~(0x03 << shift) | (index << shift));
+					} break;
+					case TYPE_INDEX_1_MSB: {
+						final int shift = 7 - (dp & 7);
+						destData[dp >> 3] = (byte)(destData[dp >> 3] & ~(0x01 << shift) | (index << shift));
+					} break;
+					case TYPE_INDEX_1_LSB: {
+						final int shift = dp & 7;
+						destData[dp >> 3] = (byte)(destData[dp >> 3] & ~(0x01 << shift) | (index << shift));
+					} break;
 				}
-				lastr = r; lastg = g; lastb = b;
-			}
-			if (ditherEnabled) {
-				// Floyd-Steinberg error diffusion, cont'd...
-				final int dxm1 = dx - 1, dxp1 = dx + 1;
-				int acc;
-				rerr[dxp1] += acc = (lrerr = r - (destReds[lastindex] & 0xff)) + lrerr + lrerr;
-				rerr[dx] += acc += lrerr + lrerr;
-				rerr[dxm1] += acc + lrerr + lrerr;
-				gerr[dxp1] += acc = (lgerr = g - (destGreens[lastindex] & 0xff)) + lgerr + lgerr;
-				gerr[dx] += acc += lgerr + lgerr;
-				gerr[dxm1] += acc + lgerr + lgerr;
-				berr[dxp1] += acc = (lberr = b - (destBlues[lastindex] & 0xff)) + lberr + lberr;
-				berr[dx] += acc += lberr + lberr;
-				berr[dxm1] += acc + lberr + lberr;
-			}
-
-			/*** WRITE NEXT PIXEL ***/
-			switch (dtype) {
-				case TYPE_INDEX_8:
-					destData[dp] = (byte) lastindex;
-					break;
-				case TYPE_INDEX_4:
-					if ((dp & 1) != 0) destData[dp >> 1] = (byte)((destData[dp >> 1] & 0xf0) | lastindex);
-					else destData[dp >> 1] = (byte)((destData[dp >> 1] & 0x0f) | (lastindex << 4));
-					break;
-				case TYPE_INDEX_2: {
-					final int shift = 6 - (dp & 3) * 2;
-					destData[dp >> 2] = (byte)(destData[dp >> 2] & ~(0x03 << shift) | (lastindex << shift));
-				} break;
-				case TYPE_INDEX_1_MSB: {
-					final int shift = 7 - (dp & 7);
-					destData[dp >> 3] = (byte)(destData[dp >> 3] & ~(0x01 << shift) | (lastindex << shift));
-				} break;
-				case TYPE_INDEX_1_LSB: {
-					final int shift = dp & 7;
-					destData[dp >> 3] = (byte)(destData[dp >> 3] & ~(0x01 << shift) | (lastindex << shift));
-				} break;
 			}
 		}
 	}
@@ -2736,113 +2228,84 @@ static void blit(int op,
  * always be fully specified.
  * </p>
  *
- * @param op the blitter operation: a combination of BLIT_xxx flags
- *        (see BLIT_xxx constants)
  * @param srcData the source byte array containing image data
  * @param srcDepth the source depth: one of 1, 2, 4, 8
  * @param srcStride the source number of bytes per line
  * @param srcOrder the source byte ordering: one of MSB_FIRST or LSB_FIRST;
  *        ignored if srcDepth is not 1
- * @param srcX the top-left x-coord of the source blit region
- * @param srcY the top-left y-coord of the source blit region
  * @param srcWidth the width of the source blit region
  * @param srcHeight the height of the source blit region
  * @param srcReds the source palette red component intensities
  * @param srcGreens the source palette green component intensities
  * @param srcBlues the source palette blue component intensities
- * @param alphaMode the alpha blending or mask mode, may be
- *        an integer 0-255 for global alpha; ignored if BLIT_ALPHA
- *        not specified in the blitter operations
- *        (see ALPHA_MODE_xxx constants)
- * @param alphaData the alpha blending or mask data, varies depending
- *        on the value of alphaMode and sometimes ignored
- * @param alphaStride the alpha data number of bytes per line
- * @param alphaX the top-left x-coord of the alpha blit region
- * @param alphaY the top-left y-coord of the alpha blit region
  * @param destData the destination byte array containing image data
  * @param destDepth the destination depth: one of 8, 16, 24, 32
  * @param destStride the destination number of bytes per line
  * @param destOrder the destination byte ordering: one of MSB_FIRST or LSB_FIRST;
  *        ignored if destDepth is not 16 or 32
- * @param destX the top-left x-coord of the destination blit region
- * @param destY the top-left y-coord of the destination blit region
- * @param destWidth the width of the destination blit region
- * @param destHeight the height of the destination blit region
  * @param destRedMask the destination red channel mask
  * @param destGreenMask the destination green channel mask
  * @param destBlueMask the destination blue channel mask
- * @param flipX if true the resulting image is flipped along the vertical axis
- * @param flipY if true the resulting image is flipped along the horizontal axis
  */
-static void blit(int op,
+static void blit(
+	int srcWidth, int srcHeight,
 	byte[] srcData, int srcDepth, int srcStride, int srcOrder,
-	int srcX, int srcY, int srcWidth, int srcHeight,
 	byte[] srcReds, byte[] srcGreens, byte[] srcBlues,
-	int alphaMode, byte[] alphaData, int alphaStride, int alphaX, int alphaY,
 	byte[] destData, int destDepth, int destStride, int destOrder,
-	int destX, int destY, int destWidth, int destHeight,
-	int destRedMask, int destGreenMask, int destBlueMask,
-	boolean flipX, boolean flipY) {
-	if ((destWidth <= 0) || (destHeight <= 0) || (alphaMode == ALPHA_TRANSPARENT)) return;
+	int destRedMask, int destGreenMask, int destBlueMask) {
 
 	/*** Fast blit (straight copy) ***/
-	if (srcX == 0 && srcY == 0 && destX == 0 && destY == 0 && destWidth == srcWidth && destHeight == srcHeight) {
-		if (destDepth == 24 && srcDepth == 8 && (op & BLIT_ALPHA) == 0 && destRedMask == 0xFF0000 && destGreenMask == 0xFF00 && destBlueMask == 0xFF) {
-			for (int y = 0, sp = 0, dp = 0, spad = srcStride - srcWidth, dpad = destStride - (destWidth * 3); y < destHeight; y++, sp += spad, dp += dpad) {
-				for (int x = 0; x < destWidth; x++) {
-					int index = srcData[sp++] & 0xff;
-					destData[dp++] = srcReds[index];
-					destData[dp++] = srcGreens[index];
-					destData[dp++] = srcBlues[index];
-				}
+	if (destDepth == 24 && srcDepth == 8 && destRedMask == 0xFF0000 && destGreenMask == 0xFF00 && destBlueMask == 0xFF) {
+		for (int y = 0, sp = 0, dp = 0, spad = srcStride - srcWidth, dpad = destStride - (srcWidth * 3); y < srcHeight; y++, sp += spad, dp += dpad) {
+			for (int x = 0; x < srcWidth; x++) {
+				int index = srcData[sp++] & 0xff;
+				destData[dp++] = srcReds[index];
+				destData[dp++] = srcGreens[index];
+				destData[dp++] = srcBlues[index];
 			}
-			return;
 		}
-		if (destDepth == 32 && destOrder == MSB_FIRST && srcDepth == 8 && (op & BLIT_ALPHA) == 0 && destRedMask == 0xFF0000 && destGreenMask == 0xFF00 && destBlueMask == 0xFF) {
-			for (int y = 0, sp = 0, dp = 0, spad = srcStride - srcWidth, dpad = destStride - (destWidth * 4); y < destHeight; y++, sp += spad, dp += dpad) {
-				for (int x = 0; x < destWidth; x++) {
-					int index = srcData[sp++] & 0xff;
-					dp++;
-					destData[dp++] = srcReds[index];
-					destData[dp++] = srcGreens[index];
-					destData[dp++] = srcBlues[index];
-				}
-			}
-			return;
-		}
+		return;
 	}
-	// these should be supplied as params later
-	final int destAlphaMask = 0;
-
-	/*** Prepare scaling data ***/
-	final int dwm1 = destWidth - 1;
-	final int sfxi = (dwm1 != 0) ? (int)((((long)srcWidth << 16) - 1) / dwm1) : 0;
-	final int dhm1 = destHeight - 1;
-	final int sfyi = (dhm1 != 0) ? (int)((((long)srcHeight << 16) - 1) / dhm1) : 0;
+	if (destDepth == 32 && destOrder == MSB_FIRST && srcDepth == 8 && destRedMask == 0xFF0000 && destGreenMask == 0xFF00 && destBlueMask == 0xFF) {
+		for (int y = 0, sp = 0, dp = 0, spad = srcStride - srcWidth, dpad = destStride - (srcWidth * 4); y < srcHeight; y++, sp += spad, dp += dpad) {
+			for (int x = 0; x < srcWidth; x++) {
+				int index = srcData[sp++] & 0xff;
+				dp++;
+				destData[dp++] = srcReds[index];
+				destData[dp++] = srcGreens[index];
+				destData[dp++] = srcBlues[index];
+			}
+		}
+		return;
+	}
 
 	/*** Prepare source-related data ***/
 	final int stype;
 	switch (srcDepth) {
+		case 16:
+			stype = TYPE_INDEX_16_LSB;
+			if ((srcStride % 2) != 0) {
+				// Such strides don't really make sense and are not expected to occur.
+				// Not supported at the moment.
+				return;
+			}
+			break;
 		case 8:
 			stype = TYPE_INDEX_8;
 			break;
 		case 4:
-			srcStride <<= 1;
 			stype = TYPE_INDEX_4;
 			break;
 		case 2:
-			srcStride <<= 2;
 			stype = TYPE_INDEX_2;
 			break;
 		case 1:
-			srcStride <<= 3;
 			stype = (srcOrder == MSB_FIRST) ? TYPE_INDEX_1_MSB : TYPE_INDEX_1_LSB;
 			break;
 		default:
 			//throw new IllegalArgumentException("Invalid source type");
 			return;
 	}
-	int spr = srcY * srcStride + srcX;
 
 	/*** Prepare destination-related data ***/
 	final int dbpp, dtype;
@@ -2867,93 +2330,46 @@ static void blit(int op,
 			//throw new IllegalArgumentException("Invalid destination type");
 			return;
 	}
-	int dpr = ((flipY) ? destY + dhm1 : destY) * destStride + ((flipX) ? destX + dwm1 : destX) * dbpp;
-	final int dprxi = (flipX) ? -dbpp : dbpp;
-	final int dpryi = (flipY) ? -destStride : destStride;
-
-	/*** Prepare special processing data ***/
-	int apr;
-	if ((op & BLIT_ALPHA) != 0) {
-		switch (alphaMode) {
-			case ALPHA_MASK_UNPACKED:
-			case ALPHA_CHANNEL_SEPARATE:
-				if (alphaData == null) alphaMode = 0x10000;
-				apr = alphaY * alphaStride + alphaX;
-				break;
-			case ALPHA_MASK_PACKED:
-				if (alphaData == null) alphaMode = 0x10000;
-				alphaStride <<= 3;
-				apr = alphaY * alphaStride + alphaX;
-				break;
-			case ALPHA_MASK_INDEX:
-			case ALPHA_MASK_RGB:
-				if (alphaData == null) alphaMode = 0x10000;
-				apr = 0;
-				break;
-			default:
-				alphaMode = (alphaMode << 16) / 255; // prescale
-			case ALPHA_CHANNEL_SOURCE:
-				apr = 0;
-				break;
-		}
-	} else {
-		alphaMode = 0x10000;
-		apr = 0;
-	}
 
 	/*** Comprehensive blit (apply transformations) ***/
 	final int destRedShift = getChannelShift(destRedMask);
 	final int destRedWidth = getChannelWidth(destRedMask, destRedShift);
-	final byte[] destReds = ANY_TO_EIGHT[destRedWidth];
 	final int destRedPreShift = 8 - destRedWidth;
 	final int destGreenShift = getChannelShift(destGreenMask);
 	final int destGreenWidth = getChannelWidth(destGreenMask, destGreenShift);
-	final byte[] destGreens = ANY_TO_EIGHT[destGreenWidth];
 	final int destGreenPreShift = 8 - destGreenWidth;
 	final int destBlueShift = getChannelShift(destBlueMask);
 	final int destBlueWidth = getChannelWidth(destBlueMask, destBlueShift);
-	final byte[] destBlues = ANY_TO_EIGHT[destBlueWidth];
 	final int destBluePreShift = 8 - destBlueWidth;
-	final int destAlphaShift = getChannelShift(destAlphaMask);
-	final int destAlphaWidth = getChannelWidth(destAlphaMask, destAlphaShift);
-	final byte[] destAlphas = ANY_TO_EIGHT[destAlphaWidth];
-	final int destAlphaPreShift = 8 - destAlphaWidth;
 
-	int dp = dpr;
-	int sp = spr;
-	int ap = apr, alpha = alphaMode;
-	int r = 0, g = 0, b = 0, a = 0, index = 0;
-	int rq = 0, gq = 0, bq = 0, aq = 0;
-	for (int dy = destHeight, sfy = sfyi; dy > 0; --dy,
-			sp = spr += (sfy >>> 16) * srcStride,
-			ap = apr += (sfy >>> 16) * alphaStride,
-			sfy = (sfy & 0xffff) + sfyi,
-			dp = dpr += dpryi) {
-		for (int dx = destWidth, sfx = sfxi; dx > 0; --dx,
-				dp += dprxi,
-				sfx = (sfx & 0xffff) + sfxi) {
+	final int srcPixelsPerStride = srcStride * 8 / srcDepth;
+	int spr = 0;
+	int dpr = 0;
+	int dp = 0;
+	int sp = 0;
+	int r = 0, g = 0, b = 0, index = 0;
+	for (int dy = srcHeight; dy > 0; --dy, sp = spr += srcPixelsPerStride, dp = dpr += destStride) {
+		for (int dx = srcWidth; dx > 0; --dx, sp++, dp += dbpp) {
 			/*** READ NEXT PIXEL ***/
 			switch (stype) {
+				case TYPE_INDEX_16_LSB:
+					index = (((srcData[2*sp+1] & 0xff) << 8) | (srcData[2*sp] & 0xff)) & 0xffff;
+					break;
 				case TYPE_INDEX_8:
 					index = srcData[sp] & 0xff;
-					sp += (sfx >>> 16);
 					break;
 				case TYPE_INDEX_4:
 					if ((sp & 1) != 0) index = srcData[sp >> 1] & 0x0f;
 					else index = (srcData[sp >> 1] >>> 4) & 0x0f;
-					sp += (sfx >>> 16);
 					break;
 				case TYPE_INDEX_2:
 					index = (srcData[sp >> 2] >>> (6 - (sp & 3) * 2)) & 0x03;
-					sp += (sfx >>> 16);
 					break;
 				case TYPE_INDEX_1_MSB:
 					index = (srcData[sp >> 3] >>> (7 - (sp & 7))) & 0x01;
-					sp += (sfx >>> 16);
 					break;
 				case TYPE_INDEX_1_LSB:
 					index = (srcData[sp >> 3] >>> (sp & 7)) & 0x01;
-					sp += (sfx >>> 16);
 					break;
 			}
 
@@ -2961,104 +2377,12 @@ static void blit(int op,
 			r = srcReds[index] & 0xff;
 			g = srcGreens[index] & 0xff;
 			b = srcBlues[index] & 0xff;
-			switch (alphaMode) {
-				case ALPHA_CHANNEL_SEPARATE:
-					alpha = ((alphaData[ap] & 0xff) << 16) / 255;
-					ap += (sfx >> 16);
-					break;
-				case ALPHA_MASK_UNPACKED:
-					alpha = (alphaData[ap] != 0) ? 0x10000 : 0;
-					ap += (sfx >> 16);
-					break;
-				case ALPHA_MASK_PACKED:
-					alpha = (alphaData[ap >> 3] << ((ap & 7) + 9)) & 0x10000;
-					ap += (sfx >> 16);
-					break;
-				case ALPHA_MASK_INDEX: { // could speed up using binary search if we sorted the indices
-					int i = 0;
-					while (i < alphaData.length) {
-						if (index == (alphaData[i] & 0xff)) break;
-					}
-					if (i < alphaData.length) continue;
-				} break;
-				case ALPHA_MASK_RGB: {
-					int i = 0;
-					while (i < alphaData.length) {
-						if ((r == (alphaData[i] & 0xff)) &&
-							(g == (alphaData[i + 1] & 0xff)) &&
-							(b == (alphaData[i + 2] & 0xff))) break;
-						i += 3;
-					}
-					if (i < alphaData.length) continue;
-				} break;
-			}
-			if (alpha != 0x10000) {
-				if (alpha == 0x0000) continue;
-				switch (dtype) {
-					case TYPE_GENERIC_8: {
-						final int data = destData[dp] & 0xff;
-						rq = destReds[(data & destRedMask) >>> destRedShift] & 0xff;
-						gq = destGreens[(data & destGreenMask) >>> destGreenShift] & 0xff;
-						bq = destBlues[(data & destBlueMask) >>> destBlueShift] & 0xff;
-						aq = destAlphas[(data & destAlphaMask) >>> destAlphaShift] & 0xff;
-					} break;
-					case TYPE_GENERIC_16_MSB: {
-						final int data = ((destData[dp] & 0xff) << 8) | (destData[dp + 1] & 0xff);
-						rq = destReds[(data & destRedMask) >>> destRedShift] & 0xff;
-						gq = destGreens[(data & destGreenMask) >>> destGreenShift] & 0xff;
-						bq = destBlues[(data & destBlueMask) >>> destBlueShift] & 0xff;
-						aq = destAlphas[(data & destAlphaMask) >>> destAlphaShift] & 0xff;
-					} break;
-					case TYPE_GENERIC_16_LSB: {
-						final int data = ((destData[dp + 1] & 0xff) << 8) | (destData[dp] & 0xff);
-						rq = destReds[(data & destRedMask) >>> destRedShift] & 0xff;
-						gq = destGreens[(data & destGreenMask) >>> destGreenShift] & 0xff;
-						bq = destBlues[(data & destBlueMask) >>> destBlueShift] & 0xff;
-						aq = destAlphas[(data & destAlphaMask) >>> destAlphaShift] & 0xff;
-					} break;
-					case TYPE_GENERIC_24: {
-						final int data = (( ((destData[dp] & 0xff) << 8) |
-							(destData[dp + 1] & 0xff)) << 8) |
-							(destData[dp + 2] & 0xff);
-						rq = destReds[(data & destRedMask) >>> destRedShift] & 0xff;
-						gq = destGreens[(data & destGreenMask) >>> destGreenShift] & 0xff;
-						bq = destBlues[(data & destBlueMask) >>> destBlueShift] & 0xff;
-						aq = destAlphas[(data & destAlphaMask) >>> destAlphaShift] & 0xff;
-					} break;
-					case TYPE_GENERIC_32_MSB: {
-						final int data = (( (( ((destData[dp] & 0xff) << 8) |
-							(destData[dp + 1] & 0xff)) << 8) |
-							(destData[dp + 2] & 0xff)) << 8) |
-							(destData[dp + 3] & 0xff);
-						rq = destReds[(data & destRedMask) >>> destRedShift] & 0xff;
-						gq = destGreens[(data & destGreenMask) >>> destGreenShift] & 0xff;
-						bq = destBlues[(data & destBlueMask) >>> destBlueShift] & 0xff;
-						aq = destAlphas[(data & destAlphaMask) >>> destAlphaShift] & 0xff;
-					} break;
-					case TYPE_GENERIC_32_LSB: {
-						final int data = (( (( ((destData[dp + 3] & 0xff) << 8) |
-							(destData[dp + 2] & 0xff)) << 8) |
-							(destData[dp + 1] & 0xff)) << 8) |
-							(destData[dp] & 0xff);
-						rq = destReds[(data & destRedMask) >>> destRedShift] & 0xff;
-						gq = destGreens[(data & destGreenMask) >>> destGreenShift] & 0xff;
-						bq = destBlues[(data & destBlueMask) >>> destBlueShift] & 0xff;
-						aq = destAlphas[(data & destAlphaMask) >>> destAlphaShift] & 0xff;
-					} break;
-				}
-				// Perform alpha blending
-				a = aq + ((a - aq) * alpha >> 16);
-				r = rq + ((r - rq) * alpha >> 16);
-				g = gq + ((g - gq) * alpha >> 16);
-				b = bq + ((b - bq) * alpha >> 16);
-			}
 
 			/*** WRITE NEXT PIXEL ***/
 			final int data =
 				(r >>> destRedPreShift << destRedShift) |
 				(g >>> destGreenPreShift << destGreenShift) |
-				(b >>> destBluePreShift << destBlueShift) |
-				(a >>> destAlphaPreShift << destAlphaShift);
+				(b >>> destBluePreShift << destBlueShift);
 			switch (dtype) {
 				case TYPE_GENERIC_8: {
 					destData[dp] = (byte) data;
@@ -3094,375 +2418,6 @@ static void blit(int op,
 }
 
 /**
- * Blits a direct palette image into an index palette image.
- * <p>
- * Note: The source and destination masks and palettes must
- * always be fully specified.
- * </p>
- *
- * @param op the blitter operation: a combination of BLIT_xxx flags
- *        (see BLIT_xxx constants)
- * @param srcData the source byte array containing image data
- * @param srcDepth the source depth: one of 8, 16, 24, 32
- * @param srcStride the source number of bytes per line
- * @param srcOrder the source byte ordering: one of MSB_FIRST or LSB_FIRST;
- *        ignored if srcDepth is not 16 or 32
- * @param srcX the top-left x-coord of the source blit region
- * @param srcY the top-left y-coord of the source blit region
- * @param srcWidth the width of the source blit region
- * @param srcHeight the height of the source blit region
- * @param srcRedMask the source red channel mask
- * @param srcGreenMask the source green channel mask
- * @param srcBlueMask the source blue channel mask
- * @param alphaMode the alpha blending or mask mode, may be
- *        an integer 0-255 for global alpha; ignored if BLIT_ALPHA
- *        not specified in the blitter operations
- *        (see ALPHA_MODE_xxx constants)
- * @param alphaData the alpha blending or mask data, varies depending
- *        on the value of alphaMode and sometimes ignored
- * @param alphaStride the alpha data number of bytes per line
- * @param alphaX the top-left x-coord of the alpha blit region
- * @param alphaY the top-left y-coord of the alpha blit region
- * @param destData the destination byte array containing image data
- * @param destDepth the destination depth: one of 1, 2, 4, 8
- * @param destStride the destination number of bytes per line
- * @param destOrder the destination byte ordering: one of MSB_FIRST or LSB_FIRST;
- *        ignored if destDepth is not 1
- * @param destX the top-left x-coord of the destination blit region
- * @param destY the top-left y-coord of the destination blit region
- * @param destWidth the width of the destination blit region
- * @param destHeight the height of the destination blit region
- * @param destReds the destination palette red component intensities
- * @param destGreens the destination palette green component intensities
- * @param destBlues the destination palette blue component intensities
- * @param flipX if true the resulting image is flipped along the vertical axis
- * @param flipY if true the resulting image is flipped along the horizontal axis
- */
-static void blit(int op,
-	byte[] srcData, int srcDepth, int srcStride, int srcOrder,
-	int srcX, int srcY, int srcWidth, int srcHeight,
-	int srcRedMask, int srcGreenMask, int srcBlueMask,
-	int alphaMode, byte[] alphaData, int alphaStride, int alphaX, int alphaY,
-	byte[] destData, int destDepth, int destStride, int destOrder,
-	int destX, int destY, int destWidth, int destHeight,
-	byte[] destReds, byte[] destGreens, byte[] destBlues,
-	boolean flipX, boolean flipY) {
-	if ((destWidth <= 0) || (destHeight <= 0) || (alphaMode == ALPHA_TRANSPARENT)) return;
-
-	// these should be supplied as params later
-	final int srcAlphaMask = 0;
-
-	/*** Prepare scaling data ***/
-	final int dwm1 = destWidth - 1;
-	final int sfxi = (dwm1 != 0) ? (int)((((long)srcWidth << 16) - 1) / dwm1) : 0;
-	final int dhm1 = destHeight - 1;
-	final int sfyi = (dhm1 != 0) ? (int)((((long)srcHeight << 16) - 1) / dhm1) : 0;
-
-	/*** Prepare source-related data ***/
-	final int sbpp, stype;
-	switch (srcDepth) {
-		case 8:
-			sbpp = 1;
-			stype = TYPE_GENERIC_8;
-			break;
-		case 16:
-			sbpp = 2;
-			stype = (srcOrder == MSB_FIRST) ? TYPE_GENERIC_16_MSB : TYPE_GENERIC_16_LSB;
-			break;
-		case 24:
-			sbpp = 3;
-			stype = TYPE_GENERIC_24;
-			break;
-		case 32:
-			sbpp = 4;
-			stype = (srcOrder == MSB_FIRST) ? TYPE_GENERIC_32_MSB : TYPE_GENERIC_32_LSB;
-			break;
-		default:
-			//throw new IllegalArgumentException("Invalid source type");
-			return;
-	}
-	int spr = srcY * srcStride + srcX * sbpp;
-
-	/*** Prepare destination-related data ***/
-	final int dtype;
-	switch (destDepth) {
-		case 8:
-			dtype = TYPE_INDEX_8;
-			break;
-		case 4:
-			destStride <<= 1;
-			dtype = TYPE_INDEX_4;
-			break;
-		case 2:
-			destStride <<= 2;
-			dtype = TYPE_INDEX_2;
-			break;
-		case 1:
-			destStride <<= 3;
-			dtype = (destOrder == MSB_FIRST) ? TYPE_INDEX_1_MSB : TYPE_INDEX_1_LSB;
-			break;
-		default:
-			//throw new IllegalArgumentException("Invalid source type");
-			return;
-	}
-	int dpr = ((flipY) ? destY + dhm1 : destY) * destStride + ((flipX) ? destX + dwm1 : destX);
-	final int dprxi = (flipX) ? -1 : 1;
-	final int dpryi = (flipY) ? -destStride : destStride;
-
-	/*** Prepare special processing data ***/
-	int apr;
-	if ((op & BLIT_ALPHA) != 0) {
-		switch (alphaMode) {
-			case ALPHA_MASK_UNPACKED:
-			case ALPHA_CHANNEL_SEPARATE:
-				if (alphaData == null) alphaMode = 0x10000;
-				apr = alphaY * alphaStride + alphaX;
-				break;
-			case ALPHA_MASK_PACKED:
-				if (alphaData == null) alphaMode = 0x10000;
-				alphaStride <<= 3;
-				apr = alphaY * alphaStride + alphaX;
-				break;
-			case ALPHA_MASK_INDEX:
-				//throw new IllegalArgumentException("Invalid alpha type");
-				return;
-			case ALPHA_MASK_RGB:
-				if (alphaData == null) alphaMode = 0x10000;
-				apr = 0;
-				break;
-			default:
-				alphaMode = (alphaMode << 16) / 255; // prescale
-			case ALPHA_CHANNEL_SOURCE:
-				apr = 0;
-				break;
-		}
-	} else {
-		alphaMode = 0x10000;
-		apr = 0;
-	}
-	final boolean ditherEnabled = (op & BLIT_DITHER) != 0;
-
-	/*** Comprehensive blit (apply transformations) ***/
-	final int srcRedShift = getChannelShift(srcRedMask);
-	final byte[] srcReds = ANY_TO_EIGHT[getChannelWidth(srcRedMask, srcRedShift)];
-	final int srcGreenShift = getChannelShift(srcGreenMask);
-	final byte[] srcGreens = ANY_TO_EIGHT[getChannelWidth(srcGreenMask, srcGreenShift)];
-	final int srcBlueShift = getChannelShift(srcBlueMask);
-	final byte[] srcBlues = ANY_TO_EIGHT[getChannelWidth(srcBlueMask, srcBlueShift)];
-	final int srcAlphaShift = getChannelShift(srcAlphaMask);
-	final byte[] srcAlphas = ANY_TO_EIGHT[getChannelWidth(srcAlphaMask, srcAlphaShift)];
-
-	int dp = dpr;
-	int sp = spr;
-	int ap = apr, alpha = alphaMode;
-	int r = 0, g = 0, b = 0, a = 0;
-	int indexq = 0;
-	int lastindex = 0, lastr = -1, lastg = -1, lastb = -1;
-	final int[] rerr, gerr, berr;
-	int destPaletteSize = 1 << destDepth;
-	if ((destReds != null) && (destReds.length < destPaletteSize)) destPaletteSize = destReds.length;
-	if (ditherEnabled) {
-		rerr = new int[destWidth + 2];
-		gerr = new int[destWidth + 2];
-		berr = new int[destWidth + 2];
-	} else {
-		rerr = null; gerr = null; berr = null;
-	}
-	for (int dy = destHeight, sfy = sfyi; dy > 0; --dy,
-			sp = spr += (sfy >>> 16) * srcStride,
-			ap = apr += (sfy >>> 16) * alphaStride,
-			sfy = (sfy & 0xffff) + sfyi,
-			dp = dpr += dpryi) {
-		int lrerr = 0, lgerr = 0, lberr = 0;
-		for (int dx = destWidth, sfx = sfxi; dx > 0; --dx,
-				dp += dprxi,
-				sfx = (sfx & 0xffff) + sfxi) {
-			/*** READ NEXT PIXEL ***/
-			switch (stype) {
-				case TYPE_GENERIC_8: {
-					final int data = srcData[sp] & 0xff;
-					sp += (sfx >>> 16);
-					r = srcReds[(data & srcRedMask) >>> srcRedShift] & 0xff;
-					g = srcGreens[(data & srcGreenMask) >>> srcGreenShift] & 0xff;
-					b = srcBlues[(data & srcBlueMask) >>> srcBlueShift] & 0xff;
-					a = srcAlphas[(data & srcAlphaMask) >>> srcAlphaShift] & 0xff;
-				} break;
-				case TYPE_GENERIC_16_MSB: {
-					final int data = ((srcData[sp] & 0xff) << 8) | (srcData[sp + 1] & 0xff);
-					sp += (sfx >>> 16) * 2;
-					r = srcReds[(data & srcRedMask) >>> srcRedShift] & 0xff;
-					g = srcGreens[(data & srcGreenMask) >>> srcGreenShift] & 0xff;
-					b = srcBlues[(data & srcBlueMask) >>> srcBlueShift] & 0xff;
-					a = srcAlphas[(data & srcAlphaMask) >>> srcAlphaShift] & 0xff;
-				} break;
-				case TYPE_GENERIC_16_LSB: {
-					final int data = ((srcData[sp + 1] & 0xff) << 8) | (srcData[sp] & 0xff);
-					sp += (sfx >>> 16) * 2;
-					r = srcReds[(data & srcRedMask) >>> srcRedShift] & 0xff;
-					g = srcGreens[(data & srcGreenMask) >>> srcGreenShift] & 0xff;
-					b = srcBlues[(data & srcBlueMask) >>> srcBlueShift] & 0xff;
-					a = srcAlphas[(data & srcAlphaMask) >>> srcAlphaShift] & 0xff;
-				} break;
-				case TYPE_GENERIC_24: {
-					final int data = (( ((srcData[sp] & 0xff) << 8) |
-						(srcData[sp + 1] & 0xff)) << 8) |
-						(srcData[sp + 2] & 0xff);
-					sp += (sfx >>> 16) * 3;
-					r = srcReds[(data & srcRedMask) >>> srcRedShift] & 0xff;
-					g = srcGreens[(data & srcGreenMask) >>> srcGreenShift] & 0xff;
-					b = srcBlues[(data & srcBlueMask) >>> srcBlueShift] & 0xff;
-					a = srcAlphas[(data & srcAlphaMask) >>> srcAlphaShift] & 0xff;
-				} break;
-				case TYPE_GENERIC_32_MSB: {
-					final int data = (( (( ((srcData[sp] & 0xff) << 8) |
-						(srcData[sp + 1] & 0xff)) << 8) |
-						(srcData[sp + 2] & 0xff)) << 8) |
-						(srcData[sp + 3] & 0xff);
-					sp += (sfx >>> 16) * 4;
-					r = srcReds[(data & srcRedMask) >>> srcRedShift] & 0xff;
-					g = srcGreens[(data & srcGreenMask) >>> srcGreenShift] & 0xff;
-					b = srcBlues[(data & srcBlueMask) >>> srcBlueShift] & 0xff;
-					a = srcAlphas[(data & srcAlphaMask) >>> srcAlphaShift] & 0xff;
-				} break;
-				case TYPE_GENERIC_32_LSB: {
-					final int data = (( (( ((srcData[sp + 3] & 0xff) << 8) |
-						(srcData[sp + 2] & 0xff)) << 8) |
-						(srcData[sp + 1] & 0xff)) << 8) |
-						(srcData[sp] & 0xff);
-					sp += (sfx >>> 16) * 4;
-					r = srcReds[(data & srcRedMask) >>> srcRedShift] & 0xff;
-					g = srcGreens[(data & srcGreenMask) >>> srcGreenShift] & 0xff;
-					b = srcBlues[(data & srcBlueMask) >>> srcBlueShift] & 0xff;
-					a = srcAlphas[(data & srcAlphaMask) >>> srcAlphaShift] & 0xff;
-				} break;
-			}
-
-			/*** DO SPECIAL PROCESSING IF REQUIRED ***/
-			switch (alphaMode) {
-				case ALPHA_CHANNEL_SEPARATE:
-					alpha = ((alphaData[ap] & 0xff) << 16) / 255;
-					ap += (sfx >> 16);
-					break;
-				case ALPHA_CHANNEL_SOURCE:
-					alpha = (a << 16) / 255;
-					break;
-				case ALPHA_MASK_UNPACKED:
-					alpha = (alphaData[ap] != 0) ? 0x10000 : 0;
-					ap += (sfx >> 16);
-					break;
-				case ALPHA_MASK_PACKED:
-					alpha = (alphaData[ap >> 3] << ((ap & 7) + 9)) & 0x10000;
-					ap += (sfx >> 16);
-					break;
-				case ALPHA_MASK_RGB:
-					alpha = 0x10000;
-					for (int i = 0; i < alphaData.length; i += 3) {
-						if ((r == alphaData[i]) && (g == alphaData[i + 1]) && (b == alphaData[i + 2])) {
-							alpha = 0x0000;
-							break;
-						}
-					}
-					break;
-			}
-			if (alpha != 0x10000) {
-				if (alpha == 0x0000) continue;
-				switch (dtype) {
-					case TYPE_INDEX_8:
-						indexq = destData[dp] & 0xff;
-						break;
-					case TYPE_INDEX_4:
-						if ((dp & 1) != 0) indexq = destData[dp >> 1] & 0x0f;
-						else indexq = (destData[dp >> 1] >>> 4) & 0x0f;
-						break;
-					case TYPE_INDEX_2:
-						indexq = (destData[dp >> 2] >>> (6 - (dp & 3) * 2)) & 0x03;
-						break;
-					case TYPE_INDEX_1_MSB:
-						indexq = (destData[dp >> 3] >>> (7 - (dp & 7))) & 0x01;
-						break;
-					case TYPE_INDEX_1_LSB:
-						indexq = (destData[dp >> 3] >>> (dp & 7)) & 0x01;
-						break;
-				}
-				// Perform alpha blending
-				final int rq = destReds[indexq] & 0xff;
-				final int gq = destGreens[indexq] & 0xff;
-				final int bq = destBlues[indexq] & 0xff;
-				r = rq + ((r - rq) * alpha >> 16);
-				g = gq + ((g - gq) * alpha >> 16);
-				b = bq + ((b - bq) * alpha >> 16);
-			}
-
-			/*** MAP COLOR TO THE PALETTE ***/
-			if (ditherEnabled) {
-				// Floyd-Steinberg error diffusion
-				r += rerr[dx] >> 4;
-				if (r < 0) r = 0; else if (r > 255) r = 255;
-				g += gerr[dx] >> 4;
-				if (g < 0) g = 0; else if (g > 255) g = 255;
-				b += berr[dx] >> 4;
-				if (b < 0) b = 0; else if (b > 255) b = 255;
-				rerr[dx] = lrerr;
-				gerr[dx] = lgerr;
-				berr[dx] = lberr;
-			}
-			if (r != lastr || g != lastg || b != lastb) {
-				// moving the variable declarations out seems to make the JDK JIT happier...
-				for (int j = 0, dr, dg, db, distance, minDistance = 0x7fffffff; j < destPaletteSize; ++j) {
-					dr = (destReds[j] & 0xff) - r;
-					dg = (destGreens[j] & 0xff) - g;
-					db = (destBlues[j] & 0xff) - b;
-					distance = dr * dr + dg * dg + db * db;
-					if (distance < minDistance) {
-						lastindex = j;
-						if (distance == 0) break;
-						minDistance = distance;
-					}
-				}
-				lastr = r; lastg = g; lastb = b;
-			}
-			if (ditherEnabled) {
-				// Floyd-Steinberg error diffusion, cont'd...
-				final int dxm1 = dx - 1, dxp1 = dx + 1;
-				int acc;
-				rerr[dxp1] += acc = (lrerr = r - (destReds[lastindex] & 0xff)) + lrerr + lrerr;
-				rerr[dx] += acc += lrerr + lrerr;
-				rerr[dxm1] += acc + lrerr + lrerr;
-				gerr[dxp1] += acc = (lgerr = g - (destGreens[lastindex] & 0xff)) + lgerr + lgerr;
-				gerr[dx] += acc += lgerr + lgerr;
-				gerr[dxm1] += acc + lgerr + lgerr;
-				berr[dxp1] += acc = (lberr = b - (destBlues[lastindex] & 0xff)) + lberr + lberr;
-				berr[dx] += acc += lberr + lberr;
-				berr[dxm1] += acc + lberr + lberr;
-			}
-
-			/*** WRITE NEXT PIXEL ***/
-			switch (dtype) {
-				case TYPE_INDEX_8:
-					destData[dp] = (byte) lastindex;
-					break;
-				case TYPE_INDEX_4:
-					if ((dp & 1) != 0) destData[dp >> 1] = (byte)((destData[dp >> 1] & 0xf0) | lastindex);
-					else destData[dp >> 1] = (byte)((destData[dp >> 1] & 0x0f) | (lastindex << 4));
-					break;
-				case TYPE_INDEX_2: {
-					final int shift = 6 - (dp & 3) * 2;
-					destData[dp >> 2] = (byte)(destData[dp >> 2] & ~(0x03 << shift) | (lastindex << shift));
-				} break;
-				case TYPE_INDEX_1_MSB: {
-					final int shift = 7 - (dp & 7);
-					destData[dp >> 3] = (byte)(destData[dp >> 3] & ~(0x01 << shift) | (lastindex << shift));
-				} break;
-				case TYPE_INDEX_1_LSB: {
-					final int shift = dp & 7;
-					destData[dp >> 3] = (byte)(destData[dp >> 3] & ~(0x01 << shift) | (lastindex << shift));
-				} break;
-			}
-		}
-	}
-}
-
-/**
  * Computes the required channel shift from a mask.
  */
 static int getChannelShift(int mask) {
@@ -3485,14 +2440,6 @@ static int getChannelWidth(int mask, int shift) {
 		mask >>>= 1;
 	}
 	return i - shift;
-}
-
-/**
- * Extracts a field from packed RGB data given a mask for that field.
- */
-static byte getChannelField(int data, int mask) {
-	final int shift = getChannelShift(mask);
-	return ANY_TO_EIGHT[getChannelWidth(mask, shift)][(data & mask) >>> shift];
 }
 
 /**

@@ -259,10 +259,9 @@ public Cursor(Device device, ImageData source, int hotspotX, int hotspotY) {
 		PaletteData newPalette = new PaletteData(0xFF00, 0xFF0000, 0xFF000000);
 		ImageData img = new ImageData(source.width, source.height, 32, newPalette);
 		if (palette.isDirect) {
-			ImageData.blit(ImageData.BLIT_SRC,
-				source.data, source.depth, source.bytesPerLine, source.getByteOrder(), 0, 0, source.width, source.height, palette.redMask, palette.greenMask, palette.blueMask,
-				ImageData.ALPHA_OPAQUE, null, 0, 0, 0,
-				img.data, img.depth, img.bytesPerLine, img.getByteOrder(), 0, 0, img.width, img.height, newPalette.redMask, newPalette.greenMask, newPalette.blueMask,
+			ImageData.blit(
+				source.data, source.depth, source.bytesPerLine, source.getByteOrder(), source.width, source.height,    palette.redMask,    palette.greenMask,    palette.blueMask,
+				   img.data,    img.depth,    img.bytesPerLine,    img.getByteOrder(),    img.width,    img.height, newPalette.redMask, newPalette.greenMask, newPalette.blueMask,
 				false, false);
 		} else {
 			RGB[] rgbs = palette.getRGBs();
@@ -277,11 +276,10 @@ public Cursor(Device device, ImageData source, int hotspotX, int hotspotY) {
 				srcGreens[i] = (byte)rgb.green;
 				srcBlues[i] = (byte)rgb.blue;
 			}
-			ImageData.blit(ImageData.BLIT_SRC,
-				source.data, source.depth, source.bytesPerLine, source.getByteOrder(), 0, 0, source.width, source.height, srcReds, srcGreens, srcBlues,
-				ImageData.ALPHA_OPAQUE, null, 0, 0, 0,
-				img.data, img.depth, img.bytesPerLine, img.getByteOrder(), 0, 0, img.width, img.height, newPalette.redMask, newPalette.greenMask, newPalette.blueMask,
-				false, false);
+			ImageData.blit(
+				source.width, source.height,
+				source.data, source.depth, source.bytesPerLine, source.getByteOrder(), srcReds, srcGreens, srcBlues,
+				   img.data,    img.depth,    img.bytesPerLine,    img.getByteOrder(), newPalette.redMask, newPalette.greenMask, newPalette.blueMask);
 		}
 		hBitmap = Image.createDIB(source.width, source.height, 32);
 		if (hBitmap == 0) SWT.error(SWT.ERROR_NO_HANDLES);

@@ -12920,6 +12920,18 @@ JNIEXPORT jlong JNICALL OS_NATIVE(g_1value_1get_1int64)
 }
 #endif
 
+#ifndef NO_g_1value_1get_1object
+JNIEXPORT jlong JNICALL OS_NATIVE(g_1value_1get_1object)
+	(JNIEnv *env, jclass that, jlong arg0)
+{
+	jlong rc = 0;
+	OS_NATIVE_ENTER(env, that, g_1value_1get_1object_FUNC);
+	rc = (jlong)g_value_get_object((GValue *)arg0);
+	OS_NATIVE_EXIT(env, that, g_1value_1get_1object_FUNC);
+	return rc;
+}
+#endif
+
 #ifndef NO_g_1value_1get_1string
 JNIEXPORT jlong JNICALL OS_NATIVE(g_1value_1get_1string)
 	(JNIEnv *env, jclass that, jlong arg0)
@@ -12998,10 +13010,14 @@ JNIEXPORT void JNICALL OS_NATIVE(g_1value_1set_1int64)
 
 #ifndef NO_g_1value_1set_1string
 JNIEXPORT void JNICALL OS_NATIVE(g_1value_1set_1string)
-	(JNIEnv *env, jclass that, jlong arg0, jlong arg1)
+	(JNIEnv *env, jclass that, jlong arg0, jbyteArray arg1)
 {
+	jbyte *lparg1=NULL;
 	OS_NATIVE_ENTER(env, that, g_1value_1set_1string_FUNC);
-	g_value_set_string((GValue *)arg0, (const gchar *)arg1);
+	if (arg1) if ((lparg1 = (*env)->GetByteArrayElements(env, arg1, NULL)) == NULL) goto fail;
+	g_value_set_string((GValue *)arg0, (const gchar *)lparg1);
+fail:
+	if (arg1 && lparg1) (*env)->ReleaseByteArrayElements(env, arg1, lparg1, 0);
 	OS_NATIVE_EXIT(env, that, g_1value_1set_1string_FUNC);
 }
 #endif
@@ -13742,6 +13758,26 @@ JNIEXPORT jlong JNICALL OS_NATIVE(pango_1attr_1foreground_1new)
 	OS_NATIVE_ENTER(env, that, pango_1attr_1foreground_1new_FUNC);
 	rc = (jlong)pango_attr_foreground_new(arg0, arg1, arg2);
 	OS_NATIVE_EXIT(env, that, pango_1attr_1foreground_1new_FUNC);
+	return rc;
+}
+#endif
+
+#ifndef NO_pango_1attr_1insert_1hyphens_1new
+JNIEXPORT jlong JNICALL OS_NATIVE(pango_1attr_1insert_1hyphens_1new)
+	(JNIEnv *env, jclass that, jboolean arg0)
+{
+	jlong rc = 0;
+	OS_NATIVE_ENTER(env, that, pango_1attr_1insert_1hyphens_1new_FUNC);
+/*
+	rc = (jlong)pango_attr_insert_hyphens_new(arg0);
+*/
+	{
+		OS_LOAD_FUNCTION(fp, pango_attr_insert_hyphens_new)
+		if (fp) {
+			rc = (jlong)((jlong (CALLING_CONVENTION*)(jboolean))fp)(arg0);
+		}
+	}
+	OS_NATIVE_EXIT(env, that, pango_1attr_1insert_1hyphens_1new_FUNC);
 	return rc;
 }
 #endif
@@ -14861,6 +14897,18 @@ JNIEXPORT void JNICALL OS_NATIVE(pango_1tab_1array_1set_1tab)
 	OS_NATIVE_ENTER(env, that, pango_1tab_1array_1set_1tab_FUNC);
 	pango_tab_array_set_tab((PangoTabArray *)arg0, (gint)arg1, (PangoTabAlign)arg2, (gint)arg3);
 	OS_NATIVE_EXIT(env, that, pango_1tab_1array_1set_1tab_FUNC);
+}
+#endif
+
+#ifndef NO_pango_1version
+JNIEXPORT jint JNICALL OS_NATIVE(pango_1version)
+	(JNIEnv *env, jclass that)
+{
+	jint rc = 0;
+	OS_NATIVE_ENTER(env, that, pango_1version_FUNC);
+	rc = (jint)pango_version();
+	OS_NATIVE_EXIT(env, that, pango_1version_FUNC);
+	return rc;
 }
 #endif
 

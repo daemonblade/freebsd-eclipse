@@ -981,7 +981,6 @@ public Rectangle getClientArea () {
 /**
  * Returns <code>true</code> if the receiver is currently
  * in fullscreen state, and false otherwise.
- * <p>
  *
  * @return the fullscreen state
  *
@@ -1182,7 +1181,7 @@ public Shell getShell () {
 /**
  * Returns an array containing all shells which are
  * descendants of the receiver.
- * <p>
+ *
  * @return the dialog shells
  *
  * @exception SWTException <ul>
@@ -1232,7 +1231,6 @@ float getThemeAlpha () {
  * trim. This will return <code>null</code> if the platform does not support tool bars that
  * are not part of the content area of the shell, or if the Shell's style does not support
  * having a tool bar.
- * <p>
  *
  * @return a ToolBar object representing the Shell's tool bar, or <code>null</code>.
  *
@@ -2072,6 +2070,30 @@ public void setVisible (boolean visible) {
 	}
 }
 
+void preventShellActivateJvmCrash () {
+	/*
+	 * Bug 578171: There is new code in macOS 12 that remembers which
+	 * Shell was active before menu popup was shown and tries to
+	 * re-activate after menu popup is closed. Unfortunately there is a
+	 * bug in this code: if window list changes, it activates a wrong
+	 * Shell.
+	 *
+	 * This is a bug on its own, but worse yet, this causes a JVM crash
+	 * because activating a new Shell causes menu bar to reset its
+	 * internal data, which is unexpected to the macOS's menu tracking
+	 * loop.
+	 *
+	 * Both bugs are bugs of macOS itself. The workaround is to cancel
+	 * menu tracking just before showing Shell.
+	 *
+	 * The condition should be for (macOS >= 12), but it's not possible
+	 * to reliably distinguish 11 from 12, see comment for OS.VERSION.
+	 */
+	if (OS.isBigSurOrLater ()) {
+		Display.cancelRootMenuTracking ();
+	}
+}
+
 void setWindowVisible (boolean visible, boolean key) {
 	if (visible) {
 		if ((state & HIDDEN) == 0) return;
@@ -2092,6 +2114,8 @@ void setWindowVisible (boolean visible, boolean key) {
 		topView ().setHidden (false);
 		invalidateVisibleRegion();
 		if (window != null) {
+			preventShellActivateJvmCrash ();
+
 			if ((style & (SWT.SHEET)) != 0) {
 				NSApplication application = NSApplication.sharedApplication();
 				application.beginSheet(window, parentWindow (), null, 0, 0);
