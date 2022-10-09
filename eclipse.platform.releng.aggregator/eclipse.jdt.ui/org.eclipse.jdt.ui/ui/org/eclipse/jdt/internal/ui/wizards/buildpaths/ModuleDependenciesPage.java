@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 import com.ibm.icu.text.MessageFormat;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
@@ -39,7 +40,6 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.TabFolder;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -62,6 +62,8 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
+
+import org.eclipse.jdt.ui.JavaUI;
 
 import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.dialogs.StatusInfo;
@@ -238,7 +240,7 @@ public class ModuleDependenciesPage extends BuildPathBasePage {
 
 		fDetailsList.setViewerComparator(new CPListElementSorter());
 
-		((TabFolder) parent).addSelectionListener(SelectionListener.widgetSelectedAdapter(e -> {
+		((CTabFolder) parent).addSelectionListener(SelectionListener.widgetSelectedAdapter(e -> {
 			if (e.item.getData() == this && fCurrJProject != null)
 				init(fCurrJProject);
 		}));
@@ -266,7 +268,7 @@ public class ModuleDependenciesPage extends BuildPathBasePage {
 			fAddSystemModuleButton.setEnabled(false);
 			fDetailsList.removeAllElements();
 			fDetailsList.refresh();
-			ModuleDependenciesAdapter.updateButtonEnablement(fDetailsList, false, false, false);
+			ModuleDependenciesAdapter.updateButtonEnablement(fDetailsList, false, false, false, false);
 			return;
 		}
 		fModuleList.setEnabled(true);
@@ -459,6 +461,7 @@ public class ModuleDependenciesPage extends BuildPathBasePage {
 
 	private void selectModule(List<CPListElement> elements, IModuleDescription module) {
 		fDetailsList.removeAllElements();
+		boolean enableAddExport= true;
 		if (elements.size() == 1) {
 			CPListElement element= elements.get(0);
 			fDetailsList.addElement(new ModuleDependenciesAdapter.DeclaredDetails(module, element));
@@ -466,8 +469,17 @@ public class ModuleDependenciesPage extends BuildPathBasePage {
 			ModuleDependenciesAdapter.ConfiguredDetails configured= new ModuleDependenciesAdapter.ConfiguredDetails(module, element, moduleKind, this);
 			fDetailsList.addElement(configured);
 			fDetailsList.expandElement(configured, 1);
+			if (moduleKind == ModuleKind.System) {
+				enableAddExport = JavaCore.DISABLED.equals(this.fCurrJProject.getOption(JavaCore.COMPILER_RELEASE, false));
+			}
 		}
-		ModuleDependenciesAdapter.updateButtonEnablement(fDetailsList, elements.size() == 1, !elements.isEmpty(), true);
+		if (!enableAddExport) {
+			setStatus(new Status(IStatus.INFO, JavaUI.ID_PLUGIN,
+					MessageFormat.format(NewWizardMessages.ModuleDependenciesPage_addExport_notWith_release_info, module.getElementName())));
+		} else {
+			setStatus(StatusInfo.OK_STATUS);
+		}
+		ModuleDependenciesAdapter.updateButtonEnablement(fDetailsList, elements.size() == 1, !elements.isEmpty(), true, enableAddExport);
 	}
 
 	@Override

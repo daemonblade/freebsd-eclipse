@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2011 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -279,7 +279,19 @@ public class SelectionConverter {
 		if (input instanceof ICompilationUnit) {
 			JavaModelUtil.reconcile((ICompilationUnit) input);
 		}
-		IJavaElement ref= input.getElementAt(selection.getOffset());
+		int whiteSpaceOffset= 0;
+		String selectedString= selection.getText();
+		if (selectedString != null && !selectedString.isEmpty()) {
+			int i= 0;
+			while (i < selectedString.length() && Character.isWhitespace(selectedString.charAt(i))) {
+				++i;
+		    }
+			whiteSpaceOffset= i;
+		}
+		if (selectedString != null && whiteSpaceOffset == selectedString.length()) {
+			whiteSpaceOffset= 0; // leave offset alone if selection is all white-space
+		}
+		IJavaElement ref= input.getElementAt(selection.getOffset() + whiteSpaceOffset);
 		if (ref == null)
 			return input;
 		return ref;
