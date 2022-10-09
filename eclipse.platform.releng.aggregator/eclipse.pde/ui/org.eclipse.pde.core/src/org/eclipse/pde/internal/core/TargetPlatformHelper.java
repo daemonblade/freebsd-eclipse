@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -409,20 +409,18 @@ public class TargetPlatformHelper {
 		if (vm == null || !JavaRuntime.isModularJava(vm)) {
 			return null;
 		}
-
-		String release = null;
-		Map<String, String> complianceOptions = environment.getComplianceOptions();
-		if (complianceOptions != null) {
-			release = complianceOptions.get(JavaCore.COMPILER_COMPLIANCE);
-		}
-
+		String release = environment.getProfileProperties().getProperty(JavaCore.COMPILER_COMPLIANCE);
 		try {
 			Collection<String> packages = new TreeSet<>();
 			String jrtPath = "lib/" + org.eclipse.jdt.internal.compiler.util.JRTUtil.JRT_FS_JAR; //$NON-NLS-1$
 			String path = new File(vm.getInstallLocation(), jrtPath).toString(); // $NON-NLS-1$
 			var jrt = org.eclipse.jdt.internal.core.builder.ClasspathLocation.forJrtSystem(path, null, null, release);
 			for (String moduleName : jrt.getModuleNames(null)) {
-				for (var packageExport : jrt.getModule(moduleName).exports()) {
+				var module = jrt.getModule(moduleName);
+				if (module == null) {
+					continue;
+				}
+				for (var packageExport : module.exports()) {
 					if (!packageExport.isQualified()) {
 						packages.add(new String(packageExport.name()));
 					}
@@ -440,12 +438,10 @@ public class TargetPlatformHelper {
 		if (defaultVM != null) {
 			return defaultVM;
 		}
-
 		IVMInstall[] compatible = environment.getCompatibleVMs();
 		if (compatible.length == 0) {
 			return null;
 		}
-
 		for (IVMInstall vm : compatible) {
 			if (environment.isStrictlyCompatible(vm)) {
 				return vm;
@@ -705,12 +701,15 @@ public class TargetPlatformHelper {
 	}
 
 	public static boolean matchesCurrentEnvironment(IPluginModelBase model) {
-		BundleContext context = PDECore.getDefault().getBundleContext();
-		Dictionary<String, String> environment = getTargetEnvironment();
 		BundleDescription bundle = model.getBundleDescription();
 		String filterSpec = bundle != null ? bundle.getPlatformFilter() : null;
+		if (filterSpec == null) {
+			return true;
+		}
+		BundleContext context = PDECore.getDefault().getBundleContext();
+		Dictionary<String, String> environment = getTargetEnvironment();
 		try {
-			return filterSpec == null || context.createFilter(filterSpec).match(environment);
+			return context.createFilter(filterSpec).match(environment);
 		} catch (InvalidSyntaxException e) {
 			return false;
 		}

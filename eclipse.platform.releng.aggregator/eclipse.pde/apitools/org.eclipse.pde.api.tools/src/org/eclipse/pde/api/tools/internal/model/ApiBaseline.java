@@ -69,6 +69,7 @@ import org.eclipse.pde.api.tools.internal.provisional.model.IApiComponent;
 import org.eclipse.pde.api.tools.internal.provisional.model.IApiElement;
 import org.eclipse.pde.api.tools.internal.util.Util;
 import org.eclipse.pde.internal.core.BuildDependencyCollector;
+import org.eclipse.pde.internal.core.TargetPlatformHelper;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.Constants;
 import org.osgi.framework.Version;
@@ -244,41 +245,20 @@ public class ApiBaseline extends ApiElement implements IApiBaseline, IVMInstallC
 		}
 	}
 
-	private static Properties getJavaProfilePropertiesForVMPackage(String ee) {
-		Bundle apitoolsBundle = Platform.getBundle("org.eclipse.pde.api.tools"); //$NON-NLS-1$
-		if (apitoolsBundle == null) {
-			return null;
-		}
-		URL systemPackageProfile = apitoolsBundle.getEntry("system_packages" + '/' + ee.replace('/', '_') + "-systempackages.profile"); //$NON-NLS-1$ //$NON-NLS-2$
-		if (systemPackageProfile != null) {
-			return getPropertiesFromURL(systemPackageProfile);
-
-		}
-		return null;
-	}
-
 	private static Properties getPropertiesFromURL(URL profileURL) {
-		InputStream is = null;
 		try {
 			URL resolvedURL = FileLocator.resolve(profileURL);
 			URLConnection openConnection = resolvedURL.openConnection();
 			openConnection.setUseCaches(false);
-			is = openConnection.getInputStream();
-			if (is != null) {
-				Properties profile = new Properties();
-				profile.load(is);
-				return profile;
+			try (InputStream is = openConnection.getInputStream()) {
+				if (is != null) {
+					Properties profile = new Properties();
+					profile.load(is);
+					return profile;
+				}
 			}
 		} catch (IOException e) {
 			ApiPlugin.log(e);
-		} finally {
-			try {
-				if (is != null) {
-					is.close();
-				}
-			} catch (IOException e) {
-				ApiPlugin.log(e);
-			}
 		}
 		return null;
 	}
@@ -313,15 +293,11 @@ public class ApiBaseline extends ApiElement implements IApiBaseline, IVMInstallC
 	private void initialize(Properties profile, ExecutionEnvironmentDescription description) throws CoreException {
 		String value = profile.getProperty(Constants.FRAMEWORK_SYSTEMPACKAGES);
 		if (value == null) {
-			// In Java-10 and beyond, we take systempackages list from
-			// org.eclipse.pde.api.tools\system_packages\JavaSE-x-systempackages.profile
-			// They are calculated by launching eclipse in Java x and then using
-			// org.eclipse.osgi.storage.Storage.calculateVMPackages
-			String id = description.getProperty(ExecutionEnvironmentDescription.CLASS_LIB_LEVEL);
-			Properties javaProfilePropertiesForVMPackage = getJavaProfilePropertiesForVMPackage(id);
-			if (javaProfilePropertiesForVMPackage != null) {
-				value = javaProfilePropertiesForVMPackage.getProperty(Constants.FRAMEWORK_SYSTEMPACKAGES);
-			}
+			// In Java-10 and beyond, we query system-packages list from the JRE
+			String environmentId = description.getProperty(ExecutionEnvironmentDescription.CLASS_LIB_LEVEL);
+			IExecutionEnvironmentsManager manager = JavaRuntime.getExecutionEnvironmentsManager();
+			IExecutionEnvironment environment = manager.getEnvironment(environmentId);
+			value = TargetPlatformHelper.querySystemPackages(environment);
 		}
 		String[] systemPackages = null;
 		if (value != null) {
@@ -575,8 +551,7 @@ public class ApiBaseline extends ApiElement implements IApiBaseline, IVMInstallC
 		}
 		Map<IApiComponent, IApiComponent[]> componentsForPackage = fComponentsProvidingPackageCache
 				.computeIfAbsent(packageName, x -> new ConcurrentHashMap<>(8));
-		IApiComponent[] cachedComponents = null;
-		cachedComponents = componentsForPackage.get(sourceComponent);
+		IApiComponent[] cachedComponents = componentsForPackage.get(sourceComponent);
 		if (cachedComponents != null && cachedComponents.length > 0) {
 			return cachedComponents;
 		}

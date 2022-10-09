@@ -14,7 +14,7 @@
   <parent>
     <groupId>org.eclipse.pde</groupId>
     <artifactId>eclipse.pde</artifactId>
-    <version>4.24.0-SNAPSHOT</version>
+    <version>4.25.0-SNAPSHOT</version>
   </parent>
   <artifactId>eclipse.pde.ds</artifactId>
   <packaging>pom</packaging>
@@ -23,8 +23,6 @@
     <module>org.eclipse.pde.ds.core</module>
     <module>org.eclipse.pde.ds.tests</module>
     <module>org.eclipse.pde.ds.ui</module>
-    <module>org.eclipse.pde.ds.lib</module>
-    <module>org.eclipse.pde.ds1_2.lib</module>
     <module>org.eclipse.pde.ds.annotations</module>
   </modules>
 </project>

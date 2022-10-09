@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %name
 Bundle-SymbolicName: org.eclipse.pde.core; singleton:=true
-Bundle-Version: 3.15.200.qualifier
+Bundle-Version: 3.15.300.qualifier
 Bundle-Activator: org.eclipse.pde.internal.core.PDECore
 Bundle-Vendor: %provider-name
 Bundle-Localization: plugin
@@ -23,6 +23,7 @@ Export-Package:
    org.eclipse.pde.ua.core,
    org.eclipse.pde.api.tools.tests,
    org.eclipse.pde.unittest.junit",
+ org.eclipse.pde.internal.core.annotations;x-friends:="org.eclipse.pde.ui",
  org.eclipse.pde.internal.core.build;x-friends:="org.eclipse.pde.ui,org.eclipse.pde.ds.ui,org.eclipse.pde.ua.ui",
  org.eclipse.pde.internal.core.builders;x-friends:="org.eclipse.pde.ui,org.eclipse.pde.launching,org.eclipse.pde.ds.core",
  org.eclipse.pde.internal.core.bundle;x-friends:="org.eclipse.pde.ui,org.eclipse.pde.ds.ui",

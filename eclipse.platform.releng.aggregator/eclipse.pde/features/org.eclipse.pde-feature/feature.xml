@@ -2,7 +2,7 @@
 <feature
       id="org.eclipse.pde"
       label="%featureName"
-      version="3.14.1200.qualifier"
+      version="3.14.1300.qualifier"
       provider-name="%providerName"
       license-feature="org.eclipse.license"
       license-feature-version="0.0.0">
@@ -21,6 +21,9 @@
 
    <requires>
       <import feature="org.eclipse.jdt" version="3.15.0" match="compatible"/>
+      <import plugin="org.osgi.annotation.versioning"/>
+      <import plugin="org.osgi.annotation.bundle"/>
+      <import plugin="org.osgi.service.component.annotations"/>
    </requires>
 
    <plugin
@@ -154,18 +157,6 @@
          install-size="0"
          version="0.0.0"
          unpack="false"/>
-
-   <plugin
-         id="org.eclipse.pde.ds.lib"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.pde.ds1_2.lib"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"/>
 
    <plugin
          id="org.eclipse.tools.layout.spy"

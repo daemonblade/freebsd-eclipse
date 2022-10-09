@@ -340,6 +340,8 @@ public class PDEUIMessages extends NLS {
 
 	public static String ProductEditor_exportTooltip;
 
+	public static String ProductEditor_launchFailed;
+
 	public static String RemoveSplashHandlerBindingAction_msgProgressRemoveProductBindings;
 
 	public static String RenamePluginAction_label;
@@ -872,9 +874,6 @@ public class PDEUIMessages extends NLS {
 
 	public static String FeatureEditor_InfoPage_PackagingSection_title;
 	public static String FeatureEditor_InfoPage_PackagingSection_text;
-
-	public static String FeatureEditor_InfoPage_PublishingSection_title;
-	public static String FeatureEditor_InfoPage_PublishingSection_text;
 
 	public static String FeatureOptionsTab_0;
 

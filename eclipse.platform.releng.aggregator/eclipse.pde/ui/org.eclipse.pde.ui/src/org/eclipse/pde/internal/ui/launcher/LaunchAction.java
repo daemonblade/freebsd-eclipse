@@ -48,47 +48,42 @@ import org.eclipse.ui.dialogs.ElementListSelectionDialog;
 
 public class LaunchAction extends Action {
 
+	private static final String DEFAULT = "default"; //$NON-NLS-1$
+
 	private IProduct fProduct;
 	private String fMode;
-	private String fPath;
+	private IPath fPath;
 	private Map<String, IPluginConfiguration> fPluginConfigurations;
 
-	public LaunchAction(IProduct product, String path, String mode) {
+	public LaunchAction(IProduct product, IPath path, String mode) {
 		fProduct = product;
 		fMode = mode;
 		fPath = path;
-		// initialize configurations... we should do this lazily
-		// TODO
-		fPluginConfigurations = new HashMap<>();
-		IPluginConfiguration[] configurations = fProduct.getPluginConfigurations();
-		for (IPluginConfiguration config : configurations) {
-			fPluginConfigurations.put(config.getId(), config);
-		}
+		fPluginConfigurations = Arrays.stream(fProduct.getPluginConfigurations())
+				.collect(Collectors.toUnmodifiableMap(IPluginConfiguration::getId, c -> c));
 	}
 
 	@Override
 	public void run() {
 		try {
 			ILaunchConfiguration config = findLaunchConfiguration();
-			if (config != null)
+			if (config != null) {
 				DebugUITools.launch(config, fMode);
+			}
 		} catch (CoreException e) {
+			PDEPlugin.log(Status.error(PDEUIMessages.ProductEditor_launchFailed, e));
 		}
 	}
 
-	private ILaunchConfiguration findLaunchConfiguration() throws CoreException {
-		ILaunchConfiguration[] configs = getLaunchConfigurations();
+	public ILaunchConfiguration findLaunchConfiguration() throws CoreException {
+		List<ILaunchConfiguration> configs = getLaunchConfigurations();
 
-		if (configs.length == 0)
+		if (configs.isEmpty()) {
 			return createConfiguration();
-
-		ILaunchConfiguration config = null;
-		if (configs.length == 1) {
-			config = configs[0];
-		} else {
-			// Prompt the user to choose a config.
-			config = chooseConfiguration(configs);
 		}
+		ILaunchConfiguration config = configs.size() == 1 //
+				? configs.get(0)
+				: chooseConfiguration(configs); // Prompt the user to choose one
 
 		if (config != null) {
 			config = refreshConfiguration(config.getWorkingCopy());
@@ -110,20 +105,19 @@ public class LaunchAction extends Action {
 		wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_VM_ARGUMENTS, getVMArguments(os, arch));
 		wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_PROGRAM_ARGUMENTS, getProgramArguments(os, arch));
 		wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_JRE_CONTAINER_PATH, getJREContainer(os));
+
 		Set<String> wsplugins = new HashSet<>();
 		Set<String> explugins = new HashSet<>();
-		IPluginModelBase[] models = getModels();
+		Set<IPluginModelBase> models = getModels(fProduct);
 		for (IPluginModelBase model : models) {
-			if (model.getUnderlyingResource() == null) {
-				appendBundle(explugins, model);
-			} else {
-				appendBundle(wsplugins, model);
-			}
+			appendBundle(model.getUnderlyingResource() == null ? explugins : wsplugins, model);
 		}
 		wc.setAttribute(IPDELauncherConstants.SELECTED_WORKSPACE_BUNDLES, wsplugins);
 		wc.setAttribute(IPDELauncherConstants.SELECTED_TARGET_BUNDLES, explugins);
+
 		if (fProduct.useFeatures()) {
-			refreshFeatureLaunchAttributes(wc, models);
+			wc.setAttribute(IPDELauncherConstants.USE_CUSTOM_FEATURES, true);
+			refreshFeatureLaunchPlugins(wc, models);
 		} else {
 			wc.removeAttribute(IPDELauncherConstants.USE_CUSTOM_FEATURES);
 			wc.removeAttribute(IPDELauncherConstants.SELECTED_FEATURES);
@@ -140,22 +134,20 @@ public class LaunchAction extends Action {
 		return wc.doSave();
 	}
 
-	private void refreshFeatureLaunchAttributes(ILaunchConfigurationWorkingCopy wc, IPluginModelBase[] models) {
-		FeatureModelManager fmm = PDECore.getDefault().getFeatureModelManager();
+	private void refreshFeatureLaunchPlugins(ILaunchConfigurationWorkingCopy wc, Set<IPluginModelBase> allModels) {
+		FeatureModelManager featureManager = PDECore.getDefault().getFeatureModelManager();
 		Set<String> selectedFeatures = Arrays.stream(fProduct.getFeatures()) //
-				.map(f -> fmm.findFeatureModel(f.getId(), f.getVersion())).filter(Objects::nonNull)
+				.map(f -> featureManager.findFeatureModel(f.getId(), f.getVersion())).filter(Objects::nonNull)
 				.map(m -> formatFeatureEntry(m.getFeature().getId(), IPDELauncherConstants.LOCATION_DEFAULT))
 				.collect(Collectors.toCollection(LinkedHashSet::new));
 
-		Set<String> additionalPlugins = Arrays.stream(models)
+		Set<String> additionalPlugins = allModels.stream()
 				.map(model -> getPluginConfiguration(model)
-						.map(c -> formatAdditionalPluginEntry(model, c.fResolution, true, c.fStartLevel, c.fAutoStart))
-						.orElse(null))
-				.filter(Objects::nonNull).collect(Collectors.toCollection(LinkedHashSet::new));
+						.map(c -> formatAdditionalPluginEntry(model, c.fResolution, true, c.fStartLevel, c.fAutoStart)))
+				.flatMap(Optional::stream).collect(Collectors.toCollection(LinkedHashSet::new));
 
 		wc.setAttribute(IPDELauncherConstants.SELECTED_FEATURES, selectedFeatures);
 		wc.setAttribute(IPDELauncherConstants.ADDITIONAL_PLUGINS, additionalPlugins);
-		wc.setAttribute(IPDELauncherConstants.USE_CUSTOM_FEATURES, true);
 	}
 
 	private void appendBundle(Set<String> plugins, IPluginModelBase model) {
@@ -165,66 +157,56 @@ public class LaunchAction extends Action {
 	}
 
 	private Optional<AdditionalPluginData> getPluginConfiguration(IPluginModelBase model) {
-		IPluginConfiguration configuration = fPluginConfigurations.get(model.getPluginBase().getId());
-		if (configuration == null) {
+		IPluginConfiguration config = fPluginConfigurations.get(model.getPluginBase().getId());
+		if (config == null) {
 			return Optional.empty();
 		}
-
-		String startLevel = (configuration.getStartLevel() > 0) ? String.valueOf(configuration.getStartLevel())
-				: "default"; //$NON-NLS-1$
-		String autoStart = String.valueOf(configuration.isAutoStart());
-		AdditionalPluginData data = new AdditionalPluginData(IPDELauncherConstants.LOCATION_DEFAULT, true, startLevel,
-				autoStart);
-		return Optional.of(data);
+		String startLevel = config.getStartLevel() > 0 ? Integer.toString(config.getStartLevel()) : DEFAULT;
+		String autoStart = Boolean.toString(config.isAutoStart());
+		return Optional
+				.of(new AdditionalPluginData(IPDELauncherConstants.LOCATION_DEFAULT, true, startLevel, autoStart));
 	}
 
 	private String getProgramArguments(String os, String arch) {
-		StringBuilder buffer = new StringBuilder(LaunchArgumentsHelper.getInitialProgramArguments());
 		IArgumentsInfo info = fProduct.getLauncherArguments();
-		String userArgs = (info != null) ? CoreUtility.normalize(info.getCompleteProgramArguments(os, arch)) : ""; //$NON-NLS-1$
-		return concatArgs(buffer, userArgs);
+		String userArgs = info != null ? CoreUtility.normalize(info.getCompleteProgramArguments(os, arch)) : ""; //$NON-NLS-1$
+		return concatArgs(LaunchArgumentsHelper.getInitialProgramArguments(), userArgs);
 	}
 
 	private String getVMArguments(String os, String arch) {
-		StringBuilder buffer = new StringBuilder(LaunchArgumentsHelper.getInitialVMArguments());
 		IArgumentsInfo info = fProduct.getLauncherArguments();
-		String userArgs = (info != null) ? CoreUtility.normalize(info.getCompleteVMArguments(os, arch)) : ""; //$NON-NLS-1$
-		return concatArgs(buffer, userArgs);
+		String userArgs = info != null ? CoreUtility.normalize(info.getCompleteVMArguments(os, arch)) : ""; //$NON-NLS-1$
+		return concatArgs(LaunchArgumentsHelper.getInitialVMArguments(), userArgs);
 	}
 
-	private String concatArgs(StringBuilder initialArgs, String userArgs) {
-		List<String> initialArgsList = Arrays.asList(DebugPlugin.splitArguments(initialArgs.toString()));
+	private static final Set<String> PROGRAM_ARGUMENTS = Set.of(//
+			'-' + IEnvironment.P_OS, '-' + IEnvironment.P_WS, '-' + IEnvironment.P_ARCH, '-' + IEnvironment.P_NL);
+
+	private String concatArgs(String initialArgs, String userArgs) {
+		List<String> arguments = new ArrayList<>(Arrays.asList(DebugPlugin.splitArguments(initialArgs)));
 		if (userArgs != null && userArgs.length() > 0) {
 			List<String> userArgsList = Arrays.asList(DebugPlugin.splitArguments(userArgs));
 			boolean previousHasSubArgument = false;
 			for (String userArg : userArgsList) {
-				boolean hasSubArgument = userArg.toString().equals('-' + IEnvironment.P_OS) || userArg.toString().equals('-' + IEnvironment.P_WS);
-				hasSubArgument = hasSubArgument || userArg.toString().equals('-' + IEnvironment.P_ARCH) || userArg.toString().equals('-' + IEnvironment.P_NL);
-				if (!initialArgsList.contains(userArg) || hasSubArgument || previousHasSubArgument) {
-					initialArgs.append(' ');
-					initialArgs.append(userArg);
+				boolean hasSubArgument = PROGRAM_ARGUMENTS.contains(userArg);
+				if (!arguments.contains(userArg) || hasSubArgument || previousHasSubArgument) {
+					arguments.add(userArg);
 				}
 				previousHasSubArgument = hasSubArgument;
 			}
 		}
-		String arguments = null;
 		try {
-			arguments = removeDuplicateArguments(initialArgs);
+			return removeDuplicateArguments(arguments);
 		} catch (Exception e) {
 			PDEPlugin.log(e);
-			return initialArgs.toString();
+			return String.join(" ", arguments); //$NON-NLS-1$
 		}
-		return arguments;
 	}
 
-	private String removeDuplicateArguments(StringBuilder initialArgs) {
-		String[] progArguments = { '-' + IEnvironment.P_OS, '-' + IEnvironment.P_WS, '-' + IEnvironment.P_ARCH,
-				'-' + IEnvironment.P_NL };
+	private String removeDuplicateArguments(List<String> userArgsList) {
 		String defaultStart = "${target."; //$NON-NLS-1$ // see
 											// LaunchArgumentHelper
-		ArrayList<String> userArgsList = new ArrayList<>(
-				Arrays.asList(DebugPlugin.splitArguments(initialArgs.toString())));
-		for (String progArgument : progArguments) {
+		for (String progArgument : PROGRAM_ARGUMENTS) {
 			int index1 = userArgsList.indexOf(progArgument);
 			int index2 = userArgsList.lastIndexOf(progArgument);
 			if (index1 != index2) {
@@ -240,14 +222,7 @@ public class LaunchAction extends Action {
 				}
 			}
 		}
-		StringBuilder arguments = new StringBuilder();
-		for (Iterator<String> iterator = userArgsList.iterator(); iterator.hasNext();) {
-			Object userArg = iterator.next();
-			arguments.append(userArg);
-			if(iterator.hasNext())
-				arguments.append(' ');
-		}
-		return arguments.toString();
+		return String.join(" ", userArgsList); //$NON-NLS-1$
 	}
 
 	private String getJREContainer(String os) {
@@ -261,64 +236,65 @@ public class LaunchAction extends Action {
 		return null;
 	}
 
-	private IPluginModelBase[] getModels() {
+	public static Set<IPluginModelBase> getModels(IProduct product) {
+		return product.useFeatures() ? getModelsFromListedFeatures(product) : getModelsFromListedPlugins(product);
+	}
+
+	private static Set<IPluginModelBase> getModelsFromListedPlugins(IProduct product) {
+		return Arrays.stream(product.getPlugins()) //
+				.map(IProductPlugin::getId).filter(Objects::nonNull)//
+				.map(PluginRegistry::findModel).filter(Objects::nonNull)
+				.filter(TargetPlatformHelper::matchesCurrentEnvironment)//
+				.collect(Collectors.toSet());
+	}
+
+	private static Set<IPluginModelBase> getModelsFromListedFeatures(IProduct product) {
 		Set<IPluginModelBase> launchPlugins = new HashSet<>();
-		if (fProduct.useFeatures()) {
-			IFeatureModel[] features = getUniqueFeatures();
-			for (IFeatureModel feature : features) {
-				addFeaturePlugins(feature.getFeature(), launchPlugins);
+		for (IFeatureModel feature : getUniqueFeatures(product)) {
+			addFeaturePlugins(feature.getFeature(), launchPlugins);
+		}
+		return launchPlugins;
+	}
+
+	private static Collection<IFeatureModel> getUniqueFeatures(IProduct product) {
+		Queue<IFeatureModel> pending = new ArrayDeque<>();
+		Set<IFeatureModel> features = new LinkedHashSet<>();
+		for (IProductFeature feature : product.getFeatures()) {
+			addFeature(feature.getId(), feature.getVersion(), pending, features);
+		}
+		while (!pending.isEmpty()) { // breadth-first search for all features
+			IFeatureModel feature = pending.remove();
+			for (IFeatureChild child : feature.getFeature().getIncludedFeatures()) {
+				addFeature(child.getId(), child.getVersion(), pending, features);
 			}
-		} else {
-			IProductPlugin[] plugins = fProduct.getPlugins();
-			for (IProductPlugin plugin : plugins) {
-				String id = plugin.getId();
-				if (id == null)
-					continue;
-				IPluginModelBase model = PluginRegistry.findModel(id);
-				if (model != null && TargetPlatformHelper.matchesCurrentEnvironment(model))
-					launchPlugins.add(model);
-			}
 		}
-		return launchPlugins.toArray(new IPluginModelBase[launchPlugins.size()]);
+		return features;
 	}
 
-	private IFeatureModel[] getUniqueFeatures() {
-		ArrayList<IFeatureModel> list = new ArrayList<>();
-		IProductFeature[] features = fProduct.getFeatures();
-		for (IProductFeature feature : features) {
-			String id = feature.getId();
-			String version = feature.getVersion();
-			addFeatureAndChildren(id, version, list);
-		}
-		return list.toArray(new IFeatureModel[list.size()]);
-	}
-
-	private void addFeatureAndChildren(String id, String version, List<IFeatureModel> list) {
-		FeatureModelManager manager = PDECore.getDefault().getFeatureModelManager();
-		IFeatureModel model = manager.findFeatureModel(id, version);
-		if (model == null || list.contains(model))
-			return;
-
-		list.add(model);
-
-		IFeatureChild[] children = model.getFeature().getIncludedFeatures();
-		for (IFeatureChild element : children) {
-			addFeatureAndChildren(element.getId(), element.getVersion(), list);
+	private static void addFeature(String id, String version, Queue<IFeatureModel> pending,
+			Set<IFeatureModel> features) {
+		FeatureModelManager featureManager = PDECore.getDefault().getFeatureModelManager();
+		IFeatureModel feature = featureManager.findFeatureModel(id, version);
+		if (feature != null && features.add(feature)) {
+			pending.add(feature);
 		}
 	}
 
-	private void addFeaturePlugins(IFeature feature, Set<IPluginModelBase> launchPlugins) {
-		IFeaturePlugin[] plugins = feature.getPlugins();
-		for (IFeaturePlugin plugin : plugins) {
+	private static void addFeaturePlugins(IFeature feature, Set<IPluginModelBase> launchPlugins) {
+		for (IFeaturePlugin plugin : feature.getPlugins()) {
 			String id = plugin.getId();
 			String version = plugin.getVersion();
-			if (id == null || version == null)
+			if (id == null || version == null) {
 				continue;
+			}
 			IPluginModelBase model = PluginRegistry.findModel(id, version, IMatchRules.EQUIVALENT, null);
-			if (model == null)
+			if (model == null) {
 				model = PluginRegistry.findModel(id);
-			if (model != null && !launchPlugins.contains(model) && TargetPlatformHelper.matchesCurrentEnvironment(model))
+			}
+			if (model != null && !launchPlugins.contains(model)
+					&& TargetPlatformHelper.matchesCurrentEnvironment(model)) {
 				launchPlugins.add(model);
+			}
 		}
 	}
 
@@ -326,14 +302,17 @@ public class LaunchAction extends Action {
 		IConfigurationFileInfo info = fProduct.getConfigurationFileInfo();
 		if (info != null) {
 			String path = info.getPath(os);
-			if (path == null) // if we can't find an os path, let's try the normal one
+			if (path == null) {
+				// if we can't find an os path, let's try the normal one
 				path = info.getPath(null);
+			}
 			if (path != null) {
 				String expandedPath = getExpandedPath(path);
 				if (expandedPath != null) {
 					File file = new File(expandedPath);
-					if (file.exists() && file.isFile())
+					if (file.isFile()) {
 						return file.getAbsolutePath();
+					}
 				}
 			}
 		}
@@ -341,8 +320,9 @@ public class LaunchAction extends Action {
 	}
 
 	private String getExpandedPath(String path) {
-		if (path == null || path.length() == 0)
+		if (path == null || path.length() == 0) {
 			return null;
+		}
 		IResource resource = PDEPlugin.getWorkspace().getRoot().findMember(new Path(path));
 		if (resource != null) {
 			IPath fullPath = resource.getLocation();
@@ -351,30 +331,27 @@ public class LaunchAction extends Action {
 		return null;
 	}
 
-	private ILaunchConfiguration chooseConfiguration(ILaunchConfiguration[] configs) {
+	private ILaunchConfiguration chooseConfiguration(List<ILaunchConfiguration> configs) {
 		IDebugModelPresentation labelProvider = DebugUITools.newDebugModelPresentation();
-		ElementListSelectionDialog dialog = new ElementListSelectionDialog(PDEPlugin.getActiveWorkbenchShell(), labelProvider);
-		dialog.setElements(configs);
+		ElementListSelectionDialog dialog = new ElementListSelectionDialog(PDEPlugin.getActiveWorkbenchShell(),
+				labelProvider);
+		dialog.setElements(configs.toArray());
 		dialog.setTitle(PDEUIMessages.RuntimeWorkbenchShortcut_title);
-		if (fMode.equals(ILaunchManager.DEBUG_MODE)) {
-			dialog.setMessage(PDEUIMessages.RuntimeWorkbenchShortcut_select_debug);
-		} else {
-			dialog.setMessage(PDEUIMessages.RuntimeWorkbenchShortcut_select_run);
-		}
+		dialog.setMessage(fMode.equals(ILaunchManager.DEBUG_MODE) //
+				? PDEUIMessages.RuntimeWorkbenchShortcut_select_debug
+				: PDEUIMessages.RuntimeWorkbenchShortcut_select_run);
 		dialog.setMultipleSelection(false);
 		int result = dialog.open();
 		labelProvider.dispose();
-		if (result == Window.OK) {
-			return (ILaunchConfiguration) dialog.getFirstResult();
-		}
-		return null;
+		return result == Window.OK ? (ILaunchConfiguration) dialog.getFirstResult() : null;
 	}
 
 	private ILaunchConfiguration createConfiguration() throws CoreException {
 		ILaunchConfigurationType configType = getWorkbenchLaunchConfigType();
-		String computedName = getComputedName(new Path(fPath).lastSegment());
+		String computedName = getComputedName(fPath.lastSegment());
 		ILaunchConfigurationWorkingCopy wc = configType.newInstance(null, computedName);
-		wc.setAttribute(IPDELauncherConstants.LOCATION, LaunchArgumentsHelper.getDefaultWorkspaceLocation(computedName));
+		wc.setAttribute(IPDELauncherConstants.LOCATION,
+				LaunchArgumentsHelper.getDefaultWorkspaceLocation(computedName));
 		wc.setAttribute(IPDELauncherConstants.USE_DEFAULT, false);
 		wc.setAttribute(IPDELauncherConstants.DOCLEAR, false);
 		wc.setAttribute(IPDEConstants.DOCLEARLOG, false);
@@ -383,7 +360,7 @@ public class LaunchAction extends Action {
 		wc.setAttribute(IPDELauncherConstants.USE_PRODUCT, true);
 		wc.setAttribute(IPDELauncherConstants.AUTOMATIC_VALIDATE, true);
 		wc.setAttribute(IPDELauncherConstants.AUTOMATIC_ADD, false);
-		wc.setAttribute(IPDELauncherConstants.PRODUCT_FILE, fPath);
+		wc.setAttribute(IPDELauncherConstants.PRODUCT_FILE, fPath.toOSString());
 		wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_SOURCE_PATH_PROVIDER, PDESourcePathProvider.ID);
 		wc.setAttribute(IPDELauncherConstants.INCLUDE_OPTIONAL, false);
 		return refreshConfiguration(wc);
@@ -394,20 +371,19 @@ public class LaunchAction extends Action {
 		return lm.generateLaunchConfigurationName(prefix);
 	}
 
-	private ILaunchConfiguration[] getLaunchConfigurations() throws CoreException {
-		ArrayList<ILaunchConfiguration> result = new ArrayList<>();
+	private List<ILaunchConfiguration> getLaunchConfigurations() throws CoreException {
+		List<ILaunchConfiguration> result = new ArrayList<>();
 		ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
 		ILaunchConfigurationType type = manager.getLaunchConfigurationType(EclipseLaunchShortcut.CONFIGURATION_TYPE);
-		ILaunchConfiguration[] configs = manager.getLaunchConfigurations(type);
-		for (int i = 0; i < configs.length; i++) {
-			if (!DebugUITools.isPrivate(configs[i])) {
-				String path = configs[i].getAttribute(IPDELauncherConstants.PRODUCT_FILE, ""); //$NON-NLS-1$
-				if (new Path(fPath).equals(new Path(path))) {
-					result.add(configs[i]);
+		for (ILaunchConfiguration config : manager.getLaunchConfigurations(type)) {
+			if (!DebugUITools.isPrivate(config)) {
+				String path = config.getAttribute(IPDELauncherConstants.PRODUCT_FILE, ""); //$NON-NLS-1$
+				if (fPath.equals(new Path(path))) {
+					result.add(config);
 				}
 			}
 		}
-		return result.toArray(new ILaunchConfiguration[result.size()]);
+		return result;
 	}
 
 	protected ILaunchConfigurationType getWorkbenchLaunchConfigType() {
