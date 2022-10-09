@@ -18,7 +18,7 @@
 
   <groupId>org.eclipse.platform</groupId>
   <artifactId>platform-aggregator</artifactId>
-  <version>4.24.0-SNAPSHOT</version>
+  <version>4.25.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <properties>
     <!--Property used in parent pom which if defined disables activation of build-individual-bundles profile -->
@@ -28,13 +28,6 @@
 	<pluginRepository>
 		<id>tycho-snapshots</id>
 		<url>https://repo.eclipse.org/content/repositories/tycho-snapshots/</url>
-	</pluginRepository>
-	<pluginRepository>
-		<id>dash-licenses-snapshots</id>
-		<url>https://repo.eclipse.org/content/repositories/dash-licenses-snapshots/</url>
-		<snapshots>
-			<enabled>true</enabled>
-		</snapshots>
 	</pluginRepository>
   </pluginRepositories>
   <modules>
@@ -55,17 +48,13 @@
     <module>eclipse.platform.ui</module>
     <module>eclipse.platform.common</module>
     <module>eclipse.platform.debug</module>
-    <module>eclipse.platform.resources</module>
-    <module>eclipse.platform.runtime</module>
     <module>eclipse.platform.swt</module>
     <module>eclipse.platform.swt.binaries</module>
-    <module>eclipse.platform.team</module>
     <module>eclipse.platform.text</module>
     <module>eclipse.platform.ua</module>
     <module>eclipse.platform.ui.tools</module>
 
-    <module>rt.equinox.bundles</module>
-    <module>rt.equinox.framework</module>
+    <module>equinox</module>
     <module>rt.equinox.p2</module>
 
     <module>eclipse.platform.releng</module>
