@@ -16,12 +16,12 @@
   <parent>
     <artifactId>binaries-parent</artifactId>
     <groupId>eclipse.platform.swt.binaries</groupId>
-    <version>4.24.0-SNAPSHOT</version>
+    <version>4.25.0-SNAPSHOT</version>
     <relativePath>../binaries-parent/</relativePath>
   </parent>
   <groupId>org.eclipse.swt</groupId>
   <artifactId>org.eclipse.swt.gtk.freebsd.aarch64</artifactId>
-  <version>3.120.0-SNAPSHOT</version>
+  <version>3.121.0-SNAPSHOT</version>
   <packaging>eclipse-plugin</packaging>
 
   <properties>
