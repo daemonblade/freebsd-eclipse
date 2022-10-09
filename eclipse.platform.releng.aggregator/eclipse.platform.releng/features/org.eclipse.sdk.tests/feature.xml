@@ -2,7 +2,7 @@
 <feature
       id="org.eclipse.sdk.tests"
       label="%featureName"
-      version="4.24.0.qualifier"
+      version="4.25.0.qualifier"
       provider-name="%providerName"
       license-feature="org.eclipse.license"
       license-feature-version="0.0.0">
@@ -423,13 +423,6 @@
 
    <plugin
          id="org.apache.commons.commons-fileupload"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.apache.commons.io"
          download-size="0"
          install-size="0"
          version="0.0.0"

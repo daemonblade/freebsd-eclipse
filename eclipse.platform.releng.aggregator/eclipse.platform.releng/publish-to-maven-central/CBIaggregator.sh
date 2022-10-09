@@ -19,7 +19,6 @@
 
 source `dirname ${0}`/properties.sh
 
-
 #================================================================================
 # Util functions
 #================================================================================
@@ -57,6 +56,17 @@ function create_baseline() {
 #================================================================================
 echo "==== CBI aggregator ===="
 
+# Set whether this is a snapshot build or not
+snapshot="false"
+for arg in "$@"; do
+	echo $arg
+	if [ "$arg" = "-snapshot" ]; then
+		snapshot="true"
+	fi
+done
+sed -e "s/snapshot=\".*\"/snapshot=\"${snapshot}\"/g" -i ${FILE_SDK_AGGR} 
+
+
 if [ ! -d ${LOCAL_TOOLS} ]
 then
 	/bin/mkdir ${LOCAL_TOOLS}
@@ -75,10 +85,10 @@ require_executable ${ECLIPSE}
 if [ ! -x ${AGGREGATOR} ]
 then
 	echo "Installing the CBI aggregator into ${LOCAL_TOOLS}/${DIR_AGGREGATOR} ..."
-	${ECLIPSE} -application ${APP_NAME_P2DIRECTOR} \
+	${ECLIPSE} -application org.eclipse.equinox.p2.director \
 		-r ${URL_AGG_UPDATES} \
 		-d ${LOCAL_TOOLS}/${DIR_AGGREGATOR} -p CBIProfile \
-		-installIU ${IU_AGG_PRODUCT}
+		-installIU org.eclipse.cbi.p2repo.cli.product
 fi
 require_executable ${AGGREGATOR}
 
@@ -336,15 +346,20 @@ function buildSourceJar() {
 		/bin/rm -r assemble
 	fi
 	/bin/mkdir assemble
-	giturl=ssh://genie.releng@git.eclipse.org:29418/${1}
-	gitpath=${2}
+	giturl=git@github.com:${1}
+	gitcache_dir=${WORKSPACE}/gitcache
+	gitpath=${gitcache_dir}/repo/${2}
 	gittag=${3}
 	group=${4}
 	artifact=${5}
 	version=${6}
-	git archive --remote=${giturl} \
-		${gittag} ${gitpath} \
-		| tar xv
+	mkdir -p $gitcache_dir
+	pushd ${gitcache_dir}
+		git clone ${giturl} repo
+		pushd repo
+			git checkout ${3}
+		popd
+	popd
 	/bin/mv ${gitpath}/src/* assemble/
 	/bin/mv ${gitpath}/META-INF assemble/
 	if [ -d ${gitpath}/OSGI-INF ]
@@ -360,7 +375,7 @@ function buildSourceJar() {
 			/bin/mv "${gitpath}/${src}" assemble/ 
 		done
 	fi
-	/bin/rm -rf ${gitpath}
+	/bin/rm -rf ${gitcache_dir}
 	cd assemble
 	jar cf ../${group}/${artifact}/${version}/${artifact}-${version}-sources.jar *
 	cd -

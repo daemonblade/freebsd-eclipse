@@ -2,7 +2,7 @@
 <feature
       id="org.eclipse.test"
       label="%featureName"
-      version="3.8.100.qualifier"
+      version="3.8.200.qualifier"
       provider-name="%providerName"
       license-feature="org.eclipse.license"
       license-feature-version="0.0.0">
@@ -102,7 +102,7 @@
          version="0.0.0"/>
 
    <plugin
-         id="org.junit.jupiter.api"
+         id="junit-jupiter-api"
          download-size="0"
          install-size="0"
          version="0.0.0"
