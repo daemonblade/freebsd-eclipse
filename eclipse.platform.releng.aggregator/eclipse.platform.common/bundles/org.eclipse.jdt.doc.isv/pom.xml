@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright (c) 2012, 2021 Eclipse Foundation and others.
+  Copyright (c) 2012, 2022 Eclipse Foundation and others.
   All rights reserved. This program and the accompanying materials
   are made available under the terms of the Eclipse Distribution License v1.0
   which accompanies this distribution, and is available at
@@ -14,12 +14,12 @@
   <parent>
     <artifactId>eclipse.platform.common</artifactId>
     <groupId>eclipse.platform.common</groupId>
-    <version>4.24.0-SNAPSHOT</version>
+    <version>4.25.0-SNAPSHOT</version>
     <relativePath>../../</relativePath>
   </parent>
   <groupId>org.eclipse.jdt</groupId>
   <artifactId>org.eclipse.jdt.doc.isv</artifactId>
-  <version>3.14.1600-SNAPSHOT</version>
+  <version>3.14.1700-SNAPSHOT</version>
   <packaging>eclipse-plugin</packaging>
   <profiles>
     <profile>
@@ -138,6 +138,10 @@
                     <dependency>
                       <artifactId>org.eclipse.update.configurator</artifactId>
                       <type>eclipse-plugin</type>
+                    </dependency>
+                    <dependency>
+                      <type>eclipse-plugin</type>
+                      <artifactId>com.ibm.icu</artifactId>
                     </dependency>
                   </dependencies>
                 </configuration>
