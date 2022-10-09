@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -512,6 +512,7 @@ public class LaunchManager extends PlatformObject implements ILaunchManager, IRe
 	 */
 	public static final IPath LOCAL_LAUNCH_CONFIGURATION_CONTAINER_PATH =
 		DebugPlugin.getDefault().getStateLocation().append(".launches"); //$NON-NLS-1$
+
 	/**
 	 * Returns a Document that can be used to build a DOM tree
 	 * @return the Document
@@ -521,8 +522,7 @@ public class LaunchManager extends PlatformObject implements ILaunchManager, IRe
 	public static Document getDocument() throws ParserConfigurationException {
 		DocumentBuilderFactory dfactory= DocumentBuilderFactory.newInstance();
 		DocumentBuilder docBuilder= dfactory.newDocumentBuilder();
-		Document doc= docBuilder.newDocument();
-		return doc;
+		return docBuilder.newDocument();
 	}
 
 	/**
@@ -536,6 +536,21 @@ public class LaunchManager extends PlatformObject implements ILaunchManager, IRe
 	 * @throws IOException if I/O error occurs
 	 */
 	public static String serializeDocument(Document doc) throws TransformerException, IOException {
+		return serializeDocument(doc, System.lineSeparator());
+	}
+
+	/**
+	 * Serializes a XML document into a string - encoded in UTF8 format, with
+	 * specified line separator.
+	 *
+	 * @param doc document to serialize
+	 * @param lineDelimiter the new line separator to use
+	 * @return the document as a string
+	 * @throws TransformerException if an unrecoverable error occurs during the
+	 *             serialization
+	 * @throws IOException if I/O error occurs
+	 */
+	public static String serializeDocument(Document doc, String lineDelimiter) throws TransformerException, IOException {
 		ByteArrayOutputStream s = new ByteArrayOutputStream();
 		TransformerFactory factory = TransformerFactory.newInstance();
 		Transformer transformer = factory.newTransformer();
@@ -544,7 +559,7 @@ public class LaunchManager extends PlatformObject implements ILaunchManager, IRe
 		DOMSource source = new DOMSource(doc);
 		StreamResult outputTarget = new StreamResult(s);
 		transformer.transform(source, outputTarget);
-		return s.toString(StandardCharsets.UTF_8);
+		return s.toString(StandardCharsets.UTF_8).replace(System.lineSeparator(), lineDelimiter);
 	}
 
 	/**
@@ -849,6 +864,10 @@ public class LaunchManager extends PlatformObject implements ILaunchManager, IRe
 
 	@Override
 	public String getEncoding(ILaunchConfiguration configuration) throws CoreException {
+		boolean forceSystemEncoding = configuration.getAttribute(DebugPlugin.ATTR_FORCE_SYSTEM_CONSOLE_ENCODING, false);
+		if (forceSystemEncoding) {
+			return Platform.getSystemCharset().name();
+		}
 		String encoding = configuration.getAttribute(DebugPlugin.ATTR_CONSOLE_ENCODING, (String)null);
 		if(encoding == null) {
 			IResource[] resources = configuration.getMappedResources();
@@ -946,7 +965,7 @@ public class LaunchManager extends PlatformObject implements ILaunchManager, IRe
 	 */
 	protected List<ILaunchConfiguration> findLaunchConfigurations(IContainer container) {
 		if (container instanceof IProject && !((IProject)container).isOpen()) {
-			return Collections.EMPTY_LIST;
+			return Collections.emptyList();
 		}
 		List<IResource> list = new ArrayList<>(10);
 		ResourceProxyVisitor visitor= new ResourceProxyVisitor(list);
@@ -1013,7 +1032,7 @@ public class LaunchManager extends PlatformObject implements ILaunchManager, IRe
 			}
 			return configs;
 		}
-		return Collections.EMPTY_LIST;
+		return Collections.emptyList();
 	}
 
 	/**

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -440,7 +440,7 @@ public class LaunchConfigurationInfo {
 	 *             if an exception occurs creating the XML
 	 */
 	@SuppressWarnings("unchecked")
-	protected String getAsXML() throws CoreException, IOException, ParserConfigurationException, TransformerException {
+	protected String getAsXML(String lineDelimeter) throws CoreException, IOException, ParserConfigurationException, TransformerException {
 		Document doc = LaunchManager.getDocument();
 		Element configRootElement = doc.createElement(LAUNCH_CONFIGURATION);
 		doc.appendChild(configRootElement);
@@ -487,7 +487,8 @@ public class LaunchConfigurationInfo {
 			}
 			configRootElement.appendChild(element);
 		}
-		return LaunchManager.serializeDocument(doc);
+
+		return LaunchManager.serializeDocument(doc, lineDelimeter);
 	}
 
 	/**

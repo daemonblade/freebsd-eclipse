@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -278,9 +278,10 @@ public class LaunchConfigurationWorkingCopy extends LaunchConfiguration implemen
 	 * @exception CoreException if writing the file fails
 	 */
 	protected void writeNewFile(IProgressMonitor monitor) throws CoreException {
+		String lineDelimeter = getLineSeparator();
 		String xml = null;
 		try {
-			xml = getInfo().getAsXML();
+			xml = getInfo().getAsXML(lineDelimeter);
 		} catch (Exception e) {
 			throw new DebugException(
 					new Status(

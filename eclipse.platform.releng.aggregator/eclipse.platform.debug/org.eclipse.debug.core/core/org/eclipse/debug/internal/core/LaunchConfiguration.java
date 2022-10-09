@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -589,6 +589,7 @@ public class LaunchConfiguration extends PlatformObject implements ILaunchConfig
 	public String getMemento() throws CoreException {
 		IPath relativePath = null;
 		IFile file = getFile();
+		String lineDelimeter = getLineSeparator();
 		boolean local = true;
 		if (file == null) {
 			relativePath = new Path(getName());
@@ -603,7 +604,7 @@ public class LaunchConfiguration extends PlatformObject implements ILaunchConfig
 			doc.appendChild(node);
 			node.setAttribute(IConfigurationElementConstants.LOCAL, Boolean.toString(local));
 			node.setAttribute(IConfigurationElementConstants.PATH, relativePath.toString());
-			return LaunchManager.serializeDocument(doc);
+			return LaunchManager.serializeDocument(doc, lineDelimeter);
 		} catch (IOException ioe) {
 			e= ioe;
 		} catch (ParserConfigurationException pce) {
@@ -756,7 +757,9 @@ public class LaunchConfiguration extends PlatformObject implements ILaunchConfig
 				} else {
 					launch.setAttribute(DebugPlugin.ATTR_CAPTURE_OUTPUT, null);
 				}
-				launch.setAttribute(DebugPlugin.ATTR_CONSOLE_ENCODING, getLaunchManager().getEncoding(this));
+				if (!getAttribute(DebugPlugin.ATTR_FORCE_SYSTEM_CONSOLE_ENCODING, false)) {
+					launch.setAttribute(DebugPlugin.ATTR_CONSOLE_ENCODING, getLaunchManager().getEncoding(this));
+				}
 				if (register) {
 					getLaunchManager().addLaunch(launch);
 				}
@@ -1038,5 +1041,16 @@ public class LaunchConfiguration extends PlatformObject implements ILaunchConfig
 		}
 
 		return delegate;
+	}
+
+	protected String getLineSeparator() throws CoreException {
+		IFile file = getFile();
+		if (file != null) {
+			// file is in workspace
+			return file.getLineSeparator(true);
+		}
+
+		// file is not in workspace, use platform default
+		return System.lineSeparator();
 	}
 }
