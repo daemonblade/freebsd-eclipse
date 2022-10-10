@@ -6,12 +6,12 @@
 #
 LINUX_DIRS="
 	eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.linux.*
-	eclipse.platform.resources/bundles/org.eclipse.core.filesystem.linux.*
-	eclipse.platform.resources/bundles/org.eclipse.core.filesystem/natives/unix/linux
-	eclipse.platform.team/bundles/org.eclipse.core.net.linux*
-	rt.equinox.bundles/bundles/org.eclipse.equinox.security.linux*
-	rt.equinox.binaries/org.eclipse.equinox.launcher.gtk.linux.*
-	rt.equinox.framework/bundles/org.eclipse.equinox.launcher.gtk.linux.*"
+	eclipse.platform/resources/bundles/org.eclipse.core.filesystem/natives/unix/linux
+	eclipse.platform/resources/bundles/org.eclipse.core.filesystem.linux.*
+	eclipse.platform/team/bundles/org.eclipse.core.net.linux*
+	equinox/bundles/org.eclipse.equinox.security.linux*
+	equinox/bundles/org.eclipse.equinox.launcher.gtk.linux.*
+	rt.equinox.binaries/org.eclipse.equinox.launcher.gtk.linux.*"
 
 if [ ! -x bin/$(basename $0) ]
 then
