@@ -29,17 +29,14 @@ PATCH_DIR="java-eclipse/files"
 PATCHED_DIRS="
 	eclipse-platform-parent
 	eclipse.pde
+	eclipse.platform
 	eclipse.platform.releng
 	eclipse.platform.releng.tychoeclipsebuilder
-	eclipse.platform.resources
-	eclipse.platform.runtime
 	eclipse.platform.swt
 	eclipse.platform.swt.binaries
-	eclipse.platform.team
 	eclipse.platform.text
 	eclipse.platform.ua
 	eclipse.platform.ui
-	rt.equinox.bundles
-	rt.equinox.framework
+	equinox
 	rt.equinox.p2
 "
