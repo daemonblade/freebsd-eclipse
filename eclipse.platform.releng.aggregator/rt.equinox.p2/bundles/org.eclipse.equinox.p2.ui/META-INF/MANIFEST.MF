@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %bundleName
 Bundle-SymbolicName: org.eclipse.equinox.p2.ui;singleton:=true
-Bundle-Version: 2.7.500.qualifier
+Bundle-Version: 2.7.600.qualifier
 Bundle-Activator: org.eclipse.equinox.internal.p2.ui.ProvUIActivator
 Bundle-Vendor: %providerName
 Bundle-Localization: plugin
@@ -40,6 +40,8 @@ Import-Package: javax.xml.parsers,
  org.bouncycastle.bcpg;version="1.65.0",
  org.bouncycastle.openpgp;version="1.65.0",
  org.bouncycastle.util;version="1.65.1",
+ org.eclipse.e4.ui.workbench,
+ org.eclipse.e4.ui.progress,
  org.eclipse.equinox.internal.p2.artifact.processors.pgp,
  org.eclipse.equinox.internal.p2.artifact.repository,
  org.eclipse.equinox.internal.p2.core.helpers,
