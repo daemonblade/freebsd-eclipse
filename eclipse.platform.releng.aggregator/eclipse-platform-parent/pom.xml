@@ -67,7 +67,7 @@
     <releaseNumberSDK>4.25</releaseNumberSDK>
     <releaseNumberPlatform>4.25</releaseNumberPlatform>
 
-    <tycho.version>3.0.0-SNAPSHOT</tycho.version>
+    <tycho.version>3.0.0</tycho.version>
 
     <cbi-plugins.version>1.3.2</cbi-plugins.version>
     <surefire.version>3.0.0-M7</surefire.version>
